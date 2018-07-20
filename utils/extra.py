@@ -4,7 +4,7 @@ import os, sys
 import logging
 from subprocess import run
 from collections import namedtuple
-from utils.constants import (ENOS_DIR, OPENSTACK_DIR)
+#from utils.constants import (ENOS_DIR, OPENSTACK_DIR)
 from utils.errors import (MadFailedHostsError, MadUnreachableHostsError,
                           MadProviderMissingConfigurationKeys,
                           MadFilePathError)
