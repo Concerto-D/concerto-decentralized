@@ -509,7 +509,7 @@ class PetriNet(object):
         """
         self.ports[name] = Port(name, self, inside_link, method)
 
-    def connect(self, remote_component):
+    def auto_connect(self, remote_component):
         """
         Automatically connect local ports to remote ports given a PetriNet
         based on their names.
@@ -524,6 +524,16 @@ class PetriNet(object):
             if name in remote_component.ports:
                 remote_port = remote_component.ports[name]
                 port.connect(remote_port)
+
+    def connect(self, port_name, remote_component, remote_port_name):
+        """
+        Connect a named local port to a named remote port.
+        """
+        # Let's do some sanity checks
+        if port_name in self.ports and remote_port_name in remote_component.ports:
+            port = self.ports[port_name]
+            remote_port = remote_component.ports[remote_port_name]
+            port.connect(remote_port)        
 
     def initialize(self):
         """Initialize the PetriNet by setting a token in the initial place."""
