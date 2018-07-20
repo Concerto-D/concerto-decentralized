@@ -48,7 +48,7 @@ class Assembly(object):
         self.automaton.add_components(instances_with_names)
        
     def connect(self, component1_name, port1_name, component2_name, port2_name):
-        self.automaton.components[component1_name].net.ports[port1_name].link_to(
+        self.automaton.components[component1_name].net.ports[port1_name].connect(
                 self.automaton.components[component2_name].net.ports[port2_name])
        
     def connect_multiple(self, array):
@@ -60,7 +60,7 @@ class Assembly(object):
             self.connect_multiple(c1, p1, c2, p2)
        
     def auto_connect(self, component1_name, component2_name):
-        self.automaton.components[component1_name].net.connect(
+        self.automaton.components[component1_name].net.auto_connect(
                 self.automaton.components[component2_name])
 
     def run(self, component_name):

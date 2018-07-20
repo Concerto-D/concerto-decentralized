@@ -75,6 +75,8 @@ class _TransitionThread(threading.Thread):
             # Add the exception in the queue:
             self.exec_queue.put(sys.exc_info())
             return_code = 1
+        except Exception:
+            None
         transition.inUse = 0
         if self.profiling:
             end = time.localtime()
@@ -234,11 +236,11 @@ class Automaton(object):
                         else:
                             # Exception was raised:
                             exc_type, exc_obj, exc_trace = exc
-                            printerr("fail: "+str(exc_obj))
-                            printerr(bcolors.FAIL + "[" + class_name + "]"
-                                + bcolors.ENDC
-                                + " Failed to move from " + place.name
-                                + " to " + transition.dst + "\n")
+#                            printerr("fail: "+str(exc_obj))
+#                            printerr(bcolors.FAIL + "[" + class_name + "]"
+#                                + bcolors.ENDC
+#                                + " Failed to move from " + place.name
+#                                + " to " + transition.dst + "\n")
                             # Deal with the exception:
                             break # Move out of the 'while' loop
 
@@ -246,19 +248,19 @@ class Automaton(object):
                             continue
                         else:
                             # If a thread finished and no exception was raised:
-                            printerr(bcolors.OKBLUE + "[" + class_name + "]"
-                                + bcolors.ENDC
-                                + " Successfully moved from " + place.name
-                                + " to " + transition.dst + "\n")
+#                            printerr(bcolors.OKBLUE + "[" + class_name + "]"
+#                                + bcolors.ENDC
+#                                + " Successfully moved from " + place.name
+#                                + " to " + transition.dst + "\n")
                             next_place = model.net.get_place(transition.dst)
                             if next_place.outgoing > 0:
                                 self.run_place(model,
                                         model.net.get_place(transition.dst))
                             break # Move out of the 'while' loop
 
-        else:
-            printerr('Place "%s" of "%s" is not activated for now.'
-                    % (place.name, class_name))
+#        else:
+#            printerr('Place "%s" of "%s" is not activated for now.'
+#                    % (place.name, class_name))
 
 
     def run(self, name):
@@ -275,14 +277,14 @@ class Automaton(object):
         current_places = copy.copy(model.net.current_places)
         for pname, place in current_places.items():
             self.run_place(model, place)
-        if model.net.get_current_transitions() == [] \
-                and model.net.is_initialized():
-            printerr(bcolors.OKGREEN + "[" + class_name + "]" + bcolors.ENDC
-                + " Reach the final place.\n")
-        else:
-            printerr(bcolors.FAIL + "[" + class_name + "]" + bcolors.ENDC
-                + " Deployment is not finished\n  Current status: "
-                    + str(model.current_places or 'Not initialized'))
+#        if model.net.get_current_transitions() == [] \
+#                and model.net.is_initialized():
+#            printerr(bcolors.OKGREEN + "[" + class_name + "]" + bcolors.ENDC
+#                + " Reach the final place.\n")
+#        else:
+#            printerr(bcolors.FAIL + "[" + class_name + "]" + bcolors.ENDC
+#                + " Deployment is not finished\n  Current status: "
+#                    + str(model.current_places or 'Not initialized'))
 
     def autorun(self):
         """This method is meant to deploy multiple components in parallel."""
