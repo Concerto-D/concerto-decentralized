@@ -140,7 +140,11 @@ class MAD_HW_Server(object):
     def func_run(self):
         print(self.MYCOLOR+"[MAD_HW_Server] (3/3) Launching process..."+self.RESET)
         self.wait_file = "/tmp/MAD_HW_SERVER_"+str(os.getpid())
-        self.p = Popen(["/usr/bin/python3", "./components/http_hello_world_remote/hw_server.py","localhost", "3306", self.wait_file])
+        try:
+            self.p = Popen(["python3", "./components/http_hello_world_remote/hw_server.py","localhost", "3306", self.wait_file])
+        except:
+            print(self.MYCOLOR+"[MAD+HW_Server] (3/3) Error -- was not able to launch the process"+self.RESET)
+            os.abort()
         print(self.MYCOLOR+"[MAD_HW_Server] (3/3) Launching process ... waiting (wait_file: "+self.wait_file+")"+self.RESET)
         while not os.path.exists(self.wait_file):
             print(self.MYCOLOR+"[MAD_HW_Server] (3/3) Launching process ... waiting...looping"+self.RESET)
