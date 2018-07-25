@@ -350,6 +350,7 @@ class PetriNet(object):
         self.model.current_places = set()
         self.initial = None
         self.automaton = None
+        self.name = None
         
         # Add places to the PetriNet's:
         if places is not None:

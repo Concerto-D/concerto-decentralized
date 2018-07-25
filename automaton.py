@@ -159,6 +159,7 @@ class Automaton(object):
                             "'%s' while this name is already used."%(name))
         self.components[name] = component
         component.net.automaton = self
+        component.net.name = name
 
     def add_components(self, components_with_names):
         """

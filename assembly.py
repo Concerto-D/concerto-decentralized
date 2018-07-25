@@ -85,3 +85,49 @@ class Assembly(object):
                     printerr("%s not in final state" % cname)
                 check = False
         return check
+
+    def dump_dot_component(self, out, cname, comp):
+        out.write("   subgraph cluster_"+cname+" {\n")
+        out.write("      style=filled;\n")
+        out.write("      color=lightgrey;\n")
+        out.write("      label="+cname+";\n")
+        out.write("      subgraph cluster_internal_"+cname+" {\n")
+        out.write("         color=\"#707070\";\n")
+        out.write("         label=\"\";\n")
+        # PLACES
+        out.write("         node [shape=box; style=filled; color=red];\n")
+        for pl in comp.net.places:
+            out.write("         "+cname+"_"+pl+";\n")
+        # TRANSITIONS
+        out.write("         node [shape=diamond; style=filled; color=lightblue];\n")
+        for t in comp.net.transitions:
+            out.write("         "+cname+"_"+t+";\n")
+        for t in comp.net.transitions.values():
+            out.write("         "+cname+"_"+t.src+" -> "+cname+"_"+t.name+";\n")
+            out.write("         "+cname+"_"+t.name+" -> "+cname+"_"+t.dst+";\n")
+        out.write("       }\n")
+        # PORTS
+        out.write("      node [shape=ellipse; style=filled; color=white];\n")
+        for pt in comp.net.ports.values():
+            out.write("        "+cname+"_"+pt.name+";\n") # PORT
+            if pt.type == "provide":
+                out.write("        "+cname+"_"+pt.inside_link+" -> "+ cname+"_"+pt.name+";\n")
+            else:
+                out.write("        "+cname+"_"+pt.name+" -> "+ cname+"_"+pt.inside_link+";\n")
+        out.write("   }\n")
+
+    def dump_dot_connection(self, out, cname, comp):
+        for pt in comp.net.ports.values():
+            if pt.type == "use":
+                for cnx in pt.outside_links:
+                    out.write("   "+cnx.net.name+"_"+cnx.name+" -> "+cname+"_"+pt.name+";\n")
+
+    def dump_dot(self, filename):
+        with open(filename, "w") as out:
+            out.write("digraph MAD\n")
+            out.write("{\n")
+            for cname, comp in self.automaton.components.items():
+                self.dump_dot_component(out, cname, comp)
+            for cname, comp in self.automaton.components.items():
+                self.dump_dot_connection(out, cname, comp)
+            out.write("}\n")
