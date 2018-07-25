@@ -18,6 +18,7 @@ import copy
 import yaml
 import os, sys
 import queue, threading
+import traceback
 from random import uniform
 from utils.extra import bcolors
 from utils.extra import printerr
@@ -75,8 +76,9 @@ class _TransitionThread(threading.Thread):
             # Add the exception in the queue:
             self.exec_queue.put(sys.exc_info())
             return_code = 1
-        except Exception:
-            None
+        except Exception as e:
+            traceback.print_exception(*sys.exc_info())
+            os.abort()
         transition.inUse = 0
         if self.profiling:
             end = time.localtime()
