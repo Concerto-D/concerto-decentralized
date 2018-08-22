@@ -9,32 +9,42 @@ if __name__ == '__main__':
 
     if len(sys.argv) != 2:
         print("*** Error: missing parameter!\n")
-        print("deploy_seq_up.py <number of components to deploy sequentially\n")
+        print("deploy_seq_up.py <number of components to deploy "
+              "sequentially>\n")
         sys.exit(-1)
+    else:
+        num = int(sys.argv[1])
+        if num < 2:
+            print("*** Warning: at least 2 components are deployed by this "
+              "example. 2 components will be deployed.\n")
+            num = 2
 
-    # Composant Provider
-    provider = Provider()
-    ass = Assembly()
-    ass.addComponent('provider', provider)
 
-    # first user-provider
-    up0 = UserProvider()
-    ass.addComponent('up0', up0)
+        # Composant Provider
+        provider = Provider()
+        ass = Assembly()
+        ass.addComponent('provider', provider)
 
-    ass.addConnection(provider, 'service', up0, 'serviceu')
+        # list of user-providers
+        ups = []
 
-    num = sys.argv[1]
-    for i in range(1, int(num)):
-        exec("up" + str(i) + " = UserProvider()")
-        exec("ass.addComponent('up" + str(i) + "'," + "up" + str(i) + ")")
-        exec("ass.addConnection(up" + str(i-1) + ", 'servicep', up"
-             + str(i) + ", 'serviceu')")
+        # user-providers created only if N > 2
+        for i in range(0, num-2):
+            ups.append(UserProvider())
+            name = "up" + str(i)
+            ass.addComponent(name, ups[i])
+            if i > 0:
+                ass.addConnection(ups[i-1], 'servicep', ups[i], 'serviceu')
+            else:
+                ass.addConnection(provider, 'service', ups[i], 'serviceu')
 
-    # last user
-    user = User()
-    ass.addComponent('user', user)
-    exec("ass.addConnection(up" + str(int(num)-1)
-         + ",'servicep', user, 'serviceu')")
+        # last user
+        user = User()
+        ass.addComponent('user', user)
+        if num <= 2:
+            ass.addConnection(provider, 'service', user, 'serviceu')
+        else:
+            ass.addConnection(ups[num-3], 'servicep', user, 'serviceu')
 
-    mad = Mad(ass)
-    mad.run()
+        mad = Mad(ass)
+        mad.run()
