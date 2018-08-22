@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) != 2:
         print("*** Error: missing parameter!\n")
-        print("deploy_seq_up.py <number of UserProvider component\n")
+        print("deploy_seq_up.py <number of components to deploy sequentially\n")
         sys.exit(-1)
 
     # Composant Provider

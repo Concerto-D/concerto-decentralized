@@ -8,7 +8,8 @@ if __name__ == '__main__':
 
     if len(sys.argv) != 3:
         print("*** Error: missing parameters!\n")
-        print("deploy_par_up.py <number of components> <number of transitions>\n")
+        print("deploy_par_up.py <number of user components> <number of "
+              "transitions inside user components>\n")
         sys.exit(-1)
 
     # Composant Provider
