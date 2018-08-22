@@ -21,5 +21,5 @@ class UserNTrans(Component):
 
     def createTransitions(self, nbtrans):
         for i in range(1,int(nbtrans)):
-            exec("self.add_transition('t" + str(i)
-                 + "', DryRun(), 'configured', 'started')")
+            name = "t" + str(i)
+            self.add_transition(name, DryRun(), 'configured', 'started')
