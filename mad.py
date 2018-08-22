@@ -40,6 +40,9 @@ from collections import Callable
 from utils.exceptions import NetError, NetConditionError, NetCallbackError
 
 
+class MadException(Exception):
+    pass
+
 class Place(object):
     """
     Define a place element in a Madeus PetriNet.
@@ -130,21 +133,21 @@ class Transition(object):
         """
         # Check if the transition is available regarding the current state:
         if self.src not in self.net.model.current_places:
-            raise Exception(
+            raise MadException(
                     'Transaction "%s" can\'t be fired because "%s" is not in '
                     'the current set of places "%s".'
                     % (self.name, self.src, self.net.current_places))
 
         # Check if the transition has already been triggered:
         if not self.state:
-            raise Exception(
+            raise MadException(
                     'Transaction "%s" can\'t be fired because it is not '
                     'activated.'
                     % (self.name))
 
         # Check if the transition is valid in the current deployment state:
         if self.name not in self.net.get_current_transitions():
-            raise Exception(
+            raise MadException(
                     'Transaction "%s" can\'t be fired because it is not in '
                     'the current set of transitions "%s".'
                     % (self.name, self.net.get_current_transitions()))
@@ -258,7 +261,7 @@ class Port(object):
             setattr(self.net.model, self.name, getattr(self, self.name))
             self.net.transitions[self.inside_link].add_condition(self.name)
         else:
-            raise Exception(
+            raise MadException(
                 'Trying to map port "%s" to non-existing element "%s"'
                 % (name, inside_link))
 
@@ -390,7 +393,7 @@ class PetriNet(object):
     def get_place(self, place):
         """Returns a place if it exists in the PetriNet, given its name."""
         if place not in self.places:
-            raise Exception('The place "%s" does not exist.' % place)
+            raise MadException('The place "%s" does not exist.' % place)
             return None
         else:
             return self.places[place]
@@ -398,7 +401,7 @@ class PetriNet(object):
     def is_initialized(self):
         """Return `True` if the PetriNet has been initialized"""
         if not self.initial:
-            raise Exception('The component has no initial state.')
+            raise MadException('The component has no initial state.')
             return 1
         return self.get_place(self.initial).state
 
@@ -457,11 +460,11 @@ class PetriNet(object):
                 user-defined methods which must return a boolean.
         """
         if source not in self.places:
-            raise Exception(
+            raise MadException(
                     'The source "%s" of the transition "%s" is not a place of '
                     'the PetriNet.' % (source, name))
         if dest not in self.places:
-            raise Exception(
+            raise MadException(
                     'The destination "%s" of the transition "%s" is not a '
                     ' place of the PetriNet.' % (dest, name))
 
@@ -481,7 +484,7 @@ class PetriNet(object):
             if isinstance(callback, string_types):
                 func = getattr(self.model, callback, None)
                 if func is None:
-                    raise Exception(
+                    raise MadException(
                             'The method "%s" is not defined.' % callback)
             elif isinstance(callback, Callable):
                 func = callback

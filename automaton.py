@@ -27,6 +27,7 @@ from utils.exceptions import NetError, NetConditionError, NetCallbackError
 import plotly 
 from plotly.figure_factory import create_gantt
 
+from mad import MadException
 
 lock = threading.Lock()
 
@@ -76,6 +77,8 @@ class _TransitionThread(threading.Thread):
             # Add the exception in the queue:
             self.exec_queue.put(sys.exc_info())
             return_code = 1
+        except MadException:
+            pass
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
             os.abort()
