@@ -7,6 +7,11 @@ from examples.scalability.userprovider import UserProvider
 
 if __name__ == '__main__':
 
+    if len(sys.argv) != 2:
+        print("*** Error: missing parameter!\n")
+        print("deploy_seq_up.py <number of UserProvider component\n")
+        sys.exit(-1)
+
     # Composant Provider
     provider = Provider()
     ass = Assembly()
@@ -19,7 +24,7 @@ if __name__ == '__main__':
     ass.addConnection(provider, 'service', up0, 'serviceu')
 
     num = sys.argv[1]
-    for i in range(1, int(num)-1):
+    for i in range(1, int(num)):
         exec("up" + str(i) + " = UserProvider()")
         exec("ass.addComponent('up" + str(i) + "'," + "up" + str(i) + ")")
         exec("ass.addConnection(up" + str(i-1) + ", 'servicep', up"
@@ -28,7 +33,7 @@ if __name__ == '__main__':
     # last user
     user = User()
     ass.addComponent('user', user)
-    exec("ass.addConnection(up" + str(int(num)-2)
+    exec("ass.addConnection(up" + str(int(num)-1)
          + ",'servicep', user, 'serviceu')")
 
     mad = Mad(ass)
