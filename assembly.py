@@ -2,132 +2,186 @@
 # -*- coding: utf-8 -*-
 
 """
-This module contains the definition of an assembly of MAD (Madeus Application
-Deployer) components.
-
+.. module:: assembly
+   :synopsis: this file contains the Assembly class.
 """
 
-from automaton import Automaton
-from utils.extra import printerr
+import sys
+from dependency import *
+from utility import Messages, COLORS
 
+class Assembly (object):
+    """This Assembly class is used to create a assembly.
 
-class Assembly(object):
-    """
-    Define a MAD assembly.
-
-    Args:
-        components (list(list(:obj:`PetriNet`, str))): List of components to
-            assemble.
-        step (bool): If True, run the deployment process step by step
-            (default=False).
-
-    Examples:
-        The following example shows how to instantiate an assembly of two MAD
-        components named 'user' and 'provider':
-
-        >>> # Instanciate the two components:
-        >>> user = User()
-        >>> provider = Provider()
-        >>>
-        >>> # Instanciate the assembly:
-        >>> assembly = Assembly([
-        ...     [user, 'user'],
-        ...     [provider, 'provider']
-        >>> ])
-
+        An assembly is a set of component instances and the connection of
+        their dependencies.
     """
 
-    def __init__(self, components=None, step=False, dry_run=False,
-                profiling=True):
-        self.automaton = Automaton(components, step, dry_run, profiling)
+    # list of Component objects
+    components = []
+    # list of connections. A connection is a tuple (component1, dependency1,
+    # component2, dependency2)
+    connections = []
 
-    def add_instance(self, instance, name):
-        self.automaton.add_component(instance, name)
-       
-    def add_instances(self, instances_with_names):
-        self.automaton.add_components(instances_with_names)
-       
-    def connect(self, component1_name, port1_name, component2_name, port2_name):
-        self.automaton.components[component1_name].net.ports[port1_name].connect(
-                self.automaton.components[component2_name].net.ports[port2_name])
-       
-    def connect_multiple(self, array):
-        for e in array:
-            c1 = e[0]
-            p1 = e[1]
-            c2 = e[2]
-            p2 = e[3]
-            self.connect_multiple(c1, p1, c2, p2)
-       
-    def auto_connect(self, component1_name, component2_name):
-        self.automaton.components[component1_name].net.auto_connect(
-                self.automaton.components[component2_name])
+    """
+    BUILD ASSEMBLY
+    """
 
-    def run(self, component_name):
-        self.automaton.run(component_name)
+    def __init__(self):
+        self.printed = False
 
-    def auto_run(self):
-        # Make sure the components have been initialized:
-        for _, comp in self.automaton.components.items():
-            if not comp.net.is_initialized():
-                comp.net.initialize()
-        self.automaton.autorun()
+    def addComponent(self, name, comp):
+        """
+        This method adds a component instance to the assembly
 
-    def set_dry_run(self, value):
-        self.automaton.dry_run=value
+        :param comp: the component instance to add
+        """
+        comp.setname(name)
+        comp.setcolor(COLORS[len(self.components)%len(COLORS)])
+        self.components.append(comp)
 
-    def check_dep(self, verbose=True):
+    def addConnection(self, comp1, name1, comp2, name2):
+        """
+        This method adds a connection between two components dependencies.
+
+        :param comp1: The first component to connect
+        :param name1: The dependency name of the first component to connect
+        :param comp2: The second component to connect
+        :param name2: The dependency name of the second component to connect
+        """
+        if DepType.validtypes(comp1.st_dependencies[name1].gettype(),
+                              comp2.st_dependencies[name2].gettype()):
+            # multiple connections are possible within MAD, so we do not
+            # check if a dependency is already connected
+            self.connections.append((comp1,comp1.st_dependencies[name1],comp2,
+                                 comp2.st_dependencies[name2]))
+            comp1.st_dependencies[name1].connect()
+            comp2.st_dependencies[name2].connect()
+        else:
+            print(Messages.fail() + "ERROR - you try to connect dependencies "
+                                 "with incompatible types. DepType.USE and "
+                                  "DepType.DATA-USE should be respectively "
+                                  "connected to DepType.PROVIDE and "
+                                  "DepType.DATA-PROVIDE dependencies."
+                  + Messages.endc())
+            sys.exit(0)
+
+    def get_components(self):
+        return self.components
+
+    """
+    CHECK ASSEMBLY
+    """
+
+    def check_warnings(self):
+        """
+        This method check WARNINGS in the structure of an assembly.
+
+        :return: false if some WARNINGS have been detected, true otherwise
+        """
         check = True
-        for cname, comp in self.automaton.components.items():
-            if comp.net.get_current_transitions() != [] \
-                    or not comp.net.is_initialized():
-                if verbose:
-                    printerr("%s not in final state" % cname)
-                check = False
-        return check
+        check_dep = True
 
-    def dump_dot_component(self, out, cname, comp):
-        out.write("   subgraph cluster_"+cname+" {\n")
-        out.write("      style=filled;\n")
-        out.write("      color=lightgrey;\n")
-        out.write("      label="+cname+";\n")
-        out.write("      subgraph cluster_internal_"+cname+" {\n")
-        out.write("         color=\"#707070\";\n")
-        out.write("         label=\"\";\n")
-        # PLACES
-        out.write("         node [shape=box; style=filled; color=red];\n")
-        for pl in comp.net.places:
-            out.write("         "+cname+"_"+pl+";\n")
-        # TRANSITIONS
-        out.write("         node [shape=diamond; style=filled; color=lightblue];\n")
-        for t in comp.net.transitions:
-            out.write("         "+cname+"_"+t+";\n")
-        for t in comp.net.transitions.values():
-            out.write("         "+cname+"_"+t.src+" -> "+cname+"_"+t.name+";\n")
-            out.write("         "+cname+"_"+t.name+" -> "+cname+"_"+t.dst+";\n")
-        out.write("       }\n")
-        # PORTS
-        out.write("      node [shape=ellipse; style=filled; color=white];\n")
-        for pt in comp.net.ports.values():
-            out.write("        "+cname+"_"+pt.name+";\n") # PORT
-            if pt.type == "provide":
-                out.write("        "+cname+"_"+pt.inside_link+" -> "+ cname+"_"+pt.name+";\n")
-            else:
-                out.write("        "+cname+"_"+pt.name+" -> "+ cname+"_"+pt.inside_link+";\n")
-        out.write("   }\n")
+        # Check warnings
+        for comp in self.components:
+            check = comp.check_warnings()
+            check_dep = comp.check_connections()
 
-    def dump_dot_connection(self, out, cname, comp):
-        for pt in comp.net.ports.values():
-            if pt.type == "use":
-                for cnx in pt.outside_links:
-                    out.write("   "+cnx.net.name+"_"+cnx.name+" -> "+cname+"_"+pt.name+";\n")
+        if not check:
+            print(Messages.warning() + "WARNING - some WARNINGS have been "
+                                     "detected in your components, please "
+                                     "check them so as to not get unwilling "
+                                     "behaviors in your deployment cordination"
+                  + Messages.endc())
 
-    def dump_dot(self, filename):
-        with open(filename, "w") as out:
-            out.write("digraph MAD\n")
-            out.write("{\n")
-            for cname, comp in self.automaton.components.items():
-                self.dump_dot_component(out, cname, comp)
-            for cname, comp in self.automaton.components.items():
-                self.dump_dot_connection(out, cname, comp)
-            out.write("}\n")
+        if not check_dep:
+            print(Messages.warning() + "WARNING - some dependencies are not "
+                                     "connected within the assembly. This "
+                                     "could lead to unwilling behaviors in "
+                                     "your deployment coordination."
+                  + Messages.endc())
+
+        return check and check_dep
+
+    """
+    OPERATIONAL SEMANTICS
+    """
+
+    def disable_enable_connections(self, configuration):
+        """
+        This method build the new list of enabled connections according to
+        the current states of "activated" places (ie the ones getting a token).
+
+        :param configuration: the current configuration of the deployment
+        :return: the new list of activated connections
+        """
+        places = configuration.get_places()
+        conf_conn = configuration.get_connections()
+
+        # create the new list of activated connections
+        activated_connections = []
+
+        # for all connections of the assembly
+        for conn in self.connections:
+            if conn[1].gettype() == DepType.PROVIDE or conn[1].gettype() == \
+                    DepType.DATA_PROVIDE:
+                # foreach place bound to this connection and present in
+                # enabled places (ie get a token), add the connection to the
+                # list of enabled connections.
+                for place in places:
+                    if place in conn[1].getbindings(): # if the place is in
+                        # the group of places bound to the service
+                        activated_connections.append(conn)
+                        if conn not in conf_conn:
+                            print("[Assembly] Enable connection (" + conn[
+                                0].getname() + ", "
+                                  + conn[1].getname() + ", "
+                                  + conn[2].getname() + ", "
+                                  + conn[3].getname() + ")")
+
+            elif conn[3].gettype() == DepType.PROVIDE or conn[3].gettype() ==\
+                    DepType.DATA_PROVIDE:
+                for place in places:
+                    if place in conn[3].getbindings(): # if the place is in
+                        # the group of places bound to the service
+                        activated_connections.append(conn)
+                        if conn not in conf_conn:
+                            print("[Assembly] Enable connection (" + conn[
+                                0].getname() + ", "
+                                  + conn[1].getname() + ", "
+                                  + conn[2].getname() + ", "
+                                  + conn[3].getname() + ")")
+
+        # data connections are always kept once activated
+        for conn in conf_conn:
+            if conn not in activated_connections:
+                if conn[1].gettype() == DepType.DATA_PROVIDE \
+                        or conn[1].gettype() == DepType.DATA_USE \
+                        or conn[3].gettype() ==  DepType.DATA_USE\
+                        or conn[3].gettype() ==  DepType.DATA_PROVIDE:
+                    activated_connections.append(conn)
+
+        return activated_connections
+
+    def is_finish(self, configuration):
+        """
+        This method checks if the deployment is finished
+
+        :param configuration: the current configuration of the deployment
+        :return: True if the deployment is finished, False otherwise
+        """
+
+        places = configuration.get_places()
+        # the deployment cannot be finished if at least all components have
+        # not reached a place
+        if len(places) >= len(self.components):
+            # if all places are finals (ie without output docks) the
+            # deployment has finished
+            all_finals = True
+            for place in places:
+                if len(place.get_outputdocks()) > 0:
+                    all_finals = False
+            return all_finals
+        else:
+            return False
+
