@@ -1,6 +1,6 @@
-# MAD Model
+# MAD
 
-A lightweight implementation of the MAD model in Python.
+The implementation of the Madeus model in Python.
 
 ## Documentation
 
