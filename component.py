@@ -49,7 +49,7 @@ class Component (object):
         :param places: dictionary of places
         """
         for key in places:
-            self.st_places[key] = Place(key)
+            self.add_place(key)
 
     def add_transitions(self, transitions):
         """
@@ -61,10 +61,12 @@ class Component (object):
         """
         for key in transitions:
             # add docks to places and bind docks
-            self.st_transitions[key] = Transition(key, transitions[key][0],
-                                                  transitions[key][1],
-                                                  transitions[key][2],
-                                                  self.st_places)
+            self.add_transition(key, transitions[key][0], transitions[key][
+                1], transitions[key][2])
+            #self.st_transitions[key] = Transition(key, transitions[key][0],
+            #                                      transitions[key][1],
+            #                                      transitions[key][2],
+            #                                      self.st_places)
 
     def add_dependencies(self,dep):
         """
@@ -83,63 +85,8 @@ class Component (object):
             if len(dep[key])==2:
                 type = dep[key][0]
                 bname = dep[key][1] # list of places or transitions bounded to
+                self.add_dependency(key, type, bname)
 
-                if type==DepType.DATA_USE or type==DepType.USE:
-                    btrans = True
-                    trans = []
-                    for bind in bname:
-                        if bind not in self.st_transitions:
-                            btrans = False
-                            break
-                        else:
-                            trans.append(self.st_transitions[bind])
-                    if btrans:
-                        self.st_dependencies[key] = Dependency(key, dep[key][0],
-                                                    trans)
-                    else:
-                        print(Messages.fail() + "ERROR - according to the type of dependency "
-                              + key + " : " + str(type) + ", its should be "
-                                                          "bound to a "
-                                                          "transition"
-                              + Messages.endc())
-                        sys.exit(0)
-                elif type==DepType.DATA_PROVIDE or type==DepType.PROVIDE:
-                    btrans = True
-                    places = []
-                    for bind in bname:
-                        if bind not in self.st_places:
-                            btrans = False
-                            break
-                        else:
-                            places.append(self.st_places[bind])
-                    if btrans:
-                        terminal = False
-                        for p in places:
-                            ods = p.get_outputdocks()
-                            if len(ods) == 0:
-                                terminal = True
-                                break
-                        if terminal or type==DepType.DATA_PROVIDE:
-                            # create the dependency
-                            self.st_dependencies[key] = Dependency(key, dep[key][
-                                0], places)
-                            # for each place add the provide dependency
-                            for p in places:
-                                p.add_provide(self.st_dependencies[key])
-                        else:
-                            print(Messages.fail() + "ERROR - at least one "
-                                                    "place bound to a provide "
-                                                    "dependency must be a terminal "
-                                                    "place without output "
-                                                    "docks."
-                                  + Messages.endc())
-                            sys.exit(0)
-                    else:
-                        print(Messages.fail() + "ERROR - according to the type of dependency "
-                              + key + " : " + str(type) + ", its should be "
-                                                          "bound to a place"
-                              + Messages.endc())
-                        sys.exit(0)
             else:
                 print(Messages.fail() + "ERROR dependency "
                       + key
@@ -150,14 +97,12 @@ class Component (object):
                 sys.exit(0)
 
 
-    def add_place(self, name, id, od):
+    def add_place(self, name):
         """
         This method offers the possibility to add a single place to an
         already existing dictionary of places.
 
         :param name: the name of the place to add
-        :param id: the number of input docks of the place
-        :param od: the number of output docks of the place
         """
         self.st_places[name] = Place(name)
 
@@ -172,7 +117,7 @@ class Component (object):
         self.st_transitions[name] = Transition(name, transition, src, dst,
                                               self.st_places)
 
-    def add_dependency(self, name, type, binding):
+    def add_dependency(self, name, type, bindings):
         """
         This method offers the possibility to add a single dependency to an
         already existing dictionary of dependencies.
@@ -182,28 +127,61 @@ class Component (object):
         :param binding: the name of the binding of the dependency (place or transition)
         """
         if type == DepType.DATA_USE or type == DepType.USE:
-            if binding in self.st_transitions:
-                self.st_dependencies[name].append(Dependency(key, type,
-                                                       self.st_transitions[
-                                                           binding]))
+            btrans = True
+            trans = []
+            for bind in bindings:
+                if bind not in self.st_transitions:
+                    btrans = False
+                    break
+                else:
+                    trans.append(self.st_transitions[bind])
+            if btrans:
+                self.st_dependencies[name] = Dependency(name, type, trans)
             else:
-                print(Messages.fail() + "ERROR - according to the type of dependency "
-                      + name + " : " + str(type) + ", its should be bound "
-                      "to a transition" + Messages.endc())
+                print(
+                    Messages.fail() + "ERROR - according to the type of dependency "
+                    + name + " : " + str(type) + ", its should be "
+                                                "bound to a "
+                                                "transition"
+                    + Messages.endc())
                 sys.exit(0)
 
         elif type == DepType.DATA_PROVIDE or type == DepType.PROVIDE:
-            if binding in self.st_places:
-                # create the dependency
-                self.st_dependencies[name].append(Dependency(key, type,
-                                                       self.st_places[binding]))
-                # for each place add the provide dependency
-                for p in binding:
-                    p.add_provide(self.st_dependencies[name])
+            btrans = True
+            places = []
+            for bind in bindings:
+                if bind not in self.st_places:
+                    btrans = False
+                    break
+                else:
+                    places.append(self.st_places[bind])
+            if btrans:
+                terminal = False
+                for p in places:
+                    ods = p.get_outputdocks()
+                    if len(ods) == 0:
+                        terminal = True
+                        break
+                if terminal or type == DepType.DATA_PROVIDE:
+                    # create the dependency
+                    self.st_dependencies[name] = Dependency(name, type, places)
+                    # for each place add the provide dependency
+                    for p in places:
+                        p.add_provide(self.st_dependencies[name])
+                else:
+                    print(Messages.fail() + "ERROR - at least one "
+                                            "place bound to a provide "
+                                            "dependency must be a terminal "
+                                            "place without output "
+                                            "docks."
+                          + Messages.endc())
+                    sys.exit(0)
             else:
-                print(Messages.fail() + "ERROR - according to the type of dependency "
-                      + name + " : " + str(type) + ", its should be bound "
-                        "to a place" + Messages.endc())
+                print(
+                    Messages.fail() + "ERROR - according to the type of dependency "
+                    + name + " : " + str(type) + ", its should be "
+                                                "bound to a place"
+                    + Messages.endc())
                 sys.exit(0)
 
     def get_places(self):
