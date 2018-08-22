@@ -6,6 +6,11 @@ from examples.scalability.user_Ntrans import UserNTrans
 
 if __name__ == '__main__':
 
+    if len(sys.argv) != 3:
+        print("*** Error: missing parameters!\n")
+        print("deploy_par_up.py <number of components> <number of transitions>\n")
+        sys.exit(-1)
+
     # Composant Provider
     provider = Provider()
     ass = Assembly()
