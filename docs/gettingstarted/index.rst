@@ -31,6 +31,7 @@ Lets focus on the component description ``provider.py``:
   from mad import *
   from transitions import *
 
+
   class Provider(Component):
 
     places = [
@@ -41,9 +42,9 @@ Lets focus on the component description ``provider.py``:
     ]
 
     transitions = {
-        'init': (Init(), 'waiting', 'initiated'),
-        'config': (Config(), 'initiated', 'configured'),
-        'start': (Start(), 'configured', 'started')
+        'init': ('waiting', 'initiated', Init().run),
+        'config': ('initiated', 'configured', Config().run),
+        'start': ('configured', 'started', Start().run)
     }
 
     dependencies = {
@@ -69,13 +70,14 @@ Transitions
 
 The ``Provider`` component contains three transitions defined within a dictionary. The key of the dictionary is a string representing the name of the transition. Thus, ``Provider`` transitions are 'init', 'config', and 'start'. One can note that in this example transitions names are verbs. These names have been chosen to represent the fact that a transition is an action to perform.
 
-Each key in the dictionary is associated to a triplet ``(action, source, destination)`` where:
+Each key in the dictionary is associated to a triplet ``(source, destination, action, [arguments])`` where:
 
-- *action* is an object
 - *source* is the name of the source place of the transition
 - *destination* is the name of the destination place of the transition
+- *action* is a functor
+- *arguments* is an optional tuple containing the arguments to give to the functor
 
-For example, the ``'init'`` transition of ``Provider`` action is the instanciation of the class ``Init``, the source place is ``'waiting'``, and the destination place is ``'initiated'``. In other words, ``'init'`` is applied when moving from ``'waiting'`` to ``'initiated'``, by performing the action associated to the class ``Init``.
+For example, the ``'init'`` transition of ``Provider`` action is the method of the class ``Init().run``, the source place is ``'waiting'``, and the destination place is ``'initiated'``. In other words, ``'init'`` is applied when moving from ``'waiting'`` to ``'initiated'``, by performing the action associated to the class ``Init``.
 
 The ``Init`` class can be found in the file ``transitions.py``. It must be defined by the component designer.
 
@@ -155,9 +157,9 @@ In the *user-provide* example another component is declared: ``user.py``.
     ]
 
     transitions = {
-        'init': (Init(), 'waiting', 'initiated'),
-        'config': (Config(), 'initiated', 'configured'),
-        'start': (Start(), 'configured', 'started')
+        'init': ('waiting', 'initiated', Init().run),
+        'config': ('initiated', 'configured', Config().run),
+        'start': ('configured', 'started', Start().run)
     }
 
     dependencies = {

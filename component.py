@@ -112,7 +112,10 @@ class Component (object):
         already existing dictionary of transitions.
 
         :param name: the name of the transition to add
-        :param transition: the transition object created by the user
+        :param src: the name of the source place of the transition
+        :param dst: the name of the destination place of the transition
+        :param func: a functor created by the user
+        :param args: optional tuple of arguments to give to the functor
         """
         self.st_transitions[name] = Transition(name, src, dst, func, args,
                                               self.st_places)
