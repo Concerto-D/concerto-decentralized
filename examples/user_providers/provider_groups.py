@@ -13,10 +13,10 @@ class ProviderGroups(Component):
     ]
 
     transitions = {
-        'init': (Init(), 'waiting', 'initiated'),
-        'config1': (Config(), 'initiated', 'configured1'),
-        'config2': (Config(), 'configured1', 'configured2'),
-        'start': (Start(), 'configured2', 'started')
+        'init': ('waiting', 'initiated', Init().run),
+        'config1': ('initiated', 'configured1', Config().run),
+        'config2': ('configured1', 'configured2', Config().run),
+        'start': ('configured2', 'started', Start().run)
     }
 
     dependencies = {

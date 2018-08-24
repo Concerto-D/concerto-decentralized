@@ -36,11 +36,11 @@ class Component (object):
         self.st_places = {}
         self.st_transitions = {}
         self.st_dependencies = {}
-        self.add_places()
-        self.add_transitions()
-        self.add_dependencies()
+        self.add_places(self.places)
+        self.add_transitions(self.transitions)
+        self.add_dependencies(self.dependencies)
 
-    def add_places(self):
+    def add_places(self, places):
         """
         This method add all places declared in the user component class as a
         dictionary associating the name of a place to its number of input and
@@ -48,10 +48,10 @@ class Component (object):
 
         :param places: dictionary of places
         """
-        for key in self.places:
+        for key in places:
             self.add_place(key)
 
-    def add_transitions(self):
+    def add_transitions(self, transitions):
         """
         This method add all transitions declared in the user component class
         as a dictionary associating the name of a transition to a transition
@@ -59,13 +59,16 @@ class Component (object):
 
         :param transitions: dictionary of transitions
         """
-        for key in self.transitions:
+        for key in transitions:
             # add docks to places and bind docks
-            self.add_transition(key, self.transitions[key][0],
-                                self.transitions[key][
-                1], self.transitions[key][2])
+            if len(transitions[key])==4:
+                self.add_transition(key, transitions[key][0], transitions[key][
+                    1], transitions[key][2], transitions[key][3])
+            else:
+                self.add_transition(key, transitions[key][0], transitions[key][
+                    1], transitions[key][2])
 
-    def add_dependencies(self):
+    def add_dependencies(self, dep):
         """
         This method add all dependencies declared in the user component class
         as a dictionary associating the name of a dependency to both a type
@@ -78,11 +81,10 @@ class Component (object):
         :param dep: dictionary of dependencies
 
         """
-        for key in self.dep:
+        for key in dep:
             if len(dep[key])==2:
-                type = self.dep[key][0]
-                bname = self.dep[key][1] # list of places or transitions
-                # bounded to
+                type = dep[key][0]
+                bname = dep[key][1] # list of places or transitions bounded to
                 self.add_dependency(key, type, bname)
 
             else:
@@ -104,7 +106,7 @@ class Component (object):
         """
         self.st_places[name] = Place(name)
 
-    def add_transition(self, name, transition, src, dst):
+    def add_transition(self, name, src, dst, func, args=()):
         """
         This method offers the possibility to add a single transition to an
         already existing dictionary of transitions.
@@ -112,7 +114,7 @@ class Component (object):
         :param name: the name of the transition to add
         :param transition: the transition object created by the user
         """
-        self.st_transitions[name] = Transition(name, transition, src, dst,
+        self.st_transitions[name] = Transition(name, src, dst, func, args,
                                               self.st_places)
 
     def add_dependency(self, name, type, bindings):

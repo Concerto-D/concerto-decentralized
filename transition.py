@@ -23,11 +23,12 @@ class Transition (object):
     BUILD TRANSITION
     """
 
-    def __init__(self, name, code, src, dst, places):
+    def __init__(self, name, src, dst, func, args, places):
         self.name = name
         self.src_place = src
         self.dst_place = dst
-        self.code = code
+        self.code = func
+        self.args = args
         self.bind_docks(places)
 
     def bind_docks(self, places):
@@ -84,7 +85,7 @@ class Transition (object):
 
         :return: the Thread of the transition
         """
-        self.thread = threading.Thread(target=self.code.run)
+        self.thread = threading.Thread(target=self.code, args=self.args)
         self.thread.start()
 
     def join_thread(self):

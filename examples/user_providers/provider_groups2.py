@@ -12,9 +12,9 @@ class ProviderGroups2(Component):
     ]
 
     transitions = {
-        'pinit': (Init(), 'waiting', 'initiated'),
-        'pconfig': (Config(), 'initiated', 'configured'),
-        'pstart': (Start(), 'configured', 'started')
+        'pinit': ('waiting', 'initiated', Init().run),
+        'pconfig': ('initiated', 'configured', Config().run),
+        'pstart': ('configured', 'started', Start().run)
     }
 
     dependencies = {

@@ -12,9 +12,9 @@ class UserGroups(Component):
     ]
 
     transitions = {
-        'uinit': (InitShort(), 'waiting', 'initiated'),
-        'uconfig': (ConfigLong(), 'initiated', 'configured'),
-        'ustart': (Start(), 'configured', 'started')
+        'uinit': ('waiting', 'initiated', InitShort().run),
+        'uconfig': ('initiated', 'configured', ConfigLong().run),
+        'ustart': ('configured', 'started', Start().run)
     }
 
     dependencies = {

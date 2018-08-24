@@ -11,8 +11,8 @@ class UserNTrans(Component):
     ]
 
     transitions = {
-        'init': (DryRun(), 'waiting', 'configured'),
-        't0': (DryRun(), 'configured', 'started')
+        'init': ('waiting', 'configured', DryRun().run),
+        't0': ('configured', 'started', DryRun().run)
     }
 
     dependencies = {
@@ -22,4 +22,4 @@ class UserNTrans(Component):
     def createTransitions(self, nbtrans):
         for i in range(1,int(nbtrans)):
             name = "t" + str(i)
-            self.add_transition(name, DryRun(), 'configured', 'started')
+            self.add_transition(name, 'configured', 'started', DryRun().run)

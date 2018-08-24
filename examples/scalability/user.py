@@ -10,7 +10,7 @@ class User(Component):
     ]
 
     transitions = {
-        'start': (DryRun(), 'waiting', 'started')
+        'start': ('waiting', 'started', DryRun().run)
     }
 
     dependencies = {

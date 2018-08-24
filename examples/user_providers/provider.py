@@ -12,9 +12,9 @@ class Provider(Component):
     ]
 
     transitions = {
-        'init': (Init(), 'waiting', 'initiated'),
-        'config': (Config(), 'initiated', 'configured'),
-        'start': (Start(), 'configured', 'started')
+        'init': ('waiting', 'initiated', Init().run),
+        'config': ('initiated', 'configured', Config().run),
+        'start': ('configured', 'started', Start().run)
     }
 
     dependencies = {
