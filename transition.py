@@ -6,7 +6,6 @@
    :synopsis: this file contains the Transition class.
 """
 
-from abc import ABCMeta, abstractmethod
 import threading
 
 class Transition (object):
@@ -19,8 +18,6 @@ class Transition (object):
         This is an abstract class that need to be override. In particular,
         the method 'run' must be override
     """
-
-    __metaclass__ = ABCMeta
 
     """
     BUILD TRANSITION
@@ -102,11 +99,3 @@ class Transition (object):
             return True
         else:
             return False
-
-
-    @abstractmethod
-    def run(self):
-        """This method must be override.
-            It represents the action performed by the transition.
-        """
-        pass

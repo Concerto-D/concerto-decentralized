@@ -36,11 +36,11 @@ class Component (object):
         self.st_places = {}
         self.st_transitions = {}
         self.st_dependencies = {}
-        self.add_places(self.places)
-        self.add_transitions(self.transitions)
-        self.add_dependencies(self.dependencies)
+        self.add_places()
+        self.add_transitions()
+        self.add_dependencies()
 
-    def add_places(self, places):
+    def add_places(self):
         """
         This method add all places declared in the user component class as a
         dictionary associating the name of a place to its number of input and
@@ -48,10 +48,10 @@ class Component (object):
 
         :param places: dictionary of places
         """
-        for key in places:
+        for key in self.places:
             self.add_place(key)
 
-    def add_transitions(self, transitions):
+    def add_transitions(self):
         """
         This method add all transitions declared in the user component class
         as a dictionary associating the name of a transition to a transition
@@ -59,16 +59,13 @@ class Component (object):
 
         :param transitions: dictionary of transitions
         """
-        for key in transitions:
+        for key in self.transitions:
             # add docks to places and bind docks
-            self.add_transition(key, transitions[key][0], transitions[key][
-                1], transitions[key][2])
-            #self.st_transitions[key] = Transition(key, transitions[key][0],
-            #                                      transitions[key][1],
-            #                                      transitions[key][2],
-            #                                      self.st_places)
+            self.add_transition(key, self.transitions[key][0],
+                                self.transitions[key][
+                1], self.transitions[key][2])
 
-    def add_dependencies(self,dep):
+    def add_dependencies(self):
         """
         This method add all dependencies declared in the user component class
         as a dictionary associating the name of a dependency to both a type
@@ -81,10 +78,11 @@ class Component (object):
         :param dep: dictionary of dependencies
 
         """
-        for key in dep:
+        for key in self.dep:
             if len(dep[key])==2:
-                type = dep[key][0]
-                bname = dep[key][1] # list of places or transitions bounded to
+                type = self.dep[key][0]
+                bname = self.dep[key][1] # list of places or transitions
+                # bounded to
                 self.add_dependency(key, type, bname)
 
             else:
