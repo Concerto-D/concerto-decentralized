@@ -5,19 +5,26 @@ from user_read import UserRead
 
 if __name__ == '__main__':
 
-    # Composant User
-    user = UserRead()
-    user.create()
+    # Composant User 1
+    user1 = UserRead()
+    user1.create()
+
+    # Composant User 2
+    user2 = UserRead()
+    user2.create()
 
     # Composant Provider
     provider = ProviderWrite()
     provider.create()
 
     ass = Assembly()
-    ass.addComponent('user', user)
+    ass.addComponent('user1', user1)
+    ass.addComponent('user2', user2)
     ass.addComponent('provider', provider)
-    ass.addConnection(user, 'ipprov', provider, 'ip')
-    ass.addConnection(user, 'service', provider, 'service')
+    ass.addConnection(user1, 'ipprov', provider, 'ip')
+    ass.addConnection(user1, 'service', provider, 'service')
+    ass.addConnection(user2, 'ipprov', provider, 'ip')
+    ass.addConnection(user2, 'service', provider, 'service')
 
     mad = Mad(ass)
     mad.run()

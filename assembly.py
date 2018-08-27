@@ -40,6 +40,8 @@ class Assembly (object):
     # list of connections. A connection is a tuple (component1, dependency1,
     # component2, dependency2)
     connections = []
+    # list of white boards, 1 for each data provide
+    wbs = {}
 
     """
     BUILD ASSEMBLY
@@ -76,11 +78,27 @@ class Assembly (object):
                               comp2.st_dependencies[name2].gettype()):
             # multiple connections are possible within MAD, so we do not
             # check if a dependency is already connected
-            white_board = WhiteBoard()
             self.connections.append((comp1, comp1.st_dependencies[name1], comp2,
-                                 comp2.st_dependencies[name2], white_board))
-            comp1.st_dependencies[name1].connect(white_board)
-            comp2.st_dependencies[name2].connect(white_board)
+                                     comp2.st_dependencies[name2]))
+
+            if (comp1.st_dependencies[name1].gettype() == DepType.DATA_PROVIDE) \
+                or (comp1.st_dependencies[name1].gettype() == DepType.DATA_USE):
+                white_board = WhiteBoard()
+                # get user and provider of the connection
+                if comp1.st_dependencies[name1].gettype() == DepType.DATA_PROVIDE:
+                    provider = comp1.st_dependencies[name1]
+                    user = comp2.st_dependencies[name2]
+                else:
+                    provider = comp2.st_dependencies[name2]
+                    user = comp1.st_dependencies[name1]
+                if provider not in self.wbs:
+                    self.wbs[provider] = white_board
+                    provider.connectwb(self.wbs[provider])
+                user.connectwb(self.wbs[provider])
+            else:
+                comp1.st_dependencies[name1].connect()
+                comp2.st_dependencies[name2].connect()
+
         else:
             print(Messages.fail() + "ERROR - you try to connect dependencies "
                                  "with incompatible types. DepType.USE and "

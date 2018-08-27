@@ -88,7 +88,19 @@ class Dependency (object):
         """
         return self.free
 
-    def connect(self, wb):
+    def connectwb(self, wb):
+        """
+        This method set self.free to False to indicate that the dependency
+        has been connected in the assembly. Note that a dependency can be
+        connected more than once, however this method is used to throw a
+        warning when dependencies are not connected.
+
+        :return: self.free
+        """
+        self.connect()
+        self.wb = wb
+
+    def connect(self):
         """
         This method set self.free to False to indicate that the dependency
         has been connected in the assembly. Note that a dependency can be
@@ -98,7 +110,6 @@ class Dependency (object):
         :return: self.free
         """
         self.free = False
-        self.wb = wb
 
     def getwb(self):
         return self.wb
