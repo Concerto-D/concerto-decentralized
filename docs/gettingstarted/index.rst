@@ -34,27 +34,37 @@ Lets focus on the component description ``provider.py``:
 
   class Provider(Component):
 
-    places = [
+    def create(self):
+      places = [
         'waiting',
         'initiated',
         'configured',
         'started'
-    ]
+      ]
 
-    transitions = {
-        'init': ('waiting', 'initiated', Init().run),
-        'config': ('initiated', 'configured', Config().run),
-        'start': ('configured', 'started', Start().run)
-    }
+      transitions = {
+        'init': ('waiting', 'initiated', self.init),
+        'config': ('initiated', 'configured', self.config),
+        'start': ('configured', 'started', self.start)
+      }
 
-    dependencies = {
+      dependencies = {
         'ip': (DepType.DATA_PROVIDE, ['configured']),
         'service': (DepType.PROVIDE, ['started'])
-    }
+      }
+
+    def init(self):
+        time.sleep(10)
+
+    def config(self):
+        time.sleep(5)
+
+    def start(self):
+        time.sleep(5)
 
 One can note in this example that a component is a new ``class`` that inherits the already existing ``Component`` class of MAD. For this reason, it is needed to import ``mad`` objects.
 
-Three data structures must be defined in the new component class:
+It is asked to the MAD developer to instanciate the abstract method ``create`` inside her new Component class. In this method will be initiated three data structures:
 
 - ``places`` which is a simple list of strings. Each string representing the name of a given place.
 - ``transitions`` which is a dictionary representing the set of transitions.
@@ -77,18 +87,21 @@ Each key in the dictionary is associated to a triplet ``(source, destination, ac
 - *action* is a functor
 - *arguments* is an optional tuple containing the arguments to give to the functor
 
-For example, the ``'init'`` transition of ``Provider`` action is the method of the class ``Init().run``, the source place is ``'waiting'``, and the destination place is ``'initiated'``. In other words, ``'init'`` is applied when moving from ``'waiting'`` to ``'initiated'``, by performing the action associated to the class ``Init``.
+For example, the ``'init'`` transition of ``Provider`` action is the internal method ``self.init``, the source place is ``'waiting'``, and the destination place is ``'initiated'``. In other words, ``'init'`` is applied when moving from ``'waiting'`` to ``'initiated'``, by performing the action associated to the method ``init``.
 
-The ``Init`` class can be found in the file ``transitions.py``. It must be defined by the component designer.
+The ``init`` method is defined within the component.
 
 .. code-block:: python
 
-  class Init(object):
-    def run(self):
-        time.sleep(10)
+   def init(self):
+       time.sleep(10)
 
 
-A transition action is simply a class definition in which a function ``run`` must be defined. Inside this ``run`` function is implemented the action to perform within the transition. In our example (see ``transitions.py``) all ``run`` functions contains a ``sleep`` system call to emulate that the action takes sometime to run.
+Inside the transition method is implemented the action to perform within the transition. In our example (see ``transitions.py``) all functions contains a ``sleep`` system call to emulate that the action takes sometime to run.
+
+.. note::
+
+   Transitions functors can be defined outside the component definition as it will be shown in other examples. However, the component object contained in `self` will be usefull for many reasons, as in ``deploy_up_read_write.py`` for instance. For this reason, it is more convenient to define transitions methods inside the component.
 
 
 Dependencies
@@ -149,24 +162,35 @@ In the *user-provide* example another component is declared: ``user.py``.
 
   class User(Component):
 
-    places = [
-        'waiting',
-        'initiated',
-        'configured',
-        'started'
-    ]
+    def create(self):
+        self.places = [
+            'waiting',
+            'initiated',
+            'configured',
+            'started'
+        ]
 
-    transitions = {
-        'init': ('waiting', 'initiated', Init().run),
-        'config': ('initiated', 'configured', Config().run),
-        'start': ('configured', 'started', Start().run)
-    }
+        self.transitions = {
+            'init': ('waiting', 'initiated', self.init),
+            'config': ('initiated', 'configured', self.config),
+            'start': ('configured', 'started', self.start)
+        }
 
-    dependencies = {
-        'ipprov': (DepType.DATA_USE, ['init']),
-        'service': (DepType.USE, ['config', 'start'])
-    }
+        self.dependencies = {
+            'ipprov': (DepType.DATA_USE, ['init']),
+            'service': (DepType.USE, ['config', 'start'])
+        }
 
+    def init(self):
+        time.sleep(10)
+
+    def config(self):
+        time.sleep(5)
+
+    def start(self):
+        time.sleep(5)
+
+	
 With previous explanation you should be able to understand this component definition. The main difference with the ``Provider`` component is the type of dependencies: ``DepType.DATA_USE`` and ``DepType.USE``. These dependencies are bound to transitions instead of places as they are used during deployment actions. The ``User`` component will be connected to the ``Provider`` component in the assembly. This will be detailed below.
     
 .. note::

@@ -13,12 +13,21 @@ class Provider(Component):
         ]
 
         self.transitions = {
-            'init': ('waiting', 'initiated', Init().run),
-            'config': ('initiated', 'configured', Config().run),
-            'start': ('configured', 'started', Start().run)
+            'init': ('waiting', 'initiated', self.init),
+            'config': ('initiated', 'configured', self.config),
+            'start': ('configured', 'started', self.start)
         }
 
         self.dependencies = {
             'ip': (DepType.DATA_PROVIDE, ['configured']),
             'service': (DepType.PROVIDE, ['started'])
         }
+
+    def init(self):
+        time.sleep(10)
+
+    def config(self):
+        time.sleep(5)
+
+    def start(self):
+        time.sleep(5)
