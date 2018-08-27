@@ -53,8 +53,10 @@ class Assembly (object):
                               comp2.st_dependencies[name2].gettype()):
             # multiple connections are possible within MAD, so we do not
             # check if a dependency is already connected
+            #white_board = WhiteBoard()
             self.connections.append((comp1,comp1.st_dependencies[name1],comp2,
                                  comp2.st_dependencies[name2]))
+
             comp1.st_dependencies[name1].connect()
             comp2.st_dependencies[name2].connect()
         else:
