@@ -79,24 +79,30 @@ class Transition (object):
         """
         return self.dst_dock
 
-    def start_thread(self):
+    def start_thread(self, dryrun):
         """
         This method creates the thread of the transition
 
         :return: the Thread of the transition
         """
-        self.thread = threading.Thread(target=self.code, args=self.args)
-        self.thread.start()
+        if not dryrun:
+            self.thread = threading.Thread(target=self.code, args=self.args)
+            self.thread.start()
+        else:
+            pass
 
-    def join_thread(self):
+    def join_thread(self, dryrun):
         """
         This method tries to join self.thread. The default behavior has no
         timeout.
 
         :return: True if the tread has been joined, False othwise
         """
-        if not self.thread.is_alive():
-            self.thread.join()
-            return True
+        if not dryrun:
+            if not self.thread.is_alive():
+                self.thread.join()
+                return True
+            else:
+                return False
         else:
-            return False
+            return True

@@ -295,7 +295,7 @@ class Component (object, metaclass=ABCMeta):
     OPERATIONAL SEMANTICS
     """
 
-    def semantics(self, configuration):
+    def semantics(self, configuration, dryrun):
         """
         This method apply the operational semantics at the component level.
         It takes as input the current configuration of the deployment which
@@ -323,7 +323,8 @@ class Component (object, metaclass=ABCMeta):
         # check if some of these running transitions are finished
         # get the new set of activated input docks
         # keep the list of unterminated transitions
-        (still_running, new_idocks) = self.end_transition(my_transitions)
+        (still_running, new_idocks) = self.end_transition(my_transitions,
+                                                          dryrun)
         new_transitions = still_running
 
         # the activated output docks of the current component
@@ -363,7 +364,7 @@ class Component (object, metaclass=ABCMeta):
         # start transitions from output docks if all dependencies are solved
         # (enabled connections)
         (add_transitions, still_odocks) = self.start_transition(my_connections,
-        my_odocks)
+        my_odocks, dryrun)
 
         # concatenate new transitions with the ones still running
         new_transitions += add_transitions
@@ -372,7 +373,7 @@ class Component (object, metaclass=ABCMeta):
         return (new_transitions, new_places, new_idocks, new_odocks)
 
 
-    def end_transition(self, my_transitions):
+    def end_transition(self, my_transitions,dryrun):
         """
         This method try to join threads from currently running transitions.
         For joined transitions, the dst_docks (ie input docks of the assembly)
@@ -391,7 +392,7 @@ class Component (object, metaclass=ABCMeta):
 
         # check if some of these running transitions are finished
         for trans in my_transitions:
-            joined = trans.join_thread()
+            joined = trans.join_thread(dryrun)
             # get the new set of activated input docks
             if joined:
                 print(self.color + "[" + self.name + "] End transition '" +
@@ -496,7 +497,7 @@ class Component (object, metaclass=ABCMeta):
 
         return new_odocks, still_place
 
-    def start_transition(self, my_connections, my_odocks):
+    def start_transition(self, my_connections, my_odocks, dryrun):
         """
         This method start the transitions ready to run:
 
@@ -544,7 +545,7 @@ class Component (object, metaclass=ABCMeta):
                         print(self.color + "[" + self.name + "] Start transition '" +
                               self.st_transitions[trans].getname() + "' ..."
                               + Messages.endc())
-                        self.st_transitions[trans].start_thread()
+                        self.st_transitions[trans].start_thread(dryrun)
                         new_transitions.append(self.st_transitions[trans])
                     else:
                         still_odocks.append(self.st_transitions[trans].get_src_dock())

@@ -46,7 +46,7 @@ class Mad (object):
         check = self.assembly.check_warnings()
         return check
 
-    def mad_engine(self):
+    def mad_engine(self, dryrun):
         """
         This is the main function to run the operational semantics of the
         Madeus formal model. This is the heart of the coordination engine.
@@ -72,7 +72,7 @@ class Mad (object):
             # for each component perform operational semantics
             for c in self.assembly.get_components():
                 (c_transitions, c_places, c_idocks, c_odocks) = \
-                    c.semantics(self.configuration)
+                    c.semantics(self.configuration, dryrun)
                 new_transitions = new_transitions + c_transitions
                 new_places = new_places + c_places
                 new_idocks = new_idocks + c_idocks
@@ -90,7 +90,7 @@ class Mad (object):
         print(Messages.ok() + "[Mad] Successful deployment" +
               Messages.endc())
 
-    def run(self, force=False):
+    def run(self, force=False, dryrun=False):
         """
         This method run the assembly after checking its validity
         """
@@ -100,7 +100,7 @@ class Mad (object):
             print(Messages.ok() + "[Mad] Assembly checked" + Messages.endc())
             print(Messages.ok() + "[Mad] Start assembly deployment" +
                   Messages.endc())
-            self.mad_engine()
+            self.mad_engine(dryrun)
 
         elif not check and not force:
             print(Messages.fail() + "ERROR - The engine is not able to launch "
