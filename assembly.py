@@ -17,8 +17,8 @@ class Assembly (object):
         their dependencies.
     """
 
-    # list of Component objects
-    components = []
+    # dict of Component objects: id => object
+    components = {}
     # list of connections. A connection is a tuple (component1, dependency1,
     # component2, dependency2)
     connections = []
@@ -38,7 +38,12 @@ class Assembly (object):
         """
         comp.setname(name)
         comp.setcolor(COLORS[len(self.components)%len(COLORS)])
-        self.components.append(comp)
+        if name not in self.components:
+            self.components[name]=comp
+        else:
+            print(Messages.fail() + "ERROR - Already instantiate component "+name +
+                  + Messages.endc())
+            sys.exit(0)
 
     def addConnection(self, comp1, name1, comp2, name2):
         """
@@ -68,8 +73,16 @@ class Assembly (object):
                   + Messages.endc())
             sys.exit(0)
 
+    def get_component(self, name):
+        if name in self.components:
+            return self.components[name]
+        else:
+            print(Messages.fail() + "ERROR - Unknown component "+name +
+                  + Messages.endc())
+            sys.exit(0)
+
     def get_components(self):
-        return self.components
+        return self.components.values()
 
     """
     CHECK ASSEMBLY
@@ -85,7 +98,7 @@ class Assembly (object):
         check_dep = True
 
         # Check warnings
-        for comp in self.components:
+        for comp in self.get_components():
             check = comp.check_warnings()
             check_dep = comp.check_connections()
 
