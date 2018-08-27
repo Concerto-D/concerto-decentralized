@@ -20,7 +20,7 @@ This documentation gives a complete guide to install and use MAD, the Madeus App
 License
 -------
 
-MAD is distributed under a GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+MAD is distributed under a GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007.
 
 
 Publications
