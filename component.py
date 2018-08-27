@@ -243,6 +243,14 @@ class Component (object, metaclass=ABCMeta):
         """
         return self.color
 
+    def isconnected(self, name):
+        """
+        This method is used to know if a given dependency is connected or not
+        :param name: name of the dependency
+        :return: True if connected, False otherwise
+        """
+        return not self.st_dependencies[name].isfree()
+
     """
     READ / WRITE DEPENDENCIES
     """
