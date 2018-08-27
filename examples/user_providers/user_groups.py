@@ -4,19 +4,21 @@ from transitions import *
 
 class UserGroups(Component):
 
-    places = [
-        'waiting',
-        'initiated',
-        'configured',
-        'started'
-    ]
+    def create(self):
 
-    transitions = {
-        'uinit': ('waiting', 'initiated', InitShort().run),
-        'uconfig': ('initiated', 'configured', ConfigLong().run),
-        'ustart': ('configured', 'started', Start().run)
-    }
+        self.places = [
+            'waiting',
+            'initiated',
+            'configured',
+            'started'
+        ]
 
-    dependencies = {
-        'service': (DepType.USE, ['uconfig', 'ustart'])
-    }
+        self.transitions = {
+            'uinit': ('waiting', 'initiated', InitShort().run),
+            'uconfig': ('initiated', 'configured', ConfigLong().run),
+            'ustart': ('configured', 'started', Start().run)
+        }
+
+        self.dependencies = {
+            'service': (DepType.USE, ['uconfig', 'ustart'])
+        }

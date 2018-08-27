@@ -4,16 +4,17 @@ from examples.scalability.transitions import *
 
 class UserProvider(Component):
 
-    places = [
-        'waiting',
-        'started'
-    ]
+    def create(self):
+        self.places = [
+            'waiting',
+            'started'
+        ]
 
-    transitions = {
-        'start': ('waiting', 'started', DryRun().run)
-    }
+        self.transitions = {
+            'start': ('waiting', 'started', DryRun().run)
+        }
 
-    dependencies = {
-        'serviceu': (DepType.USE, ['start']),
-        'servicep': (DepType.PROVIDE, ['started'])
-    }
+        self.dependencies = {
+            'serviceu': (DepType.USE, ['start']),
+            'servicep': (DepType.PROVIDE, ['started'])
+        }

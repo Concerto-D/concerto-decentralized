@@ -10,6 +10,24 @@ import sys
 from dependency import *
 from utility import Messages, COLORS
 
+
+class WhiteBoard (object):
+    """ This class is used to implement data dependencies of the Madeus model.
+    Each connection between two components is associated to a white board
+    able to contain one value of any type. The provider component will write
+    data inside its transitions while the user components will read data.
+    """
+
+    def __init__(self):
+        pass
+
+    def write(self, data):
+        self.data = data
+
+    def read(self):
+        return self.data
+
+
 class Assembly (object):
     """This Assembly class is used to create a assembly.
 
@@ -58,12 +76,11 @@ class Assembly (object):
                               comp2.st_dependencies[name2].gettype()):
             # multiple connections are possible within MAD, so we do not
             # check if a dependency is already connected
-            #white_board = WhiteBoard()
-            self.connections.append((comp1,comp1.st_dependencies[name1],comp2,
-                                 comp2.st_dependencies[name2]))
-
-            comp1.st_dependencies[name1].connect()
-            comp2.st_dependencies[name2].connect()
+            white_board = WhiteBoard()
+            self.connections.append((comp1, comp1.st_dependencies[name1], comp2,
+                                 comp2.st_dependencies[name2], white_board))
+            comp1.st_dependencies[name1].connect(white_board)
+            comp2.st_dependencies[name2].connect(white_board)
         else:
             print(Messages.fail() + "ERROR - you try to connect dependencies "
                                  "with incompatible types. DepType.USE and "

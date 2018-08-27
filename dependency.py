@@ -88,7 +88,7 @@ class Dependency (object):
         """
         return self.free
 
-    def connect(self):
+    def connect(self, wb):
         """
         This method set self.free to False to indicate that the dependency
         has been connected in the assembly. Note that a dependency can be
@@ -98,3 +98,7 @@ class Dependency (object):
         :return: self.free
         """
         self.free = False
+        self.wb = wb
+
+    def getwb(self):
+        return self.wb

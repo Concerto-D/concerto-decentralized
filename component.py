@@ -7,12 +7,13 @@
 """
 
 import sys
+from abc import ABCMeta, abstractmethod
 from place import *
 from dependency import *
 from transition import Transition
 from utility import Messages
 
-class Component (object):
+class Component (object, metaclass=ABCMeta):
     """This Component class is used to create a component.
 
         A component is a software module to deploy. It is composed of places,
@@ -21,6 +22,10 @@ class Component (object):
 
         This is an abstract class that need to be override.
     """
+
+    @abstractmethod
+    def create(self):
+        pass
 
     # st_places a dictionary of Place objects
     # st_transitions a dictionary of Transition objects
@@ -36,6 +41,7 @@ class Component (object):
         self.st_places = {}
         self.st_transitions = {}
         self.st_dependencies = {}
+        self.create()
         self.add_places(self.places)
         self.add_transitions(self.transitions)
         self.add_dependencies(self.dependencies)
@@ -143,7 +149,7 @@ class Component (object):
             else:
                 print(
                     Messages.fail() + "ERROR - according to the type of dependency "
-                    + name + " : " + str(type) + ", its should be "
+                    + name + " : " + str(type) + ", it should be "
                                                 "bound to a "
                                                 "transition"
                     + Messages.endc())
@@ -236,6 +242,23 @@ class Component (object):
         :return: the printing color of the component
         """
         return self.color
+
+    """
+    READ / WRITE DEPENDENCIES
+    """
+
+    def read(self, name):
+        return self.st_dependencies[name].getwb().read()
+
+    def write(self, name, val):
+        # keep trace of the line below to check wether the calling method has
+        #  the right to acess thes dependency
+        # this is not portable according to Python implementations
+        # moreover, the write is associated to a transition while the data
+        # provide is associated to a place in the model. This has to be
+        # corrected somewhere.
+        # print(sys._getframe().f_back.f_code.co_name)
+        self.st_dependencies[name].getwb().write(val)
 
     """
     CHECK COMPONENT

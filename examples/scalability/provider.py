@@ -7,15 +7,17 @@ class Provider(Component):
     echo1 = "test1"
     echo2 = "test2"
 
-    places = [
-        'waiting',
-        'started'
-    ]
+    def create(self):
+        self.places = [
+            'waiting',
+            'started'
+        ]
 
-    transitions = {
-        'start': ('waiting', 'started', DryRun().testargs, (echo1, echo2))
-    }
+        self.transitions = {
+            'start': ('waiting', 'started', DryRun().testargs, (self.echo1,
+                                                                self.echo2))
+        }
 
-    dependencies = {
-        'service': (DepType.PROVIDE, ['started'])
-    }
+        self.dependencies = {
+            'service': (DepType.PROVIDE, ['started'])
+        }

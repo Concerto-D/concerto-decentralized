@@ -4,19 +4,20 @@ from transitions import *
 
 class ProviderGroups2(Component):
 
-    places = [
-        'waiting',
-        'initiated',
-        'configured',
-        'started'
-    ]
+    def create(self):
+        self.places = [
+            'waiting',
+            'initiated',
+            'configured',
+            'started'
+        ]
 
-    transitions = {
-        'pinit': ('waiting', 'initiated', Init().run),
-        'pconfig': ('initiated', 'configured', Config().run),
-        'pstart': ('configured', 'started', Start().run)
-    }
+        self.transitions = {
+            'pinit': ('waiting', 'initiated', Init().run),
+            'pconfig': ('initiated', 'configured', Config().run),
+            'pstart': ('configured', 'started', Start().run)
+        }
 
-    dependencies = {
-        'service': (DepType.PROVIDE, ['started', 'configured'])
-    }
+        self.dependencies = {
+            'service': (DepType.PROVIDE, ['started', 'configured'])
+        }
