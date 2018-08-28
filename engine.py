@@ -20,19 +20,12 @@ class Mad (object):
 
     def __init__(self, ass):
         self.assembly = ass
-        init_transitions = []
         init_places = []
         for c in self.assembly.get_components():
-            places = c.get_places()
-            for p in places:
-                if len(places[p].get_inputdocks()) == 0:
-                    init_places.append(places[p])
-        init_idocks = []
-        init_odocks = []
+            c.init_places()
         init_conn = []
 
-        self.configuration = Configuration(init_transitions, init_places,
-                                           init_idocks, init_odocks, init_conn)
+        self.configuration = Configuration(init_places, init_conn)
 
     def check_warnings(self):
         """
@@ -64,25 +57,15 @@ class Mad (object):
             # before doing anything else
             self.configuration.update_connections(new_connections)
 
-            new_transitions = []
             new_places = []
-            new_idocks = []
-            new_odocks = []
 
             # for each component perform operational semantics
             for c in self.assembly.get_components():
-                (c_transitions, c_places, c_idocks, c_odocks) = \
-                    c.semantics(self.configuration, dryrun, printing)
-                new_transitions = new_transitions + c_transitions
+                c_places = c.semantics(self.configuration, dryrun, printing)
                 new_places = new_places + c_places
-                new_idocks = new_idocks + c_idocks
-                new_odocks = new_odocks + c_odocks
 
             # build the new configuration / ended
-            self.configuration.update_transitions(new_transitions)
             self.configuration.update_places(new_places)
-            self.configuration.update_input_docks(new_idocks)
-            self.configuration.update_output_docks(new_odocks)
 
             if self.assembly.is_finish(self.configuration):
                 ended = True

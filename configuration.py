@@ -22,21 +22,14 @@ class Configuration (object):
     # all components are always into the configuration until the end of the
     # deployment so this list is not represented.
 
-    # list of Transition objects currently containing a token
-    transitions = []
     # list of Place objects currently containing a token
     places = []
     # list of activated connections
     connections = []
-    input_docks = []
-    output_docks = []
 
-    def __init__(self, trans, pla, idocks, odocks, conn):
-        self.transitions = trans
+    def __init__(self, pla, conn):
         self.places = pla
         self.connections = conn
-        self.input_docks = idocks
-        self.output_docks = odocks
 
     """
     UPDATE CONFIGURATION
@@ -50,13 +43,13 @@ class Configuration (object):
         """
         self.connections = conn
 
-    def update_transitions(self, trans):
-        """
-        This method updates the transitions of the configuration
-
-        :param trans: new list of active transitions
-        """
-        self.transitions = trans
+    #def update_transitions(self, trans):
+    #    """
+    #    This method updates the transitions of the configuration
+    #
+    #    :param trans: new list of active transitions
+    #    """
+    #    self.transitions = trans
 
     def update_places(self, pla):
         """
@@ -66,34 +59,34 @@ class Configuration (object):
         """
         self.places = pla
 
-    def update_input_docks(self, id):
-        """
-        This method updates the input docks of the configuration
+    #def update_input_docks(self, id):
+    #    """
+    #    This method updates the input docks of the configuration
 
-        :param id: new list of active input docks
-        """
-        self.input_docks = id
+    #    :param id: new list of active input docks
+    #    """
+    #    self.input_docks = id
 
-    def update_output_docks(self, od):
-        """
-        This method updates the output docks of the configuration
+    #def update_output_docks(self, od):
+    #    """
+    #    This method updates the output docks of the configuration
 
-        :param id: new list of active output docks
-        :return:
-        """
-        self.output_docks = od
+    #    :param id: new list of active output docks
+    #    :return:
+    #    """
+    #    self.output_docks = od
 
     """
     GET CONFIGURATION
     """
 
-    def get_transitions(self):
-        """
-        This method returns the list of active transitions of the configuration
+    #def get_transitions(self):
+    #"""
+    #    This method returns the list of active transitions of the configuration
 
-        :return: self.transitions
-        """
-        return self.transitions
+    #    :return: self.transitions
+    #    """
+    #    return self.transitions
 
     def get_places(self):
         """
@@ -111,18 +104,19 @@ class Configuration (object):
         """
         return self.connections
 
-    def get_input_docks(self):
-        """
-        This method returns the list of active input docks of the configuration
+    #def get_input_docks(self):
+    #    """
+    #    This method returns the list of active input docks of the configuration
 
-        :return: self.input_docks
-        """
-        return self.input_docks
+    #    :return: self.input_docks
+    #    """
+    #    return self.input_docks
 
-    def get_output_docks(self):
-        """
-        This method returns the list of active output docks of the configuration
+    #def get_output_docks(self):
+    #    """
+    #    This method returns the list of active output docks of the
+        # configuration
 
-        :return: self.output_docks
-        """
-        return self.output_docks
+    #    :return: self.output_docks
+    #    """
+    #    return self.output_docks

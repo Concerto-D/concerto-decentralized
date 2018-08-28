@@ -31,6 +31,17 @@ class Component (object, metaclass=ABCMeta):
     # st_transitions a dictionary of Transition objects
     # st_dependencies a dictionary of Dependency objects
 
+    # these four lists represents the configuration at the component level
+    # they are used within the semantics parts, ie the runtime
+    # active places of the component
+    act_places = []
+    # active transitions of the component
+    act_transitions = []
+    # active input docks of the component
+    act_idocks = []
+    # active output docks of the component
+    act_odocks = []
+
     """
     BUILD COMPONENT
     """
@@ -303,6 +314,15 @@ class Component (object, metaclass=ABCMeta):
     OPERATIONAL SEMANTICS
     """
 
+    def init_places(self):
+        """
+        This method initialize the initial activated places of the component
+        in its local configuration self.act_places
+        """
+        for p in self.st_places:
+            if len(self.st_places[p].get_inputdocks()) == 0:
+                self.act_places.append(self.st_places[p])
+
     def semantics(self, configuration, dryrun, printing):
         """
         This method apply the operational semantics at the component level.
@@ -319,71 +339,38 @@ class Component (object, metaclass=ABCMeta):
 
         self.printing = printing
 
-        transitions = configuration.get_transitions()
-        places = configuration.get_places()
-        idocks = configuration.get_input_docks()
-        odocks = configuration.get_output_docks()
         connections = configuration.get_connections()
-
-        # current running transitions
-        my_transitions = []
-        for t in self.st_transitions:
-            if self.st_transitions[t] in transitions:
-                my_transitions.append(self.st_transitions[t])
-        # check if some of these running transitions are finished
-        # get the new set of activated input docks
-        # keep the list of unterminated transitions
-        (still_running, new_idocks) = self.end_transition(my_transitions,
-                                                          dryrun)
-        new_transitions = still_running
-
-        # the activated output docks of the current component
-        my_idocks = []
-        for d in idocks:
-            for p in self.st_places:
-                ids = self.st_places[p].get_inputdocks()
-                if d in ids:
-                    my_idocks.append(d)
-        # new list of places
-        (new_places, still_idocks) = self.idocks_in_place(my_idocks)
-
-        new_idocks += still_idocks
-
-        # enabled places of the current component
-        my_places = []
-        for p in self.st_places:
-            if self.st_places[p] in places:
-                my_places.append(self.st_places[p])
-        (new_odocks, still_place) = self.place_in_odocks(my_places,
-                                                         transitions,
-                                                         connections)
-
-        new_places += still_place
-
         my_connections = []
         for conn in connections:
             if conn[0] == self or conn[2] == self:
                 my_connections.append(conn)
-        # the activated output docks of the current component
-        my_odocks = []
-        for d in odocks:
-            for p in self.st_places:
-                ods = self.st_places[p].get_outputdocks()
-                if d in ods:
-                    my_odocks.append(d)
-        # start transitions from output docks if all dependencies are solved
-        # (enabled connections)
-        (add_transitions, still_odocks) = self.start_transition(my_connections,
-        my_odocks, dryrun)
+
+        (still_running, new_idocks) = self.end_transition(dryrun)
+        new_transitions = still_running
+
+        (new_places, still_idocks) = self.idocks_in_place()
+        new_idocks += still_idocks
+
+        (new_odocks, still_place) = self.place_in_odocks(my_connections)
+        new_places += still_place
+
+        (add_transitions, still_odocks) = self.start_transition(my_connections,dryrun)
 
         # concatenate new transitions with the ones still running
         new_transitions += add_transitions
         new_odocks += still_odocks
 
-        return (new_transitions, new_places, new_idocks, new_odocks)
+        # replace the new local configuration
+        self.act_places = new_places
+        self.act_transitions = new_transitions
+        self.act_idocks = new_idocks
+        self.act_odocks = new_odocks
+
+        # return the new set of active places to the global configuration
+        return self.act_places
 
 
-    def end_transition(self, my_transitions,dryrun):
+    def end_transition(self, dryrun):
         """
         This method try to join threads from currently running transitions.
         For joined transitions, the dst_docks (ie input docks of the assembly)
@@ -401,7 +388,7 @@ class Component (object, metaclass=ABCMeta):
         new_idocks = []
 
         # check if some of these running transitions are finished
-        for trans in my_transitions:
+        for trans in self.act_transitions:
             joined = trans.join_thread(dryrun)
             # get the new set of activated input docks
             if joined:
@@ -416,7 +403,7 @@ class Component (object, metaclass=ABCMeta):
         return (still_running, new_idocks)
 
 
-    def idocks_in_place(self, my_idocks):
+    def idocks_in_place(self):
         """
         This method returns the list of new places enabled. These places come
         from their set of input docks, all ready.
@@ -434,13 +421,13 @@ class Component (object, metaclass=ABCMeta):
         # docks.
         still_idocks = []
 
-        if len(my_idocks) > 0:
+        if len(self.act_idocks) > 0:
             for place in self.st_places:
                 inp_docks = self.st_places[place].get_inputdocks()
                 if len(inp_docks) > 0:
                     ready = True
                     for id in inp_docks:
-                        if id not in my_idocks:
+                        if id not in self.act_idocks:
                             ready = False
                             break
                     if ready:
@@ -451,13 +438,13 @@ class Component (object, metaclass=ABCMeta):
                         new_places.append(self.st_places[place])
                     else:
                         for id in inp_docks:
-                            if id in my_idocks:
+                            if id in self.act_idocks:
                                 still_idocks.append(id)
 
         return new_places, still_idocks
 
 
-    def place_in_odocks(self, my_places, transitions, connections):
+    def place_in_odocks(self, connections):
         """
         This method represents the one moving the token of a place to its
         output docks.
@@ -471,7 +458,7 @@ class Component (object, metaclass=ABCMeta):
         new_odocks = []
         still_place = []
 
-        for place in my_places:
+        for place in self.act_places:
             odocks = place.get_outputdocks()
             if len(odocks) > 0:
                 # the place can be left if no provide dependencies are bound
@@ -493,7 +480,7 @@ class Component (object, metaclass=ABCMeta):
                                 # transitions connected to the place
                             lused = False
                             for t in conn_trans:
-                                if t in transitions:
+                                if t in self.act_transitions:
                                     lused = True
                                     break
                             if lused:
@@ -509,7 +496,7 @@ class Component (object, metaclass=ABCMeta):
 
         return new_odocks, still_place
 
-    def start_transition(self, my_connections, my_odocks, dryrun):
+    def start_transition(self, my_connections, dryrun):
         """
         This method start the transitions ready to run:
 
@@ -527,12 +514,12 @@ class Component (object, metaclass=ABCMeta):
         new_transitions = []
         still_odocks = []
 
-        if len(my_odocks) > 0:
+        if len(self.act_odocks) > 0:
             # start transitions from output docks
             for trans in self.st_transitions:
                 # if the source dock of the transition (output dock of a place) is
                 # ready (ie get a token)
-                if self.st_transitions[trans].get_src_dock() in my_odocks:
+                if self.st_transitions[trans].get_src_dock() in self.act_odocks:
                     # check that connections bound to this transition are enabled
                     enabled = True
 
