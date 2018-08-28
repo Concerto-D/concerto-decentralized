@@ -46,7 +46,7 @@ class Mad (object):
         check = self.assembly.check_warnings()
         return check
 
-    def mad_engine(self, dryrun):
+    def mad_engine(self, dryrun, printing):
         """
         This is the main function to run the operational semantics of the
         Madeus formal model. This is the heart of the coordination engine.
@@ -58,7 +58,7 @@ class Mad (object):
 
             # enable/disable connections
             new_connections = self.assembly.disable_enable_connections(
-                self.configuration)
+                self.configuration, printing)
             # highest priority according to the model to guarantee the
             # disconnection of services when no more provided
             # before doing anything else
@@ -72,7 +72,7 @@ class Mad (object):
             # for each component perform operational semantics
             for c in self.assembly.get_components():
                 (c_transitions, c_places, c_idocks, c_odocks) = \
-                    c.semantics(self.configuration, dryrun)
+                    c.semantics(self.configuration, dryrun, printing)
                 new_transitions = new_transitions + c_transitions
                 new_places = new_places + c_places
                 new_idocks = new_idocks + c_idocks
@@ -87,25 +87,28 @@ class Mad (object):
             if self.assembly.is_finish(self.configuration):
                 ended = True
 
-        print(Messages.ok() + "[Mad] Successful deployment" +
-              Messages.endc())
+        if printing:
+            print(Messages.ok() + "[Mad] Successful deployment" +
+                  Messages.endc())
 
-    def run(self, force=False, dryrun=False):
+    def run(self, force=False, dryrun=False, printing=True):
         """
         This method run the assembly after checking its validity
         """
         check = self.check_warnings()
 
         if check or (not check and force):
-            print(Messages.ok() + "[Mad] Assembly checked" + Messages.endc())
-            print(Messages.ok() + "[Mad] Start assembly deployment" +
-                  Messages.endc())
-            self.mad_engine(dryrun)
+            if printing:
+                print(Messages.ok() + "[Mad] Assembly checked" + Messages.endc())
+                print(Messages.ok() + "[Mad] Start assembly deployment" +
+                      Messages.endc())
+            self.mad_engine(dryrun, printing)
 
         elif not check and not force:
-            print(Messages.fail() + "ERROR - The engine is not able to launch "
-                                  "your assembly because some WARNINGS or "
-                                  "ERRORS have been detected. You can force "
-                                  "the deployment execution by calling run(True)."
-                  + Messages.endc())
+            if printing:
+                print(Messages.fail() + "ERROR - The engine is not able to launch "
+                                      "your assembly because some WARNINGS or "
+                                      "ERRORS have been detected. You can force "
+                                      "the deployment execution by calling run(True)."
+                      + Messages.endc())
             sys.exit(0)

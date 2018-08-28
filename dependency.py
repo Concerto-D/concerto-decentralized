@@ -8,6 +8,15 @@
 
 from enum import Enum
 
+class DepMandatory(Enum):
+    """
+    This class is not instanciated and is an Enumeration. It is used to know
+    if a dependency is mandatory or optional.
+    """
+
+    MANDATORY = 0
+    OPTIONAL = 1
+
 class DepType(Enum):
     """
     This class is not instanciated. It handles the types of dependencies.

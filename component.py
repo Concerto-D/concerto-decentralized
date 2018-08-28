@@ -303,7 +303,7 @@ class Component (object, metaclass=ABCMeta):
     OPERATIONAL SEMANTICS
     """
 
-    def semantics(self, configuration, dryrun):
+    def semantics(self, configuration, dryrun, printing):
         """
         This method apply the operational semantics at the component level.
         It takes as input the current configuration of the deployment which
@@ -316,6 +316,8 @@ class Component (object, metaclass=ABCMeta):
         components, transitions, places, input docks and output docks in the
         new configuration of the current component.
         """
+
+        self.printing = printing
 
         transitions = configuration.get_transitions()
         places = configuration.get_places()
@@ -403,8 +405,9 @@ class Component (object, metaclass=ABCMeta):
             joined = trans.join_thread(dryrun)
             # get the new set of activated input docks
             if joined:
-                print(self.color + "[" + self.name + "] End transition '" +
-                      trans.getname() + "'" + Messages.endc())
+                if self.printing:
+                    print(self.color + "[" + self.name + "] End transition '" +
+                          trans.getname() + "'" + Messages.endc())
                 new_idocks.append(trans.get_dst_dock())
             # keep the list of unterminated transitions
             elif not joined:
@@ -441,9 +444,10 @@ class Component (object, metaclass=ABCMeta):
                             ready = False
                             break
                     if ready:
-                        print(self.color + "[" + self.name + "] In place '" +
-                              self.st_places[place].getname() + "'"
-                              + Messages.endc())
+                        if self.printing:
+                            print(self.color + "[" + self.name + "] In place '" +
+                                  self.st_places[place].getname() + "'"
+                                  + Messages.endc())
                         new_places.append(self.st_places[place])
                     else:
                         for id in inp_docks:
@@ -550,9 +554,10 @@ class Component (object, metaclass=ABCMeta):
 
                     # start the thread and the transition
                     if enabled:
-                        print(self.color + "[" + self.name + "] Start transition '" +
-                              self.st_transitions[trans].getname() + "' ..."
-                              + Messages.endc())
+                        if self.printing:
+                            print(self.color + "[" + self.name + "] Start transition '" +
+                                  self.st_transitions[trans].getname() + "' ..."
+                                  + Messages.endc())
                         self.st_transitions[trans].start_thread(dryrun)
                         new_transitions.append(self.st_transitions[trans])
                     else:

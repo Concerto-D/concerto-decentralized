@@ -157,7 +157,7 @@ class Assembly (object):
     OPERATIONAL SEMANTICS
     """
 
-    def disable_enable_connections(self, configuration):
+    def disable_enable_connections(self, configuration, printing):
         """
         This method build the new list of enabled connections according to
         the current states of "activated" places (ie the ones getting a token).
@@ -183,11 +183,12 @@ class Assembly (object):
                         # the group of places bound to the service
                         activated_connections.append(conn)
                         if conn not in conf_conn:
-                            print("[Assembly] Enable connection (" + conn[
-                                0].getname() + ", "
-                                  + conn[1].getname() + ", "
-                                  + conn[2].getname() + ", "
-                                  + conn[3].getname() + ")")
+                            if printing:
+                                print("[Assembly] Enable connection (" + conn[
+                                    0].getname() + ", "
+                                      + conn[1].getname() + ", "
+                                      + conn[2].getname() + ", "
+                                      + conn[3].getname() + ")")
 
             elif conn[3].gettype() == DepType.PROVIDE or conn[3].gettype() ==\
                     DepType.DATA_PROVIDE:
@@ -196,11 +197,12 @@ class Assembly (object):
                         # the group of places bound to the service
                         activated_connections.append(conn)
                         if conn not in conf_conn:
-                            print("[Assembly] Enable connection (" + conn[
-                                0].getname() + ", "
-                                  + conn[1].getname() + ", "
-                                  + conn[2].getname() + ", "
-                                  + conn[3].getname() + ")")
+                            if printing:
+                                print("[Assembly] Enable connection (" + conn[
+                                    0].getname() + ", "
+                                      + conn[1].getname() + ", "
+                                      + conn[2].getname() + ", "
+                                      + conn[3].getname() + ")")
 
         # data connections are always kept once activated
         for conn in conf_conn:
