@@ -33,14 +33,10 @@ class Component (object, metaclass=ABCMeta):
 
     # these four lists represents the configuration at the component level
     # they are used within the semantics parts, ie the runtime
-    # active places of the component
-    act_places = []
-    # active transitions of the component
-    act_transitions = []
-    # active input docks of the component
-    act_idocks = []
-    # active output docks of the component
-    act_odocks = []
+    #act_places the set of active places of the component
+    #act_transitions the set of active transitions of the component
+    #act_idocks the set of active input docks of the component
+    #act_odocks the set of active output docks of the component
 
     """
     BUILD COMPONENT
@@ -52,6 +48,10 @@ class Component (object, metaclass=ABCMeta):
         self.st_places = {}
         self.st_transitions = {}
         self.st_dependencies = {}
+        self.act_places = []
+        self.act_transitions = []
+        self.act_odocks = []
+        self.act_idocks = []
         self.create()
         self.add_places(self.places)
         self.add_transitions(self.transitions)
@@ -377,7 +377,7 @@ class Component (object, metaclass=ABCMeta):
         are stored for the new configuration.
         Un-joined transitions are stored for the new configuration.
 
-        :param my_transitions: list of currently running transitions.
+        :param dryrun: to indicate if the assembly is executed in dryrun mode.
         :return: return (still_running, new_idocks)
 
         Elements of the returned tuple are the list of transitions still
@@ -408,7 +408,6 @@ class Component (object, metaclass=ABCMeta):
         This method returns the list of new places enabled. These places come
         from their set of input docks, all ready.
 
-        :param my_idocks: list of enabled input docks of the assembly
         :return: (new_place, still_idocks)
 
         Elements of the returned tuple are the new list of new enabled places,
@@ -422,8 +421,9 @@ class Component (object, metaclass=ABCMeta):
         still_idocks = []
 
         if len(self.act_idocks) > 0:
-            for place in self.st_places:
-                inp_docks = self.st_places[place].get_inputdocks()
+            for id in self.act_idocks:
+                place = id.mother
+                inp_docks = place.get_inputdocks()
                 if len(inp_docks) > 0:
                     ready = True
                     for id in inp_docks:
@@ -432,10 +432,10 @@ class Component (object, metaclass=ABCMeta):
                             break
                     if ready:
                         if self.printing:
-                            print(self.color + "[" + self.name + "] In place '" +
-                                  self.st_places[place].getname() + "'"
-                                  + Messages.endc())
-                        new_places.append(self.st_places[place])
+                            print(
+                                self.color + "[" + self.name + "] In place '" +
+                                place.getname() + "'" + Messages.endc())
+                        new_places.append(place)
                     else:
                         for id in inp_docks:
                             if id in self.act_idocks:
@@ -444,12 +444,13 @@ class Component (object, metaclass=ABCMeta):
         return new_places, still_idocks
 
 
-    def place_in_odocks(self, connections):
+    def place_in_odocks(self, my_connections):
         """
         This method represents the one moving the token of a place to its
         output docks.
 
-        :param my_places: the list of enabled places of the current component.
+        :param my_connections: the list of enabled connections of the current
+        component.
         :return: (new_odocks, still_place)
 
         Elements of the returned tuple are the new list of output docks and
@@ -471,7 +472,7 @@ class Component (object, metaclass=ABCMeta):
                     used = False
                     # foreach provide bound to the place, check if it is in use
                     for prov in provides:
-                        for conn in connections:
+                        for conn in my_connections:
                             if conn[0] == self:
                                 conn_trans = conn[3].getbindings() #list of
                                 # transitions connected to the place
@@ -505,7 +506,7 @@ class Component (object, metaclass=ABCMeta):
         - all dependencies required by the transition in an activated connection
 
         :param my_connections: list of connections associated to the current component
-        :param odocks: list of activated output docks of the assembly
+        :param dryrun: to indicate if the assembly is executed in dryrun mode.
         :return: (new_transitions, still_odocks)
 
         Elements of the returned tuple are the list of new transitions
@@ -514,40 +515,40 @@ class Component (object, metaclass=ABCMeta):
         new_transitions = []
         still_odocks = []
 
-        if len(self.act_odocks) > 0:
-            # start transitions from output docks
-            for trans in self.st_transitions:
-                # if the source dock of the transition (output dock of a place) is
-                # ready (ie get a token)
-                if self.st_transitions[trans].get_src_dock() in self.act_odocks:
-                    # check that connections bound to this transition are enabled
-                    enabled = True
+        for od in self.act_odocks:
+            trans = od.transition
 
-                    # find trans in dependencies
-                    for d in self.st_dependencies:
-                        bindings = self.st_dependencies[d].getbindings()
-                        if self.st_transitions[trans] in bindings:
-                            # find the dependency d in the list of my enabled
-                            # connections
-                            dep_found = False
-                            for conn in my_connections:
-                                if conn[1] == self.st_dependencies[d] \
-                                        or conn[3] == self.st_dependencies[d]:
-                                    dep_found = True
-                                    break
-                            if dep_found == False:
-                                enabled = False
-                                break
+            enabled = True
 
-                    # start the thread and the transition
-                    if enabled:
-                        if self.printing:
-                            print(self.color + "[" + self.name + "] Start transition '" +
-                                  self.st_transitions[trans].getname() + "' ..."
-                                  + Messages.endc())
-                        self.st_transitions[trans].start_thread(dryrun)
-                        new_transitions.append(self.st_transitions[trans])
-                    else:
-                        still_odocks.append(self.st_transitions[trans].get_src_dock())
+            # find this trans in dependencies
+            deps = []
+            for d in self.st_dependencies:
+                bindings = self.st_dependencies[d].getbindings()
+                if trans in bindings:
+                    deps.append(d)
+
+            # no dependencies means the transition can be started
+            # for each dependency bound to trans
+            for d in deps:
+                # find it in my activated connections
+                dep_found = False
+                for conn in my_connections:
+                    if conn[1] == self.st_dependencies[d] or conn[3] == \
+                            self.st_dependencies[d]:
+                        dep_found = True
+                        break
+                # at the first dep not satisfied stop
+                if dep_found == False:
+                    enabled = False
+                    break
+
+            if enabled:
+                if self.printing:
+                    print(self.color + "[" + self.name + "] Start transition '"
+                        + trans.getname() + "' ..." + Messages.endc())
+                trans.start_thread(dryrun)
+                new_transitions.append(trans)
+            else:
+                still_odocks.append(trans.get_src_dock())
 
         return new_transitions, still_odocks

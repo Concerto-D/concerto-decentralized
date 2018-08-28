@@ -9,18 +9,16 @@
 class Configuration (object):
     """
     This class represents a configuration of the Madeus formal model.
-    A configuration is a set of objects (components, transitions, docks) on
-    which tokens are placed. It represents the current state of an assembly.
+    However, unlike the formal model and for performance reasons, the global
+    configuration only stores active places and connections. Actually,
+    each component stores its local set of actives places, transitions,
+    input docks and output docks.
     A configuration is used by the engine to know the state of a deployment.
     """
 
     """
     BUILD CONFIGURATION
     """
-
-    # list of Component objects currently containing a token
-    # all components are always into the configuration until the end of the
-    # deployment so this list is not represented.
 
     # list of Place objects currently containing a token
     places = []
