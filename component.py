@@ -314,6 +314,12 @@ class Component (object, metaclass=ABCMeta):
     # act_idocks the set of active input docks of the component
     # act_odocks the set of active output docks of the component
 
+    # old_places the set of previous iteration active places of the component
+    # old_transitions the set of previous iteration active transitions of the component
+    # old_idocks the set of previous iteration active input docks of the component
+    # old_odocks the set of previous iteration active output docks of the component
+    # old_my_connections
+
     def init_places(self):
         """
         This method initialize the initial activated places of the component
@@ -322,6 +328,9 @@ class Component (object, metaclass=ABCMeta):
         for p in self.st_places:
             if len(self.st_places[p].get_inputdocks()) == 0:
                 self.act_places.append(self.st_places[p])
+        self.old_places = []
+        self.old_odocks = []
+        self.old_my_connections = []
 
     def semantics(self, configuration, dryrun, printing):
         """
@@ -339,26 +348,58 @@ class Component (object, metaclass=ABCMeta):
 
         self.printing = printing
 
+        new_transitions = []
+        new_places = []
+        new_idocks = []
+        new_odocks = []
+
+        # new set of active connections
         connections = configuration.get_connections()
         my_connections = []
         for conn in connections:
             if conn[0] == self or conn[2] == self:
                 my_connections.append(conn)
 
-        (still_running, new_idocks) = self.end_transition(dryrun)
-        new_transitions = still_running
+        # ending transitions (atomic)
+        (still_running, idocks) = self.end_transition(dryrun)
+        new_transitions += still_running
+        new_idocks += idocks
 
-        (new_places, still_idocks) = self.idocks_in_place()
+        # input docks to places (atomic)
+        (places, still_idocks) = self.idocks_in_place()
         new_idocks += still_idocks
+        new_places += places
 
-        (new_odocks, still_place) = self.place_in_odocks(my_connections)
-        new_places += still_place
+        # place to output docks
+        # only when places or connections have changed compared to the
+        # previous iteration.
+        # otherwise, places stay the same and no new output docks activated
+        if self.old_places == self.act_places \
+                and self.old_my_connections == my_connections:
+            new_places += self.old_places
+        else:
+            (odocks, still_place) = self.place_in_odocks(my_connections)
+            new_places += still_place
+            new_odocks += odocks
 
-        (add_transitions, still_odocks) = self.start_transition(my_connections,dryrun)
+        #start transition
+        # only when output docks or connections have changed compared to the
+        # previous iteration
+        # otherwise no new transitions and the same output docks
+        if self.old_odocks == self.act_odocks \
+                and self.old_my_connections == my_connections:
+            new_odocks += self.old_odocks
+        else:
+            (add_transitions, still_odocks) = self.start_transition(
+                    my_connections, dryrun)
+            # concatenate new transitions with the ones still running
+            new_transitions += add_transitions
+            new_odocks += still_odocks
 
-        # concatenate new transitions with the ones still running
-        new_transitions += add_transitions
-        new_odocks += still_odocks
+        # keep changes traces
+        self.old_places = self.act_places
+        self.old_odocks = self.act_odocks
+        self.old_my_connections = my_connections
 
         # replace the new local configuration
         self.act_places = new_places

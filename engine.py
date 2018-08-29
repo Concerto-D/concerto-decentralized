@@ -19,6 +19,9 @@ class Mad (object):
     the semantics on the assembly.
     """
 
+    # list used to check if the set of active places has changed
+    old_places = []
+
     def __init__(self, ass):
         self.assembly = ass
         init_places = []
@@ -53,13 +56,16 @@ class Mad (object):
         # main loop of the deployment process
         while not ended:
 
-            # enable/disable connections
-            new_connections = self.assembly.disable_enable_connections(
-                self.configuration, printing)
-            # highest priority according to the model to guarantee the
-            # disconnection of services when no more provided
-            # before doing anything else
-            self.configuration.update_connections(new_connections)
+            places = self.configuration.get_places()
+            if places != self.old_places:
+                # enable/disable connections
+                new_connections = self.assembly.disable_enable_connections(
+                    self.configuration, printing)
+                # highest priority according to the model to guarantee the
+                # disconnection of services when no more provided
+                # before doing anything else
+                self.configuration.update_connections(new_connections)
+                self.old_places = places
 
             new_places = []
 
