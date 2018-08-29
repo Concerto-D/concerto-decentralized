@@ -328,11 +328,14 @@ class Component (object, metaclass=ABCMeta):
         for p in self.st_places:
             if len(self.st_places[p].get_inputdocks()) == 0:
                 self.act_places.append(self.st_places[p])
+
         self.old_places = []
         self.old_odocks = []
         self.old_my_connections = []
 
-    def semantics(self, configuration, dryrun, printing):
+        return self.act_places
+
+    def semantics(self, my_connections, dryrun, printing):
         """
         This method apply the operational semantics at the component level.
         It takes as input the current configuration of the deployment which
@@ -353,22 +356,15 @@ class Component (object, metaclass=ABCMeta):
         new_idocks = []
         new_odocks = []
 
-        # new set of active connections
-        connections = configuration.get_connections()
-        my_connections = []
-        for conn in connections:
-            if conn[0] == self or conn[2] == self:
-                my_connections.append(conn)
-
         # ending transitions (atomic)
         (still_running, idocks) = self.end_transition(dryrun)
-        new_transitions += still_running
-        new_idocks += idocks
+        new_transitions.extend(still_running)
+        new_idocks.extend(idocks)
 
         # input docks to places (atomic)
         (places, still_idocks) = self.idocks_in_place()
-        new_idocks += still_idocks
-        new_places += places
+        new_idocks.extend(still_idocks)
+        new_places.extend(places)
 
         # place to output docks
         # only when places or connections have changed compared to the
@@ -376,11 +372,11 @@ class Component (object, metaclass=ABCMeta):
         # otherwise, places stay the same and no new output docks activated
         if self.old_places == self.act_places \
                 and self.old_my_connections == my_connections:
-            new_places += self.old_places
+            new_places.extend(self.old_places)
         else:
             (odocks, still_place) = self.place_in_odocks(my_connections)
-            new_places += still_place
-            new_odocks += odocks
+            new_places.extend(still_place)
+            new_odocks.extend(odocks)
 
         #start transition
         # only when output docks or connections have changed compared to the
@@ -388,24 +384,24 @@ class Component (object, metaclass=ABCMeta):
         # otherwise no new transitions and the same output docks
         if self.old_odocks == self.act_odocks \
                 and self.old_my_connections == my_connections:
-            new_odocks += self.old_odocks
+            new_odocks.extend(self.old_odocks)
         else:
             (add_transitions, still_odocks) = self.start_transition(
                     my_connections, dryrun)
             # concatenate new transitions with the ones still running
-            new_transitions += add_transitions
-            new_odocks += still_odocks
+            new_transitions.extend(add_transitions)
+            new_odocks.extend(still_odocks)
 
         # keep changes traces
-        self.old_places = self.act_places
-        self.old_odocks = self.act_odocks
-        self.old_my_connections = my_connections
+        self.old_places = self.act_places.copy()
+        self.old_odocks = self.act_odocks.copy()
+        self.old_my_connections = my_connections.copy()
 
         # replace the new local configuration
-        self.act_places = new_places
-        self.act_transitions = new_transitions
-        self.act_idocks = new_idocks
-        self.act_odocks = new_odocks
+        self.act_places = new_places.copy()
+        self.act_transitions = new_transitions.copy()
+        self.act_idocks = new_idocks.copy()
+        self.act_odocks = new_odocks.copy()
 
         # return the new set of active places to the global configuration
         return self.act_places
@@ -524,42 +520,8 @@ class Component (object, metaclass=ABCMeta):
                 still_place.append(place)
 
         # TODO warning the current implementation is limited compared to the
-            # model. The groupe notion has not been implemented properly.
-            # we force the user to associate a provide port to a final place
-
-            """if len(odocks) > 0:
-                # the place can be left if no provide dependencies are bound
-                # to it, or if no using transition is active
-                provides = place.get_provides()
-                if len(provides) == 0:
-                    new_odocks += odocks
-                else:
-                    # is there a provide used by a transition somewhere
-                    used = False
-                    # foreach provide bound to the place, check if it is in use
-                    for prov in provides:
-                        for conn in my_connections:
-                            if conn[0] == self:
-                                conn_trans = conn[3].getbindings() #list of
-                                # transitions connected to the place
-                            elif conn[2] ==self:
-                                conn_trans = conn[1].getbindings()  # list of
-                                # transitions connected to the place
-                            lused = False
-                            for t in conn_trans:
-                                if t in self.act_transitions:
-                                    lused = True
-                                    break
-                            if lused:
-                                used = True
-                                break
-
-                    if not used:
-                        new_odocks += odocks
-                    else:
-                        still_place.append(place)
-            else:
-                still_place.append(place)"""
+        # model. The group notion has not been implemented properly.
+        # we force the user to associate a provide port to a final place
 
         return new_odocks, still_place
 

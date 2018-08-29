@@ -39,7 +39,7 @@ class Configuration (object):
 
         :param conn: new list of active connections
         """
-        self.connections = conn
+        self.connections = conn.copy()
 
     #def update_transitions(self, trans):
     #    """
@@ -55,7 +55,7 @@ class Configuration (object):
 
         :param pla: new list of active places
         """
-        self.places = pla
+        self.places = pla.copy()
 
     #def update_input_docks(self, id):
     #    """

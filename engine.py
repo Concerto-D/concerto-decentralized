@@ -8,8 +8,6 @@
 
 from utility import Messages
 import sys
-from configuration import Configuration
-import concurrent.futures
 
 
 class Mad (object):
@@ -24,12 +22,7 @@ class Mad (object):
 
     def __init__(self, ass):
         self.assembly = ass
-        init_places = []
-        for c in self.assembly.get_components():
-            c.init_places()
-        init_conn = []
-
-        self.configuration = Configuration(init_places, init_conn)
+        self.assembly.init_semantics()
 
     def check_warnings(self):
         """
@@ -51,32 +44,14 @@ class Mad (object):
         This is the main function to run the operational semantics of the
         Madeus formal model. This is the heart of the coordination engine.
         """
+
         ended = False
 
         # main loop of the deployment process
         while not ended:
 
-            places = self.configuration.get_places()
-            if places != self.old_places:
-                # enable/disable connections
-                new_connections = self.assembly.disable_enable_connections(
-                    self.configuration, printing)
-                # highest priority according to the model to guarantee the
-                # disconnection of services when no more provided
-                # before doing anything else
-                self.configuration.update_connections(new_connections)
-                self.old_places = places
-
-            new_places = []
-
-            for c in self.assembly.get_components():
-                c_places= c.semantics(self.configuration, dryrun, printing)
-                new_places = new_places + c_places
-
-            # build the new configuration / ended
-            self.configuration.update_places(new_places)
-
-            if self.assembly.is_finish(self.configuration):
+            self.assembly.semantics(dryrun, printing)
+            if self.assembly.is_finish():
                 ended = True
 
         if printing:

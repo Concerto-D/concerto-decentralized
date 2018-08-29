@@ -7,26 +7,32 @@
 """
 
 import sys
+from whiteboard import *
 from dependency import *
 from utility import Messages, COLORS
 
-
-class WhiteBoard (object):
-    """ This class is used to implement data dependencies of the Madeus model.
-    Each connection between two components is associated to a white board
-    able to contain one value of any type. The provider component will write
-    data inside its transitions while the user components will read data.
+class Connection(object):
+    """
+    This class is used by the assembly to store connections between components
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, comp1, dep1, comp2, dep2):
+        self.active = False
+        self.tuple = (comp1, dep1, comp2, dep2)
+        self.names = (comp1.getname(), dep1.getname(), comp2.getname(),
+                          dep2.getname())
 
-    def write(self, data):
-        self.data = data
+    def activate(self):
+        self.active = True
 
-    def read(self):
-        return self.data
+    def gettuple(self):
+        return self.tuple
 
+    def getnames(self):
+        return self.names
+
+    def isactive(self):
+        return self.active
 
 class Assembly (object):
     """This Assembly class is used to create a assembly.
@@ -42,13 +48,18 @@ class Assembly (object):
     # component2, dependency2)
     connections = []
 
+    # list of white boards, 1 for each data provide
+    wbs = {}
+
     # a dictionary to store at the assembly level a list of connections for
-    # each place of the assembly (ie provide dependencies)
+    # each place (name) of the assembly (ie provide dependencies)
     # this is used to improve performance of the semantics
     places_connections = {}
 
-    # list of white boards, 1 for each data provide
-    wbs = {}
+    # a dictionary to store at the assembly level a list of connections for
+    # each component (name) of the assembly
+    # this is used to improve performance of the semantics
+    component_connections = {}
 
     """
     BUILD ASSEMBLY
@@ -85,9 +96,40 @@ class Assembly (object):
                               comp2.st_dependencies[name2].gettype()):
             # multiple connections are possible within MAD, so we do not
             # check if a dependency is already connected
-            self.connections.append((comp1, comp1.st_dependencies[name1], comp2,
-                                     comp2.st_dependencies[name2]))
 
+            # create connection
+            new_connection = Connection(comp1, comp1.st_dependencies[name1], comp2,
+                                        comp2.st_dependencies[name2])
+            self.connections.append(new_connection.gettuple())
+
+            # fill component_connections
+            if comp1.getname() in self.component_connections:
+                self.component_connections[comp1.getname()].append(new_connection)
+            else:
+                self.component_connections[comp1.getname()] = [new_connection]
+            if comp2.getname() in self.component_connections:
+                self.component_connections[comp2.getname()].append(new_connection)
+            else:
+                self.component_connections[comp2.getname()] = [new_connection]
+
+            # fill places_connections
+            if comp1.st_dependencies[name1].gettype() == DepType.PROVIDE or \
+               comp1.st_dependencies[name1].gettype() == DepType.DATA_PROVIDE:
+                for binding in comp1.st_dependencies[name1].getbindings():
+                    if binding.getname() in self.places_connections:
+                        self.places_connections[binding.getname()].append(new_connection)
+                    else:
+                        self.places_connections[binding.getname()] = [new_connection]
+            elif comp2.st_dependencies[name2].gettype() == DepType.PROVIDE or \
+               comp2.st_dependencies[name2].gettype() == DepType.DATA_PROVIDE:
+                for binding in comp2.st_dependencies[name2].getbindings():
+                    if binding.getname() in self.places_connections:
+                        self.places_connections[binding.getname()].append(new_connection)
+                    else:
+                        self.places_connections[binding.getname()] = [new_connection]
+
+            # white board management
+            # if we have a DATA connection, create a whiteboard and attached it
             if (comp1.st_dependencies[name1].gettype() == DepType.DATA_PROVIDE) \
                 or (comp1.st_dependencies[name1].gettype() == DepType.DATA_USE):
                 white_board = WhiteBoard()
@@ -102,6 +144,7 @@ class Assembly (object):
                     self.wbs[provider] = white_board
                     provider.connectwb(self.wbs[provider])
                 user.connectwb(self.wbs[provider])
+            # else we have a service connection to connect
             else:
                 comp1.st_dependencies[name1].connect()
                 comp2.st_dependencies[name2].connect()
@@ -164,7 +207,59 @@ class Assembly (object):
     OPERATIONAL SEMANTICS
     """
 
-    def disable_enable_connections(self, configuration, printing):
+    # a set of active places and connections within the assembly (global)
+    act_places = []
+    act_connections = []
+    # set of active places and connections of the previous iteration
+    old_places = []
+    old_connections = []
+
+    def init_semantics(self):
+        """
+        This method activate the initial places of each component and builds
+        the global self.act_places
+        """
+        for c in self.components:
+            comp_places = self.components[c].init_places()
+            self.act_places.extend(comp_places)
+
+    def semantics(self, dryrun, printing):
+        """
+        This method runs one semantics iteration by first updating the list
+        of enbled connections and then by running semantics of each component
+        of the assembly.
+        :param dryrun: boolean representing if the semantics is run in dryrun mode
+        :param printing: boolean representing if the semantics must print output
+        """
+
+        # enable / disable connections
+        if self.act_places != self.old_places:
+            # enable/disable connections
+            new_connections = self.disable_enable_connections(printing)
+            # highest priority according to the model to guarantee the
+            # disconnection of services when no more provided
+            # before doing anything else
+            self.old_connections = self.act_connections.copy()
+            self.act_connections = new_connections.copy()
+
+        # semantics for each component
+        new_places = []
+        for c in self.components:
+            connections = []
+            if c in self.component_connections:
+                for conn in self.component_connections[c]:
+                    if conn.isactive():
+                        connections.append(conn.gettuple())
+
+            c_places = self.components[c].semantics(connections, dryrun, printing)
+            new_places = new_places + c_places
+
+        # build the new configuration / ended
+        self.old_places = self.act_places.copy()
+        self.act_places = new_places.copy()
+
+
+    def disable_enable_connections(self, printing):
         """
         This method build the new list of enabled connections according to
         the current states of "activated" places (ie the ones getting a token).
@@ -172,57 +267,24 @@ class Assembly (object):
         :param configuration: the current configuration of the deployment
         :return: the new list of activated connections
         """
-        places = configuration.get_places()
-        conf_conn = configuration.get_connections()
 
         # create the new list of activated connections
         activated_connections = []
 
-        # for all connections of the assembly
-        for conn in self.connections:
-            if conn[1].gettype() == DepType.PROVIDE or conn[1].gettype() == \
-                    DepType.DATA_PROVIDE:
-                # foreach place bound to this connection and present in
-                # enabled places (ie get a token), add the connection to the
-                # list of enabled connections.
-                for place in places:
-                    if place in conn[1].getbindings(): # if the place is in
-                        # the group of places bound to the service
-                        activated_connections.append(conn)
-                        if conn not in conf_conn:
-                            if printing:
-                                print("[Assembly] Enable connection (" + conn[
-                                    0].getname() + ", "
-                                      + conn[1].getname() + ", "
-                                      + conn[2].getname() + ", "
-                                      + conn[3].getname() + ")")
-
-            elif conn[3].gettype() == DepType.PROVIDE or conn[3].gettype() ==\
-                    DepType.DATA_PROVIDE:
-                for place in places:
-                    if place in conn[3].getbindings(): # if the place is in
-                        # the group of places bound to the service
-                        activated_connections.append(conn)
-                        if conn not in conf_conn:
-                            if printing:
-                                print("[Assembly] Enable connection (" + conn[
-                                    0].getname() + ", "
-                                      + conn[1].getname() + ", "
-                                      + conn[2].getname() + ", "
-                                      + conn[3].getname() + ")")
-
-        # data connections are always kept once activated
-        for conn in conf_conn:
-            if conn not in activated_connections:
-                if conn[1].gettype() == DepType.DATA_PROVIDE \
-                        or conn[1].gettype() == DepType.DATA_USE \
-                        or conn[3].gettype() ==  DepType.DATA_USE\
-                        or conn[3].gettype() ==  DepType.DATA_PROVIDE:
-                    activated_connections.append(conn)
+        for place in self.act_places:
+            if place.getname() in self.places_connections:
+                connections = self.places_connections[place.getname()]
+                for conn in connections:
+                    activated_connections.append(conn.gettuple())
+                    if not conn.isactive():
+                        conn.activate()
+                        if printing:
+                            print("[Assembly] Enable connection ("
+                                  + str(conn.getnames()) + ")")
 
         return activated_connections
 
-    def is_finish(self, configuration):
+    def is_finish(self):
         """
         This method checks if the deployment is finished
 
@@ -230,14 +292,13 @@ class Assembly (object):
         :return: True if the deployment is finished, False otherwise
         """
 
-        places = configuration.get_places()
         # the deployment cannot be finished if at least all components have
         # not reached a place
-        if len(places) >= len(self.components):
+        if len(self.act_places) >= len(self.components):
             # if all places are finals (ie without output docks) the
             # deployment has finished
             all_finals = True
-            for place in places:
+            for place in self.act_places:
                 if len(place.get_outputdocks()) > 0:
                     all_finals = False
             return all_finals
