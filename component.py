@@ -31,13 +31,6 @@ class Component (object, metaclass=ABCMeta):
     # st_transitions a dictionary of Transition objects
     # st_dependencies a dictionary of Dependency objects
 
-    # these four lists represents the configuration at the component level
-    # they are used within the semantics parts, ie the runtime
-    #act_places the set of active places of the component
-    #act_transitions the set of active transitions of the component
-    #act_idocks the set of active input docks of the component
-    #act_odocks the set of active output docks of the component
-
     """
     BUILD COMPONENT
     """
@@ -314,6 +307,13 @@ class Component (object, metaclass=ABCMeta):
     OPERATIONAL SEMANTICS
     """
 
+    # these four lists represents the configuration at the component level
+    # they are used within the semantics parts, ie the runtime
+    # act_places the set of active places of the component
+    # act_transitions the set of active transitions of the component
+    # act_idocks the set of active input docks of the component
+    # act_odocks the set of active output docks of the component
+
     def init_places(self):
         """
         This method initialize the initial activated places of the component
@@ -463,6 +463,31 @@ class Component (object, metaclass=ABCMeta):
             odocks = place.get_outputdocks()
             if len(odocks) > 0:
                 # the place can be left if no provide dependencies are bound
+                # to it
+                provides = place.get_provides()
+                if len(provides) == 0:
+                    new_odocks += odocks
+                else:
+                    # we stay forever in the place that is providing the
+                    # service, we consider such dependency in final places
+                    # only (limitation)
+                    service_found = False
+                    for p in provides:
+                        if p.gettype() == DepType.PROVIDE:
+                            service_found = True
+                    if service_found:
+                        still_place.append(place)
+                    else:
+                        new_odocks += odocks
+            else:
+                still_place.append(place)
+
+        # TODO warning the current implementation is limited compared to the
+            # model. The groupe notion has not been implemented properly.
+            # we force the user to associate a provide port to a final place
+
+            """if len(odocks) > 0:
+                # the place can be left if no provide dependencies are bound
                 # to it, or if no using transition is active
                 provides = place.get_provides()
                 if len(provides) == 0:
@@ -493,7 +518,7 @@ class Component (object, metaclass=ABCMeta):
                     else:
                         still_place.append(place)
             else:
-                still_place.append(place)
+                still_place.append(place)"""
 
         return new_odocks, still_place
 

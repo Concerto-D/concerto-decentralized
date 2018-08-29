@@ -37,9 +37,16 @@ class Assembly (object):
 
     # dict of Component objects: id => object
     components = {}
+
     # list of connections. A connection is a tuple (component1, dependency1,
     # component2, dependency2)
     connections = []
+
+    # a dictionary to store at the assembly level a list of connections for
+    # each place of the assembly (ie provide dependencies)
+    # this is used to improve performance of the semantics
+    places_connections = {}
+
     # list of white boards, 1 for each data provide
     wbs = {}
 

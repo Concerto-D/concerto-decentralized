@@ -9,6 +9,7 @@
 from utility import Messages
 import sys
 from configuration import Configuration
+import concurrent.futures
 
 
 class Mad (object):
@@ -39,6 +40,9 @@ class Mad (object):
         check = self.assembly.check_warnings()
         return check
 
+    def test(self,comp):
+        return comp.getname()
+
     def mad_engine(self, dryrun, printing):
         """
         This is the main function to run the operational semantics of the
@@ -59,9 +63,8 @@ class Mad (object):
 
             new_places = []
 
-            # for each component perform operational semantics
             for c in self.assembly.get_components():
-                c_places = c.semantics(self.configuration, dryrun, printing)
+                c_places= c.semantics(self.configuration, dryrun, printing)
                 new_places = new_places + c_places
 
             # build the new configuration / ended
