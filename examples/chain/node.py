@@ -1,5 +1,6 @@
 from mad import *
 
+import time
 
 class Node(Component):
 
@@ -34,3 +35,4 @@ class Node(Component):
 
     def mt_run(self):
         print(self.name+" run!")
+        time.sleep(2)
