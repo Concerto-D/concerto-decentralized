@@ -1,7 +1,7 @@
 import sys
 from mad import *
 
-from nodecomponent import Node
+from node import Node
 
 if __name__ == '__main__':
 
@@ -27,7 +27,7 @@ if __name__ == '__main__':
             print("new component: "+name)
             if i>0:
                 ass.addConnection(nodes[i-1], 'p', nodes[i], 'u')
-                print("new connection: "+nodes[i-1].name+'.p -> '+ nodes[i].name+'.u')
+                print("new connection: "+nodes[i-1].name+'.p <- '+ nodes[i].name+'.u')
         
         mad = Mad(ass)
         mad.run(True)
