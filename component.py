@@ -13,6 +13,14 @@ from dependency import *
 from transition import Transition
 from utility import Messages
 
+class Group(object):
+    """
+    This class is used to create a group object within a Component.
+    A group is a set of places and transitions to which a service provide
+    dependency is bound. This object facilitate the semantics and its
+    efficiency.
+    """
+
 class Component (object, metaclass=ABCMeta):
     """This Component class is used to create a component.
 
@@ -460,23 +468,24 @@ class Component (object, metaclass=ABCMeta):
         if len(self.act_idocks) > 0:
             for id in self.act_idocks:
                 place = id.mother
-                inp_docks = place.get_inputdocks()
-                if len(inp_docks) > 0:
-                    ready = True
-                    for id in inp_docks:
-                        if id not in self.act_idocks:
-                            ready = False
-                            break
-                    if ready:
-                        if self.printing:
-                            print(
-                                self.color + "[" + self.name + "] In place '" +
-                                place.getname() + "'" + Messages.endc())
-                        new_places.append(place)
-                    else:
+                if place not in new_places:
+                    inp_docks = place.get_inputdocks()
+                    if len(inp_docks) > 0:
+                        ready = True
                         for id in inp_docks:
-                            if id in self.act_idocks:
-                                still_idocks.append(id)
+                            if id not in self.act_idocks:
+                                ready = False
+                                break
+                        if ready:
+                            if self.printing:
+                                print(
+                                    self.color + "[" + self.name + "] In place '" +
+                                    place.getname() + "'" + Messages.endc())
+                            new_places.append(place)
+                        else:
+                            for id in inp_docks:
+                                if id in self.act_idocks:
+                                    still_idocks.append(id)
 
         return new_places, still_idocks
 

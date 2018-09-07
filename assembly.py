@@ -116,17 +116,17 @@ class Assembly (object):
             if comp1.st_dependencies[name1].gettype() == DepType.PROVIDE or \
                comp1.st_dependencies[name1].gettype() == DepType.DATA_PROVIDE:
                 for binding in comp1.st_dependencies[name1].getbindings():
-                    if binding.getname() in self.places_connections:
-                        self.places_connections[binding.getname()].append(new_connection)
+                    if binding in self.places_connections:
+                        self.places_connections[binding].append(new_connection)
                     else:
-                        self.places_connections[binding.getname()] = [new_connection]
+                        self.places_connections[binding] = [new_connection]
             elif comp2.st_dependencies[name2].gettype() == DepType.PROVIDE or \
                comp2.st_dependencies[name2].gettype() == DepType.DATA_PROVIDE:
                 for binding in comp2.st_dependencies[name2].getbindings():
-                    if binding.getname() in self.places_connections:
-                        self.places_connections[binding.getname()].append(new_connection)
+                    if binding in self.places_connections:
+                        self.places_connections[binding].append(new_connection)
                     else:
-                        self.places_connections[binding.getname()] = [new_connection]
+                        self.places_connections[binding] = [new_connection]
 
             # white board management
             # if we have a DATA connection, create a whiteboard and attached it
@@ -272,8 +272,8 @@ class Assembly (object):
         activated_connections = []
 
         for place in self.act_places:
-            if place.getname() in self.places_connections:
-                connections = self.places_connections[place.getname()]
+            if place in self.places_connections:
+                connections = self.places_connections[place]
                 for conn in connections:
                     activated_connections.append(conn.gettuple())
                     if not conn.isactive():
