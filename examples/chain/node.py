@@ -4,6 +4,8 @@ import time
 
 class Node(Component):
 
+    # first: only provide
+    # last: only use
     def __init__(self, first=False, last=False):
         self.first = first
         self.last = last
