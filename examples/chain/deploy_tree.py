@@ -52,11 +52,10 @@ if __name__ == '__main__':
 
         for i in range(height):
             for j in range(2**i):
-                # Connecting the client to all
                 name = get_name(i,j)
-                print("name: "+name)
                 n = nodes[name]
                 if bug == '1':
+                    # Connecting the client to all
                     ass.addConnection(n, 'p', client, 'u')
                     print("client connection: "+n.name+'.p <- '+ client.name+'.u')
                 else:
