@@ -510,27 +510,26 @@ class Component (object, metaclass=ABCMeta):
             if len(odocks) > 0:
                 # the place can be left if no provide dependencies are bound
                 # to it
-                provides = place.get_provides()
-                if len(provides) == 0:
+                #provides = place.get_provides()
+                #if len(provides) == 0:
                     new_odocks += odocks
-                else:
+                #else:
                     # we stay forever in the place that is providing the
                     # service, we consider such dependency in final places
                     # only (limitation)
-                    service_found = False
-                    for p in provides:
-                        if p.gettype() == DepType.PROVIDE:
-                            service_found = True
-                    if service_found:
-                        still_place.append(place)
-                    else:
-                        new_odocks += odocks
+                #    service_found = False
+                #    for p in provides:
+                #        if p.gettype() == DepType.PROVIDE:
+                #            service_found = True
+                #    if service_found:
+                #        still_place.append(place)
+                #    else:
+                #        new_odocks += odocks
             else:
                 still_place.append(place)
 
         # TODO warning the current implementation is limited compared to the
         # model. The group notion has not been implemented properly.
-        # we force the user to associate a provide port to a final place
 
         return new_odocks, still_place
 
