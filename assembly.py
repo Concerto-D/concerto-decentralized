@@ -222,6 +222,8 @@ class Assembly (object):
         for c in self.components:
             comp_places = self.components[c].init_places()
             self.act_places.extend(comp_places)
+            self.components[c].init_trans_connections(
+                self.component_connections[c])
 
     def semantics(self, dryrun, printing):
         """

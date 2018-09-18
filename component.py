@@ -322,15 +322,48 @@ class Component (object, metaclass=ABCMeta):
     # act_idocks the set of active input docks of the component
     # act_odocks the set of active output docks of the component
 
+    # trans_connections a dictionary associating one transition to its
+    # associated use connections
+
     # old_places the set of previous iteration active places of the component
     # old_transitions the set of previous iteration active transitions of the component
     # old_idocks the set of previous iteration active input docks of the component
     # old_odocks the set of previous iteration active output docks of the component
     # old_my_connections
 
+    def init_trans_connections(self, comp_connections):
+        """
+        This method initializes the dictionary associating one transition to
+        a set of connections. This dictionary is used to start a transition.
+        :param comp_connections: the list of all connections associated to
+        the current component.
+        """
+
+        self.trans_connections = {}
+
+        for t in self.st_transitions:
+            # find this trans in dependencies
+            deps = []
+            for d in self.st_dependencies:
+                bindings = self.st_dependencies[d].getbindings()
+                if self.st_transitions[t] in bindings:
+                    deps.append(d)
+
+            for d in deps:
+                for conn in comp_connections:
+                    c = conn.gettuple()
+                    if (c[0].getname() == self.name and c[1].getname() == d) or \
+                            (c[2].getname() ==self.name and c[3].getname() == d):
+                        if t not in self.trans_connections:
+                            self.trans_connections[t] = [conn]
+                        else:
+                            self.trans_connections[t].append(conn)
+
+        return True
+
     def init_places(self):
         """
-        This method initialize the initial activated places of the component
+        This method initializes the initial activated places of the component
         in its local configuration self.act_places
         """
         for p in self.st_places:
@@ -556,27 +589,15 @@ class Component (object, metaclass=ABCMeta):
 
             enabled = True
 
-            # find this trans in dependencies
-            deps = []
-            for d in self.st_dependencies:
-                bindings = self.st_dependencies[d].getbindings()
-                if trans in bindings:
-                    deps.append(d)
-
-            # no dependencies means the transition can be started
-            # for each dependency bound to trans
-            for d in deps:
-                # find it in my activated connections
-                dep_found = False
-                for conn in my_connections:
-                    if conn[1] == self.st_dependencies[d] or conn[3] == \
-                            self.st_dependencies[d]:
-                        dep_found = True
+            if trans.getname() in self.trans_connections:
+                for conn in self.trans_connections[trans.getname()]:
+                    found = False
+                    for act_conn in my_connections:
+                        if act_conn == conn.gettuple():
+                            found = True
+                    if not found:
+                        enabled = False
                         break
-                # at the first dep not satisfied stop
-                if dep_found == False:
-                    enabled = False
-                    break
 
             if enabled:
                 if self.printing:
