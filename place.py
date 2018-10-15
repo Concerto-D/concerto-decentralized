@@ -6,6 +6,8 @@
    :synopsis: this file contains the Place and Dock classes.
 """
 
+from transition import Transition
+
 class Dock(object):
     """This Dock class is used to create a dock.
 
@@ -54,20 +56,24 @@ class Place (object):
         self.output_docks = {} # dictionary behavior -> docks[]
         self.provides = []
 
-    def create_input_dock(self, transition):
+    def create_input_dock(self, transition : Transition):
         """
         This method creates an additional input dock to the current place.
         This method is called by Transition. An input dock of a place
         corresponds to a destination dock of a transition.
 
         :param transition: the transition to which the dock will be associated
+        :param set: the set of input docks it should be contained in
         :return: the new input dock
         """
         new_dock = Dock(self, 0, transition)
         behavior = transition.get_behavior()
+        idset = transition.get_dst_idset()
         if behavior not in self.input_docks:
-            self.input_docks[behavior] = []
-        self.input_docks[behavior].append(new_dock)
+            self.input_docks[behavior] = dict()
+        if idset not in self.input_docks[behavior]:
+            self.input_docks[behavior][idset] = []
+        self.input_docks[behavior][idset].append(new_dock)
         return new_dock
 
     def create_output_dock(self, transition):
@@ -94,7 +100,7 @@ class Place (object):
         """
         return self.name
 
-    def get_input_docks(self, behavior):
+    def get_groups_of_input_docks(self, behavior):
         """
         This method returns the list of input docks of the place
 
@@ -103,7 +109,7 @@ class Place (object):
         if behavior not in self.input_docks:
             return []
         else:
-            return self.input_docks[behavior]
+            return list(self.input_docks[behavior].values())
 
     def get_output_docks(self, behavior):
         """

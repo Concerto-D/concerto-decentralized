@@ -13,15 +13,17 @@ class UserRead(Component):
         ]
 
         self.transitions = {
-            'init': ('waiting', 'initiated', self.init),
-            'config': ('initiated', 'configured', self.config),
-            'start': ('configured', 'started', self.start)
+            'init': ('waiting', 'initiated', 'install', self.init),
+            'config': ('initiated', 'configured', 'install', self.config),
+            'start': ('configured', 'started', 'install', self.start)
         }
 
         self.dependencies = {
             'ipprov': (DepType.DATA_USE, ['init']),
             'service': (DepType.USE, ['config', 'start'])
         }
+        
+        self.initial_place = 'waiting'
 
     def init(self):
         time.sleep(10)

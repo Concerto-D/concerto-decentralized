@@ -88,12 +88,12 @@ class Component (object, metaclass=ABCMeta):
         """
         for key in transitions:
             # add docks to places and bind docks
-            if len(transitions[key])==5:
+            if len(transitions[key])==6:
                 self.add_transition(key, transitions[key][0], transitions[key][
-                    1], transitions[key][2], transitions[key][3], transitions[key][4])
+                    1], transitions[key][2], transitions[key][3], transitions[key][4], transitions[key][5])
             else:
                 self.add_transition(key, transitions[key][0], transitions[key][
-                    1], transitions[key][2], transitions[key][3])
+                    1], transitions[key][2], transitions[key][3], transitions[key][4])
 
     def add_dependencies(self, dep):
         """
@@ -152,7 +152,7 @@ class Component (object, metaclass=ABCMeta):
         self.initial_place = name
     
 
-    def add_transition(self, name, src, dst, bhv, func, args=()):
+    def add_transition(self, name, src, dst, bhv, idset, func, args=()):
         """
         This method offers the possibility to add a single transition to an
         already existing dictionary of transitions.
@@ -164,7 +164,7 @@ class Component (object, metaclass=ABCMeta):
         :param func: a functor created by the user
         :param args: optional tuple of arguments to give to the functor
         """
-        self.st_transitions[name] = Transition(name, src, dst, bhv, func, args,
+        self.st_transitions[name] = Transition(name, src, dst, bhv, idset, func, args,
                                               self.st_places)
         self.st_behaviors.add(bhv)
 
@@ -453,9 +453,22 @@ class Component (object, metaclass=ABCMeta):
         (still_running, idocks) = self._end_transition(dryrun)
         new_transitions.extend(still_running)
         new_idocks.extend(idocks)
+        
+        #TODO : REMOVE
+        #if new_idocks or self.act_idocks:
+        #    print ("new_idocks: %s"%str(new_idocks))
+        #    print ("act_idocks: %s"%str(self.act_idocks))
 
         # input docks to places (atomic)
         (places, still_idocks) = self._idocks_in_place()
+        
+        #TODO : REMOVE
+        #if new_idocks or self.act_idocks:
+        #    print ("places: %s"%str(places))
+        #    print ("still_idocks: %s"%str(still_idocks))
+        #if self.act_idocks:
+        #    exit(0)
+        
         new_idocks.extend(still_idocks)
         new_places.extend(places)
 
@@ -558,11 +571,15 @@ class Component (object, metaclass=ABCMeta):
         # docks.
         still_idocks = []
 
-        if len(self.act_idocks) > 0:
-            for id in self.act_idocks:
-                place = id.mother
-                if place not in new_places:
-                    inp_docks = place.get_input_docks(self.act_behavior)
+        for id in self.act_idocks:
+            # print("Considering idock %s"%str(id)) # TODO REMOVE
+            place : Place = id.mother
+            if place not in new_places:
+                #print("Considering place '%s'"%str(place.get_name())) # TODO REMOVE
+                grp_inp_docks = place.get_groups_of_input_docks(self.act_behavior)
+                for inp_docks in grp_inp_docks:
+                    #inp_docks = grp_inp_docks[inp_docks_id]
+                    #print("Number of input docks: %d"%len(inp_docks)) # TODO REMOVE
                     if len(inp_docks) > 0:
                         ready = True
                         for id in inp_docks:

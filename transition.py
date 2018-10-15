@@ -23,11 +23,12 @@ class Transition (object):
     BUILD TRANSITION
     """
 
-    def __init__(self, name, src, dst, bhv, func, args, places):
+    def __init__(self, name, src, dst, bhv, idset, func, args, places):
         self.name = name
         self.src_place = src
         self.dst_place = dst
         self.behavior = bhv
+        self.dst_idset = idset
         self.code = func
         self.args = args
         self.bind_docks(places)
@@ -63,6 +64,9 @@ class Transition (object):
         :return: name (string)
         """
         return self.name
+    
+    def get_dst_idset(self):
+        return self.dst_idset
 
     def get_src_dock(self):
         """

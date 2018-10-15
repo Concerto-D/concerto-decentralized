@@ -12,9 +12,9 @@ class Client(Component):
         ]
 
         self.transitions = {
-            'configure': ('off', 'configured', 'install_start', self.configure),
-            'start': ('configured', 'running', 'install_start', self.start),
-            'suspend': ('configured', 'started', 'stop', self.suspend)
+            'configure': ('off', 'configured', 'install_start', 0, self.configure),
+            'start': ('configured', 'running', 'install_start', 0, self.start),
+            'suspend': ('configured', 'started', 'stop', 0, self.suspend)
         }
 
         self.dependencies = {
@@ -59,10 +59,10 @@ class Server(Component):
         ]
 
         self.transitions = {
-            'allocate': ('undeployed', 'allocated', 'deploy', self.allocate),
-            'run': ('allocated', 'running', 'deploy', self.run),
-            'suspend': ('running', 'maintenance', 'stop', self.suspend),
-            'restart': ('maintenance', 'allocated', 'deploy', self.restart)
+            'allocate': ('undeployed', 'allocated', 'deploy', 0, self.allocate),
+            'run': ('allocated', 'running', 'deploy', 0, self.run),
+            'suspend': ('running', 'maintenance', 'stop', 0, self.suspend),
+            'restart': ('maintenance', 'allocated', 'deploy', 1, self.restart)
         }
 
         self.dependencies = {
