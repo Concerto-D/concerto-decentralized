@@ -19,7 +19,7 @@ class Dock(object):
         self.DOCK_TYPE = type
         self.transition = transition
 
-    def getplace(self):
+    def get_place(self):
         """
         This method returns the Place object associated to the dock
 
@@ -27,7 +27,7 @@ class Dock(object):
         """
         return self.mother
 
-    def gettype(self):
+    def get_type(self):
         """
         This method returns the type of dock
 
@@ -37,6 +37,9 @@ class Dock(object):
 
     def get_transition(self):
         return self.transition
+    
+    def get_behavior(self):
+        return self.get_transition().get_behavior()
 
 
 class Place (object):
@@ -47,8 +50,8 @@ class Place (object):
 
     def __init__(self,name):
         self.name = name
-        self.input_docks = []
-        self.output_docks = []
+        self.input_docks = {}  # dictionary behavior -> docks[]
+        self.output_docks = {} # dictionary behavior -> docks[]
         self.provides = []
 
     def create_input_dock(self, transition):
@@ -61,7 +64,10 @@ class Place (object):
         :return: the new input dock
         """
         new_dock = Dock(self, 0, transition)
-        self.input_docks.append(new_dock)
+        behavior = transition.get_behavior()
+        if behavior not in self.input_docks:
+            self.input_docks[behavior] = []
+        self.input_docks[behavior].append(new_dock)
         return new_dock
 
     def create_output_dock(self, transition):
@@ -74,10 +80,13 @@ class Place (object):
         :return: the new output dock
         """
         new_dock = Dock(self, 1, transition)
-        self.output_docks.append(new_dock)
+        behavior = transition.get_behavior()
+        if behavior not in self.output_docks:
+            self.output_docks[behavior] = []
+        self.output_docks[behavior].append(new_dock)
         return new_dock
 
-    def getname(self):
+    def get_name(self):
         """
         This method returns the name of the place
 
@@ -85,21 +94,27 @@ class Place (object):
         """
         return self.name
 
-    def get_inputdocks(self):
+    def get_input_docks(self, behavior):
         """
         This method returns the list of input docks of the place
 
-        :return: self.input_docks
+        :return: self.input_docks[behavior] if not empty, [] otherwise
         """
-        return self.input_docks
+        if behavior not in self.input_docks:
+            return []
+        else:
+            return self.input_docks[behavior]
 
-    def get_outputdocks(self):
+    def get_output_docks(self, behavior):
         """
         This method returns the list of output docks of the place
 
-        :return: self.output_docks
+        :return: self.output_docks[behavior] if not empty, [] otherwise
         """
-        return self.output_docks
+        if behavior not in self.output_docks:
+            return []
+        else:
+            return self.output_docks[behavior]
 
     def add_provide(self, dep):
         """

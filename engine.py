@@ -36,10 +36,7 @@ class Mad (object):
         check = self.assembly.check_warnings()
         return check
 
-    def test(self,comp):
-        return comp.getname()
-
-    def mad_engine(self, dryrun, printing):
+    def _mad_engine(self, dryrun, printing):
         """
         This is the main function to run the operational semantics of the
         Madeus formal model. This is the heart of the coordination engine.
@@ -69,7 +66,7 @@ class Mad (object):
                 print(Messages.ok() + "[Mad] Assembly checked" + Messages.endc())
                 print(Messages.ok() + "[Mad] Start assembly deployment" +
                       Messages.endc())
-            self.mad_engine(dryrun, printing)
+            self._mad_engine(dryrun, printing)
 
         elif not check and not force:
             if printing:

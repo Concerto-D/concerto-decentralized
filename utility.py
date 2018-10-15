@@ -1,3 +1,4 @@
+from typing import List, Any, Callable
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -36,3 +37,11 @@ COLORS = ['\33[34m', #blue
           '\33[32m', # green
           '\33[33m', # yellow
          ]
+
+def remove_if(l : List[Any], remove_cond : Callable[[Any], bool]):
+    i=0
+    while i < len(l):
+        if remove_cond(l[i]):
+            del l[i]
+            continue
+        i+=1

@@ -20,6 +20,7 @@ class Group(object):
     dependency is bound. This object facilitate the semantics and its
     efficiency.
     """
+    # TODO: VERY IMPORTANT
 
 class Component (object, metaclass=ABCMeta):
     """This Component class is used to create a component.
@@ -38,6 +39,7 @@ class Component (object, metaclass=ABCMeta):
     # st_places a dictionary of Place objects
     # st_transitions a dictionary of Transition objects
     # st_dependencies a dictionary of Dependency objects
+    # st_behaviors a set of behavior names (strings)
 
     """
     BUILD COMPONENT
@@ -46,19 +48,24 @@ class Component (object, metaclass=ABCMeta):
     def __init__(self):
         self.name = ""
         self.color = ''
+        self.initial_place = None
         self.st_places = {}
         self.st_transitions = {}
         self.st_dependencies = {}
+        self.st_behaviors = set()
         self.act_places = []
         self.act_transitions = []
         self.act_odocks = []
         self.act_idocks = []
+        self.act_behavior = None
+        self.initialized = False
+        self.idle = True
         self.create()
         self.add_places(self.places)
         self.add_transitions(self.transitions)
         self.add_dependencies(self.dependencies)
 
-    def add_places(self, places):
+    def add_places(self, places, initial=None):
         """
         This method add all places declared in the user component class as a
         dictionary associating the name of a place to its number of input and
@@ -68,6 +75,8 @@ class Component (object, metaclass=ABCMeta):
         """
         for key in places:
             self.add_place(key)
+        if initial is not None:
+            self.set_initial_place(initial)
 
     def add_transitions(self, transitions):
         """
@@ -79,12 +88,12 @@ class Component (object, metaclass=ABCMeta):
         """
         for key in transitions:
             # add docks to places and bind docks
-            if len(transitions[key])==4:
+            if len(transitions[key])==5:
                 self.add_transition(key, transitions[key][0], transitions[key][
-                    1], transitions[key][2], transitions[key][3])
+                    1], transitions[key][2], transitions[key][3], transitions[key][4])
             else:
                 self.add_transition(key, transitions[key][0], transitions[key][
-                    1], transitions[key][2])
+                    1], transitions[key][2], transitions[key][3])
 
     def add_dependencies(self, dep):
         """
@@ -115,16 +124,35 @@ class Component (object, metaclass=ABCMeta):
                 sys.exit(0)
 
 
-    def add_place(self, name):
+    def add_place(self, name, initial=False):
         """
         This method offers the possibility to add a single place to an
         already existing dictionary of places.
 
         :param name: the name of the place to add
+        :param initial: whether the place is the initial place of the component (default: False)
         """
         self.st_places[name] = Place(name)
+        if initial:
+            self.set_initial_place(initial)
 
-    def add_transition(self, name, src, dst, func, args=()):
+
+    def set_initial_place(self, name):
+        """
+        This method allows to set the (unique) initial place of the component, if not already done
+        using the parameter of add_place and add_places.
+        
+        :param name: the name of the place to mark initial
+        """
+        
+        if name not in self.st_places:
+            raise Exception("Trying to set non-existant place %s as intial place of component %s." % (name, self.get_name()))
+        if self.initial_place is not None:
+            raise Exception("Trying to set place %s as intial place of component %s while %s is already the intial place." % (name, self.get_name(), self.initial_place))
+        self.initial_place = name
+    
+
+    def add_transition(self, name, src, dst, bhv, func, args=()):
         """
         This method offers the possibility to add a single transition to an
         already existing dictionary of transitions.
@@ -132,13 +160,15 @@ class Component (object, metaclass=ABCMeta):
         :param name: the name of the transition to add
         :param src: the name of the source place of the transition
         :param dst: the name of the destination place of the transition
+        :param bhv: the name of the behavior associated to the transition
         :param func: a functor created by the user
         :param args: optional tuple of arguments to give to the functor
         """
-        self.st_transitions[name] = Transition(name, src, dst, func, args,
+        self.st_transitions[name] = Transition(name, src, dst, bhv, func, args,
                                               self.st_places)
+        self.st_behaviors.add(bhv)
 
-    def add_dependency(self, name, type, bindings):
+    def add_dependency(self, name : str, type : DepType, bindings):
         """
         This method offers the possibility to add a single dependency to an
         already existing dictionary of dependencies.
@@ -177,26 +207,11 @@ class Component (object, metaclass=ABCMeta):
                 else:
                     places.append(self.st_places[bind])
             if btrans:
-                terminal = False
+                # create the dependency
+                self.st_dependencies[name] = Dependency(name, type, places)
+                # for each place add the provide dependency
                 for p in places:
-                    ods = p.get_outputdocks()
-                    if len(ods) == 0:
-                        terminal = True
-                        break
-                if terminal or type == DepType.DATA_PROVIDE:
-                    # create the dependency
-                    self.st_dependencies[name] = Dependency(name, type, places)
-                    # for each place add the provide dependency
-                    for p in places:
-                        p.add_provide(self.st_dependencies[name])
-                else:
-                    print(Messages.fail() + "ERROR - at least one "
-                                            "place bound to a provide "
-                                            "dependency must be a terminal "
-                                            "place without output "
-                                            "docks."
-                          + Messages.endc())
-                    sys.exit(0)
+                    p.add_provide(self.st_dependencies[name])
             else:
                 print(
                     Messages.fail() + "ERROR - according to the type of dependency "
@@ -223,7 +238,7 @@ class Component (object, metaclass=ABCMeta):
         """
         return self.st_dependencies[name]
 
-    def setname(self, name):
+    def set_name(self, name):
         """
         This method sets the name of the current component
 
@@ -231,7 +246,7 @@ class Component (object, metaclass=ABCMeta):
         """
         self.name = name
 
-    def getname(self):
+    def get_name(self):
         """
         This method returns the name of the component
 
@@ -239,7 +254,7 @@ class Component (object, metaclass=ABCMeta):
         """
         return self.name
 
-    def setcolor(self, c):
+    def set_color(self, c):
         """
         This method set a printing color to the current component
 
@@ -247,7 +262,7 @@ class Component (object, metaclass=ABCMeta):
         """
         self.color = c
 
-    def getcolor(self):
+    def get_color(self):
         """
         This method returns the color associated to the current component
 
@@ -255,20 +270,20 @@ class Component (object, metaclass=ABCMeta):
         """
         return self.color
 
-    def isconnected(self, name):
+    def is_connected(self, name):
         """
         This method is used to know if a given dependency is connected or not
         :param name: name of the dependency
         :return: True if connected, False otherwise
         """
-        return not self.st_dependencies[name].isfree()
+        return not self.st_dependencies[name].is_free()
 
     """
     READ / WRITE DEPENDENCIES
     """
 
     def read(self, name):
-        return self.st_dependencies[name].getwb().read()
+        return self.st_dependencies[name].get_wb().read()
 
     def write(self, name, val):
         # keep trace of the line below to check wether the calling method has
@@ -278,7 +293,7 @@ class Component (object, metaclass=ABCMeta):
         # provide is associated to a place in the model. This has to be
         # corrected somewhere.
         # print(sys._getframe().f_back.f_code.co_name)
-        self.st_dependencies[name].getwb().write(val)
+        self.st_dependencies[name].get_wb().write(val)
 
     """
     CHECK COMPONENT
@@ -306,10 +321,31 @@ class Component (object, metaclass=ABCMeta):
         result = True
 
         for dep in self.st_dependencies:
-            if self.st_dependencies[dep].isfree():
+            if self.st_dependencies[dep].is_free():
                 result = False
 
         return result
+    
+    
+    """
+    RECONFIGURATION
+    """
+    
+    # reconfiguration of the component by changing its current behavior
+    
+    def set_behavior(self, behavior):
+        if behavior not in self.st_behaviors and behavior is not None:
+            raise Exception("Trying to set behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
+        # TODO warn if no transition with the behavior is fireable from the current state
+        self.act_behavior = behavior
+        
+    def get_behaviors(self):
+        return self.st_behaviors
+        
+    def get_active_behavior(self):
+        return self.act_behavior
+            
+            
 
     """
     OPERATIONAL SEMANTICS
@@ -330,8 +366,25 @@ class Component (object, metaclass=ABCMeta):
     # old_idocks the set of previous iteration active input docks of the component
     # old_odocks the set of previous iteration active output docks of the component
     # old_my_connections
+    
+    def is_idle(self):
+        """
+        This method returns a boolean stating if the component is idle.
+        :return: a boolean stating if the component is idle
+        """
+        return self.idle
+    
+    def init(self, comp_connections):
+        """
+        This method initializes the component and returns the set of active places
+        """
+        places = self._init_places()
+        self._init_trans_connections(comp_connections)
+        self.initialized = True
+        self.idle = True
+        return places
 
-    def init_trans_connections(self, comp_connections):
+    def _init_trans_connections(self, comp_connections):
         """
         This method initializes the dictionary associating one transition to
         a set of connections. This dictionary is used to start a transition.
@@ -345,30 +398,26 @@ class Component (object, metaclass=ABCMeta):
             # find this trans in dependencies
             deps = []
             for d in self.st_dependencies:
-                bindings = self.st_dependencies[d].getbindings()
+                bindings = self.st_dependencies[d].get_bindings()
                 if self.st_transitions[t] in bindings:
                     deps.append(d)
 
             for d in deps:
                 for conn in comp_connections:
                     c = conn.gettuple()
-                    if (c[0].getname() == self.name and c[1].getname() == d) or \
-                            (c[2].getname() ==self.name and c[3].getname() == d):
+                    if (c[0].get_name() == self.name and c[1].get_name() == d) or \
+                            (c[2].get_name() ==self.name and c[3].get_name() == d):
                         if t not in self.trans_connections:
                             self.trans_connections[t] = [conn]
                         else:
                             self.trans_connections[t].append(conn)
 
-        return True
-
-    def init_places(self):
+    def _init_places(self):
         """
         This method initializes the initial activated places of the component
         in its local configuration self.act_places
         """
-        for p in self.st_places:
-            if len(self.st_places[p].get_inputdocks()) == 0:
-                self.act_places.append(self.st_places[p])
+        self.act_places.append(self.st_places[self.initial_place])
 
         self.old_places = []
         self.old_odocks = []
@@ -389,6 +438,9 @@ class Component (object, metaclass=ABCMeta):
         components, transitions, places, input docks and output docks in the
         new configuration of the current component.
         """
+        
+        if not self.initialized:
+            raise ("Error: trying to execute one step of semantics in uninitialized component %s." % self.get_name())
 
         self.printing = printing
 
@@ -398,12 +450,12 @@ class Component (object, metaclass=ABCMeta):
         new_odocks = []
 
         # ending transitions (atomic)
-        (still_running, idocks) = self.end_transition(dryrun)
+        (still_running, idocks) = self._end_transition(dryrun)
         new_transitions.extend(still_running)
         new_idocks.extend(idocks)
 
         # input docks to places (atomic)
-        (places, still_idocks) = self.idocks_in_place()
+        (places, still_idocks) = self._idocks_in_place()
         new_idocks.extend(still_idocks)
         new_places.extend(places)
 
@@ -415,7 +467,7 @@ class Component (object, metaclass=ABCMeta):
                 and self.old_my_connections == my_connections:
             new_places.extend(self.old_places)
         else:
-            (odocks, still_place) = self.place_in_odocks(my_connections)
+            (odocks, still_place) = self._place_in_odocks(my_connections)
             new_places.extend(still_place)
             new_odocks.extend(odocks)
 
@@ -427,7 +479,7 @@ class Component (object, metaclass=ABCMeta):
                 and self.old_my_connections == my_connections:
             new_odocks.extend(self.old_odocks)
         else:
-            (add_transitions, still_odocks) = self.start_transition(
+            (add_transitions, still_odocks) = self._start_transition(
                     my_connections, dryrun)
             # concatenate new transitions with the ones still running
             new_transitions.extend(add_transitions)
@@ -443,12 +495,20 @@ class Component (object, metaclass=ABCMeta):
         self.act_transitions = new_transitions.copy()
         self.act_idocks = new_idocks.copy()
         self.act_odocks = new_odocks.copy()
+        
+        # Checks if the component is idle
+        self.idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
+        if self.idle:
+            for place in self.act_places:
+                if len(place.get_output_docks(self.act_behavior)) > 0:
+                    self.idle = False
+                    break
 
         # return the new set of active places to the global configuration
         return self.act_places
 
 
-    def end_transition(self, dryrun):
+    def _end_transition(self, dryrun):
         """
         This method try to join threads from currently running transitions.
         For joined transitions, the dst_docks (ie input docks of the assembly)
@@ -472,7 +532,7 @@ class Component (object, metaclass=ABCMeta):
             if joined:
                 if self.printing:
                     print(self.color + "[" + self.name + "] End transition '" +
-                          trans.getname() + "'" + Messages.endc())
+                          trans.get_name() + "'" + Messages.endc())
                 new_idocks.append(trans.get_dst_dock())
             # keep the list of unterminated transitions
             elif not joined:
@@ -481,12 +541,12 @@ class Component (object, metaclass=ABCMeta):
         return (still_running, new_idocks)
 
 
-    def idocks_in_place(self):
+    def _idocks_in_place(self):
         """
         This method returns the list of new places enabled. These places come
         from their set of input docks, all ready.
 
-        :return: (new_place, still_idocks)
+        :return: (new_places, still_idocks)
 
         Elements of the returned tuple are the new list of new enabled places,
         and the list of input docks without modification
@@ -502,7 +562,7 @@ class Component (object, metaclass=ABCMeta):
             for id in self.act_idocks:
                 place = id.mother
                 if place not in new_places:
-                    inp_docks = place.get_inputdocks()
+                    inp_docks = place.get_input_docks(self.act_behavior)
                     if len(inp_docks) > 0:
                         ready = True
                         for id in inp_docks:
@@ -513,7 +573,7 @@ class Component (object, metaclass=ABCMeta):
                             if self.printing:
                                 print(
                                     self.color + "[" + self.name + "] In place '" +
-                                    place.getname() + "'" + Messages.endc())
+                                    place.get_name() + "'" + Messages.endc())
                             new_places.append(place)
                         else:
                             for id in inp_docks:
@@ -523,7 +583,7 @@ class Component (object, metaclass=ABCMeta):
         return new_places, still_idocks
 
 
-    def place_in_odocks(self, my_connections):
+    def _place_in_odocks(self, my_connections):
         """
         This method represents the one moving the token of a place to its
         output docks.
@@ -539,7 +599,7 @@ class Component (object, metaclass=ABCMeta):
         still_place = []
 
         for place in self.act_places:
-            odocks = place.get_outputdocks()
+            odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) > 0:
                 # the place can be left if no provide dependencies are bound
                 # to it
@@ -552,7 +612,7 @@ class Component (object, metaclass=ABCMeta):
                     # only (limitation)
                 #    service_found = False
                 #    for p in provides:
-                #        if p.gettype() == DepType.PROVIDE:
+                #        if p.get_type() == DepType.PROVIDE:
                 #            service_found = True
                 #    if service_found:
                 #        still_place.append(place)
@@ -566,7 +626,7 @@ class Component (object, metaclass=ABCMeta):
 
         return new_odocks, still_place
 
-    def start_transition(self, my_connections, dryrun):
+    def _start_transition(self, my_connections, dryrun):
         """
         This method start the transitions ready to run:
 
@@ -585,12 +645,12 @@ class Component (object, metaclass=ABCMeta):
         still_odocks = []
 
         for od in self.act_odocks:
-            trans = od.transition
+            trans = od.get_transition()
 
             enabled = True
 
-            if trans.getname() in self.trans_connections:
-                for conn in self.trans_connections[trans.getname()]:
+            if trans.get_name() in self.trans_connections:
+                for conn in self.trans_connections[trans.get_name()]:
                     found = False
                     for act_conn in my_connections:
                         if act_conn == conn.gettuple():
@@ -602,7 +662,7 @@ class Component (object, metaclass=ABCMeta):
             if enabled:
                 if self.printing:
                     print(self.color + "[" + self.name + "] Start transition '"
-                        + trans.getname() + "' ..." + Messages.endc())
+                        + trans.get_name() + "' ..." + Messages.endc())
                 trans.start_thread(dryrun)
                 new_transitions.append(trans)
             else:

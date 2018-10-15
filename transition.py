@@ -23,10 +23,11 @@ class Transition (object):
     BUILD TRANSITION
     """
 
-    def __init__(self, name, src, dst, func, args, places):
+    def __init__(self, name, src, dst, bhv, func, args, places):
         self.name = name
         self.src_place = src
         self.dst_place = dst
+        self.behavior = bhv
         self.code = func
         self.args = args
         self.bind_docks(places)
@@ -47,7 +48,7 @@ class Transition (object):
             if key == self.dst_place:
                 self.dst_dock = places[key].create_input_dock(self)
 
-    def setname(self, name):
+    def set_name(self, name):
         """
         This method set the name of the transition
 
@@ -55,7 +56,7 @@ class Transition (object):
         """
         self.name = name
 
-    def getname(self):
+    def get_name(self):
         """
         This method returns the name of the transition
 
@@ -78,6 +79,14 @@ class Transition (object):
         :return: the destination dock self.dst_dock
         """
         return self.dst_dock
+
+    def get_behavior(self):
+        """
+        This method returns the behavior of the transition
+
+        :return: behavior (string)
+        """
+        return self.behavior
 
     def start_thread(self, dryrun):
         """

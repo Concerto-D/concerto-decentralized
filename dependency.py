@@ -7,6 +7,7 @@
 """
 
 from enum import Enum
+from whiteboard import *
 
 class DepMandatory(Enum):
     """
@@ -28,7 +29,7 @@ class DepType(Enum):
     DATA_PROVIDE = 3
 
     @staticmethod
-    def validtypes(type1, type2):
+    def valid_types(type1, type2):
         """
         This method checks if the two input types are compatible:
         - DepType.USE is compatible with DepType.PROVIDE
@@ -54,14 +55,15 @@ class Dependency (object):
     """
     This class represents a dependency.
     """
-    free = True
 
-    def __init__(self, name, type, bindings):
+    def __init__(self, name : str, type : DepType, bindings):
         self.name = name
         self.type = type
+        self.nb_users = 0
         self.bindings = bindings # list of transitions or places
+        self.wb = WhiteBoard()
 
-    def getname(self):
+    def get_name(self) -> str:
         """
         This method returns the name of the dependency
 
@@ -69,7 +71,7 @@ class Dependency (object):
         """
         return self.name
 
-    def gettype(self):
+    def get_type(self) -> DepType:
         """
         This method returns the type of the dependency DepType
 
@@ -77,7 +79,7 @@ class Dependency (object):
         """
         return self.type
 
-    def getbindings(self):
+    def get_bindings(self):
         """
         This method returns the place or the transition to which the
         dependency is bound. If the dependency is of type DepType.USE or
@@ -88,26 +90,14 @@ class Dependency (object):
         """
         return self.bindings
 
-    def isfree(self):
+    def is_free(self) -> bool:
         """
         This method indicates if the dependency is free or not, ie if it is
         already connected to another dependency within the assembly
 
         :return: True if not connected, False if free
         """
-        return self.free
-
-    def connectwb(self, wb):
-        """
-        This method set self.free to False to indicate that the dependency
-        has been connected in the assembly. Note that a dependency can be
-        connected more than once, however this method is used to throw a
-        warning when dependencies are not connected.
-
-        :return: self.free
-        """
-        self.connect()
-        self.wb = wb
+        return self.nb_users == 0
 
     def connect(self):
         """
@@ -118,7 +108,18 @@ class Dependency (object):
 
         :return: self.free
         """
-        self.free = False
+        self.nb_users += 1
+        
+    def set_wb(self, wb : WhiteBoard):
+        self.wb = wb
+        # Used for data use ports
+        # TODO: Create separate classes for Read and Use dependencies
+    
+    def disconnect(self):
+        if (self.nb_users > 0):
+            self.nb_users -= 1
+            if self.nb_users == 0:
+                self.wb = None
 
-    def getwb(self):
+    def get_wb(self) -> WhiteBoard:
         return self.wb
