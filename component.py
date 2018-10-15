@@ -417,7 +417,8 @@ class Component (object, metaclass=ABCMeta):
         This method initializes the initial activated places of the component
         in its local configuration self.act_places
         """
-        self.act_places.append(self.st_places[self.initial_place])
+        if not self.act_places:
+            self.act_places.append(self.st_places[self.initial_place])
 
         self.old_places = []
         self.old_odocks = []

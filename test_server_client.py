@@ -128,6 +128,10 @@ class ServerClient(Assembly):
         tprint("Assembly: waiting server")
         self.wait('server')
         
+        #DEBUGGING
+        print("Server active places: %s"%','.join([p.get_name() for p in self.server.act_places]))
+        print("Client active places: %s"%','.join([p.get_name() for p in self.client.act_places]))
+        
     def suspend(self):
         print("### SUSPENDING ###")
         self.change_behavior('client', 'stop')
@@ -135,8 +139,17 @@ class ServerClient(Assembly):
         self.change_behavior('server', 'stop')
         self.wait('server')
         
+        #DEBUGGING
+        print("Server active places: %s"%','.join([p.get_name() for p in self.server.act_places]))
+        print("Client active places: %s"%','.join([p.get_name() for p in self.client.act_places]))
+        
     def restart(self):
         print("### RESTARTING ###")
+        
+        #DEBUGGING
+        print("Server active places: %s"%','.join([p.get_name() for p in self.server.act_places]))
+        print("Client active places: %s"%','.join([p.get_name() for p in self.client.act_places]))
+        
         self.change_behavior('client', 'install_start')
         self.change_behavior('server', 'deploy')
         tprint("Assembly: waiting client")
