@@ -1,5 +1,9 @@
 from mad import *
-import time
+import time, datetime
+
+def tprint(message : str):
+    now = datetime.datetime.now()
+    print("[%2d:%2d:%2d:%3d] %s"%(now.hour,now.minute, now.second, now.microsecond/1000, message))
 
 
 class Client(Component):
@@ -7,18 +11,20 @@ class Client(Component):
     def create(self):
         self.places = [
             'off',
+            'waiting_server_ip',
             'configured',
             'running'
         ]
 
         self.transitions = {
-            'configure': ('off', 'configured', 'install_start', 0, self.configure),
+            'configure1': ('off', 'waiting_server_ip', 'install_start', 0, self.configure1),
+            'configure2': ('waiting_server_ip', 'configured', 'install_start', 0, self.configure2),
             'start': ('configured', 'running', 'install_start', 0, self.start),
             'suspend': ('configured', 'started', 'stop', 0, self.suspend)
         }
 
         self.dependencies = {
-            'server_ip': (DepType.DATA_USE, ['configure']),
+            'server_ip': (DepType.DATA_USE, ['configure2']),
             'service': (DepType.USE, ['start'])
         }
         
@@ -28,24 +34,26 @@ class Client(Component):
         self.server_ip = None
         Component.__init__(self)
 
-    def configure(self):
-        print("Client: configuration (1/2)")
+    def configure1(self):
+        tprint("Client: configuration (1/2)")
         time.sleep(1)
-        print("Client: waiting for server IP")
+        tprint("Client: waiting for server IP")
+
+    def configure2(self):
         self.server_ip = self.read('server_ip')
-        print("Client: configuration (2/2) [server IP: %s]" % self.server_ip)
+        tprint("Client: configuration (2/2) [server IP: %s]" % self.server_ip)
         time.sleep(1)
-        print("Client: configured")
+        tprint("Client: configured")
 
     def start(self):
-        print("Client: starting")
+        tprint("Client: starting")
         time.sleep(1)
-        print("Client: running")
+        tprint("Client: running")
 
     def suspend(self):
-        print("Client: suspending")
+        tprint("Client: suspending")
         time.sleep(2)
-        print("Client: suspended")
+        tprint("Client: suspended")
 
 
 class Server(Component):
@@ -77,25 +85,25 @@ class Server(Component):
         Component.__init__(self)
 
     def allocate(self):
-        print("Server: allocating resources")
+        tprint("Server: allocating resources")
         time.sleep(4)
         self.my_ip = "123.124.1.2"
-        print("Server: got IP %s" % self.my_ip)
+        tprint("Server: got IP %s" % self.my_ip)
         self.write('ip', self.my_ip)
-        print("Server: finished allocation")
+        tprint("Server: finished allocation")
 
     def run(self):
-        print("Server: preparing to run")
+        tprint("Server: preparing to run")
         time.sleep(4)
-        print("Server: running")
+        tprint("Server: running")
 
     def suspend(self):
-        print("Server: suspending")
+        tprint("Server: suspending")
         time.sleep(1)
-        print("Server: suspended")
+        tprint("Server: suspended")
 
     def restart(self):
-        print("Server: restarting")
+        tprint("Server: restarting")
         time.sleep(0.5)
         
 
@@ -109,11 +117,17 @@ if __name__ == '__main__':
     
     # Assembly
     ass = Assembly()
-    #ass.add_component('client', client)
+    ass.add_component('client', client)
     ass.add_component('server', server)
-    #ass.connect('client', 'server_ip',
-    #            'server', 'ip')
-    #ass.connect('client', 'service',
-    #            'server', 'service')
-    #ass.change_behavior('client', 'install_start')
+    ass.connect('client', 'server_ip',
+                'server', 'ip')
+    ass.connect('client', 'service',
+                'server', 'service')
+    ass.change_behavior('client', 'install_start')
     ass.change_behavior('server', 'deploy')
+    
+    tprint("Assembly: waiting client")
+    ass.wait('client')
+    tprint("Assembly: waiting server")
+    ass.wait('server')
+    exit(0)

@@ -308,7 +308,6 @@ class Assembly (object):
     """
     
     def loop_smeantics(self, dryrun=False, printing=False):
-        printing = True # TODO REMOVE
         while True:
             self.semantics(dryrun, printing)
 
