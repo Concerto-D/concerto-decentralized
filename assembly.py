@@ -76,6 +76,7 @@ class Assembly (object):
         
         # thread running the semantics of the assembly in a loop
         self.semantics_thread = Thread(target=self.loop_smeantics)
+        self.alive = True
         self.activate_component_lock : Lock = Lock()
         
         # dictionary active Component objects (with a behavior) -> event in case of wait
@@ -89,6 +90,10 @@ class Assembly (object):
         # set of active places and connections of the previous iteration
         self.old_places = []
         self.old_connections = []
+        
+    def terminate(self):
+        self.alive = False
+        self.semantics_thread.join()
 
     def add_component(self, name : str, comp : Component):
         """
@@ -248,15 +253,19 @@ class Assembly (object):
             self.semantics_thread.start()
         
     
-    def wait(self, component_name):
+    def wait(self, component_name, printing=False):
         self.activate_component_lock.acquire()
         event = None
         try:
             if component_name not in self.act_components or self.act_components[component_name].is_set():
+                if printing:
+                    print("wait returns immediatly")
                 return
             event = self.act_components[component_name]
         finally:
             self.activate_component_lock.release()
+        if printing:
+            print("wait is waiting for event %s"%str(event))
         event.wait()
         
 
@@ -308,7 +317,7 @@ class Assembly (object):
     """
     
     def loop_smeantics(self, dryrun=False, printing=False):
-        while True:
+        while self.alive:
             self.semantics(dryrun, printing)
 
     def init_semantics(self):

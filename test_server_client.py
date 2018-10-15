@@ -20,7 +20,7 @@ class Client(Component):
             'configure1': ('off', 'waiting_server_ip', 'install_start', 0, self.configure1),
             'configure2': ('waiting_server_ip', 'configured', 'install_start', 0, self.configure2),
             'start': ('configured', 'running', 'install_start', 0, self.start),
-            'suspend': ('configured', 'started', 'stop', 0, self.suspend)
+            'suspend': ('running', 'configured', 'stop', 0, self.suspend)
         }
 
         self.dependencies = {
@@ -105,29 +105,61 @@ class Server(Component):
     def restart(self):
         tprint("Server: restarting")
         time.sleep(0.5)
+
+
+class ServerClient(Assembly):
+    def __init__(self):
+        Assembly.__init__(self)
+        self.client = Client()
+        self.server = Server()
+        self.add_component('client', self.client)
+        self.add_component('server', self.server)
+    
+    def deploy(self):
+        print("### DEPLOYING ####")
+        self.connect('client', 'server_ip',
+                    'server', 'ip')
+        self.connect('client', 'service',
+                    'server', 'service')
+        self.change_behavior('client', 'install_start')
+        self.change_behavior('server', 'deploy')
+        tprint("Assembly: waiting client")
+        self.wait('client')
+        tprint("Assembly: waiting server")
+        self.wait('server')
+        
+    def suspend(self):
+        print("### SUSPENDING ###")
+        self.change_behavior('client', 'stop')
+        self.wait('client')
+        self.change_behavior('server', 'stop')
+        self.wait('server')
+        
+    def restart(self):
+        print("### RESTARTING ###")
+        self.change_behavior('client', 'install_start')
+        self.change_behavior('server', 'deploy')
+        tprint("Assembly: waiting client")
+        self.wait('client')
+        tprint("Assembly: waiting server")
+        self.wait('server')
+        
+        
         
 
 if __name__ == '__main__':
-
-    # Client
-    client = Client()
-
-    # Server
-    server = Server()
+    sca = ServerClient()
+    sca.deploy()
     
-    # Assembly
-    ass = Assembly()
-    ass.add_component('client', client)
-    ass.add_component('server', server)
-    ass.connect('client', 'server_ip',
-                'server', 'ip')
-    ass.connect('client', 'service',
-                'server', 'service')
-    ass.change_behavior('client', 'install_start')
-    ass.change_behavior('server', 'deploy')
+    tprint("Main: waiting a little before reconfiguring")
+    time.sleep(3)
     
-    tprint("Assembly: waiting client")
-    ass.wait('client')
-    tprint("Assembly: waiting server")
-    ass.wait('server')
+    sca.suspend()
+    tprint("Main: server maintenance")
+    time.sleep(5)
+    
+    tprint("Main: maintenance over")
+    sca.restart()
+    
+    sca.terminate()
     exit(0)
