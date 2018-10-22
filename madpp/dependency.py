@@ -7,7 +7,7 @@
 """
 
 from enum import Enum
-from whiteboard import *
+from madpp.whiteboard import *
 
 class DepMandatory(Enum):
     """

@@ -8,10 +8,10 @@
 
 import sys
 from abc import ABCMeta, abstractmethod
-from place import *
-from dependency import *
-from transition import Transition
-from utility import Messages
+from madpp.place import *
+from madpp.dependency import *
+from madpp.transition import Transition
+from madpp.utility import Messages
 
 class Group(object):
     """

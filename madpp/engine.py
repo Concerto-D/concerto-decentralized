@@ -6,7 +6,7 @@
    :synopsis: this file contains the Mad class.
 """
 
-from utility import Messages
+from madpp.utility import Messages
 import sys
 
 

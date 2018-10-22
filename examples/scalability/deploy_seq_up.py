@@ -1,7 +1,9 @@
-import sys
 #!/usr/bin/python3
 
-from mad import *
+import sys
+import time, datetime
+
+from madpp.all import *
 
 from examples.scalability.provider import Provider
 from examples.scalability.user import User

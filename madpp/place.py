@@ -6,7 +6,7 @@
    :synopsis: this file contains the Place and Dock classes.
 """
 
-from transition import Transition
+from madpp.transition import Transition
 
 class Dock(object):
     """This Dock class is used to create a dock.

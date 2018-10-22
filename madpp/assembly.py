@@ -10,10 +10,10 @@ import sys
 from typing import Dict, Tuple, List, Set
 from threading import Thread, Lock, Event
 from copy import deepcopy
-from whiteboard import *
-from dependency import *
-from component import *
-from utility import Messages, COLORS, remove_if
+from madpp.whiteboard import *
+from madpp.dependency import *
+from madpp.component import *
+from madpp.utility import Messages, COLORS, remove_if
 
 class Connection(object):
     """

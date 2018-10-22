@@ -1,4 +1,4 @@
-from mad import *
+from madpp.all import *
 from examples.scalability.transitions import *
 
 
