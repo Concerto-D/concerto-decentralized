@@ -440,6 +440,9 @@ class Component (object, metaclass=ABCMeta):
         new configuration of the current component.
         """
         
+        #TODO: ne pas autoriser plus d'une action de sémantique à s'exécuter à la fois
+        
+        
         if not self.initialized:
             raise ("Error: trying to execute one step of semantics in uninitialized component %s." % self.get_name())
 
@@ -454,21 +457,9 @@ class Component (object, metaclass=ABCMeta):
         (still_running, idocks) = self._end_transition(dryrun)
         new_transitions.extend(still_running)
         new_idocks.extend(idocks)
-        
-        #TODO : REMOVE
-        #if new_idocks or self.act_idocks:
-        #    print ("new_idocks: %s"%str(new_idocks))
-        #    print ("act_idocks: %s"%str(self.act_idocks))
 
         # input docks to places (atomic)
         (places, still_idocks) = self._idocks_in_place()
-        
-        #TODO : REMOVE
-        #if new_idocks or self.act_idocks:
-        #    print ("places: %s"%str(places))
-        #    print ("still_idocks: %s"%str(still_idocks))
-        #if self.act_idocks:
-        #    exit(0)
         
         new_idocks.extend(still_idocks)
         new_places.extend(places)

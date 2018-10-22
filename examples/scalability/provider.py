@@ -12,9 +12,11 @@ class Provider(Component):
             'waiting',
             'started'
         ]
+        
+        self.initial_place = 'waiting'
 
         self.transitions = {
-            'start': ('waiting', 'started', DryRun().testargs, (self.echo1,
+            'start': ('waiting', 'started', 'start', 0, DryRun().testargs, (self.echo1,
                                                                 self.echo2))
         }
 

@@ -113,38 +113,48 @@ class Server(Component):
 class ServerClient(Assembly):
     def __init__(self):
         Assembly.__init__(self)
-        self.client = Client()
+        self.nb_clients = 2000
+        self.clients = []
+        for i in range(self.nb_clients):
+            new_client = Client()
+            self.clients.append(new_client)
+            self.add_component('client%d'%i, new_client)
         self.server = Server()
-        self.add_component('client', self.client)
         self.add_component('server', self.server)
     
     def deploy(self):
         tprint("### DEPLOYING ####")
-        self.connect('client', 'server_ip',
-                    'server', 'ip')
-        self.connect('client', 'service',
-                    'server', 'service')
-        self.change_behavior('client', 'install_start')
+        for i in range(self.nb_clients):
+            self.connect('client%d'%i, 'server_ip',
+                        'server', 'ip')
+            self.connect('client%d'%i, 'service',
+                        'server', 'service')
+            self.change_behavior('client%d'%i, 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting client")
-        self.wait('client')
+        tprint("Assembly: waiting clients")
+        for i in range(self.nb_clients):
+            self.wait('client%d'%i)
         tprint("Assembly: waiting server")
         self.wait('server')
         
     def suspend(self):
         tprint("### SUSPENDING ###")
-        self.change_behavior('client', 'stop')
-        self.wait('client')
+        for i in range(self.nb_clients):
+            self.change_behavior('client%d'%i, 'stop')
+        for i in range(self.nb_clients):
+            self.wait('client%d'%i)
         self.change_behavior('server', 'stop')
         self.wait('server')
         
     def restart(self):
         tprint("### RESTARTING ###")
         
-        self.change_behavior('client', 'install_start')
+        for i in range(self.nb_clients):
+            self.change_behavior('client%d'%i, 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting client")
-        self.wait('client')
+        tprint("Assembly: waiting clients")
+        for i in range(self.nb_clients):
+            self.wait('client%d'%i)
         tprint("Assembly: waiting server")
         self.wait('server')
         
@@ -173,3 +183,4 @@ if __name__ == '__main__':
     print("Total time in seconds: %f"%(end_time-start_time))
     
     sca.terminate()
+    exit(0)

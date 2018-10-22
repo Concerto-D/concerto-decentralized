@@ -348,20 +348,21 @@ class Assembly (object):
         finally:
             self.activate_component_lock.release()
         
-        
-        # enable / disable connections
-        if self.act_places != self.old_places:
-            # enable/disable connections
-            new_connections = self.disable_enable_connections(printing)
-            # highest priority according to the model to guarantee the
-            # disconnection of services when no more provided
-            # before doing anything else
-            self.old_connections = self.act_connections.copy()
-            self.act_connections = new_connections.copy()
 
         # semantics for each component
-        new_places = []
         for c in active_components:
+            new_places = []
+        
+            # enable / disable connections
+            if self.act_places != self.old_places:
+                # enable/disable connections
+                new_connections = self.disable_enable_connections(printing)
+                # highest priority according to the model to guarantee the
+                # disconnection of services when no more provided
+                # before doing anything else
+                self.old_connections = self.act_connections.copy()
+                self.act_connections = new_connections.copy()
+                
             connections = []
             if c in self.component_connections:
                 for conn in self.component_connections[c]:
@@ -371,9 +372,9 @@ class Assembly (object):
             c_places = self.components[c].semantics(connections, dryrun, printing)
             new_places = new_places + c_places
 
-        # build the new configuration / ended
-        self.old_places = self.act_places.copy()
-        self.act_places = new_places.copy()
+            # build the new configuration / ended
+            self.old_places = self.act_places.copy()
+            self.act_places = new_places.copy()
         
         idle_components = []
         for c in active_components:

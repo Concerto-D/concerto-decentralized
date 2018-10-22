@@ -1,9 +1,54 @@
 import sys
+#!/usr/bin/python3
+
 from mad import *
 
 from examples.scalability.provider import Provider
 from examples.scalability.user import User
 from examples.scalability.userprovider import UserProvider
+
+
+class DeploySeqUp(Assembly):
+    def __init__(self, nb_comp : int):
+        self.nb_comp = nb_comp
+        
+        Assembly.__init__(self)
+        
+        self.provider = Provider()
+        self.add_component('provider', self.provider)
+        
+        # list of user-providers
+        self.ups = []
+
+        # user-providers created only if N > 2
+        for i in range(0, self.nb_comp-2):
+            self.ups.append(UserProvider())
+            self.add_component(self.name_for_up(i), self.ups[i])
+            if i > 0:
+                self.connect(self.name_for_up(i-1), 'servicep',
+                                  self.name_for_up(i), 'serviceu')
+            else:
+                self.connect('provider', 'service',
+                                  self.name_for_up(i), 'serviceu')
+
+        # last user
+        self.user = User()
+        self.add_component('user', self.user)
+        if self.nb_comp <= 2:
+            self.connect('provider', 'service', 'user', 'serviceu')
+        else:
+            self.connect(self.name_for_up(self.nb_comp-3), 'servicep',
+                              'user', 'serviceu')
+            
+    def deploy(self):
+        self.change_behavior('provider', 'start')
+        for i in range(0, self.nb_comp-2):
+            self.change_behavior(self.name_for_up(i), 'start')
+        self.change_behavior('user', 'start')
+    
+    @staticmethod
+    def name_for_up(id : int):
+        return "up" + str(id)
 
 if __name__ == '__main__':
 
@@ -13,38 +58,13 @@ if __name__ == '__main__':
               "sequentially>\n")
         sys.exit(-1)
     else:
-        num = int(sys.argv[1])
-        if num < 2:
+        nb_comp = int(sys.argv[1])
+        if nb_comp < 2:
             print("*** Warning: at least 2 components are deployed by this "
               "example. 2 components will be deployed.\n")
-            num = 2
+            nb_comp = 2
 
 
         # Composant Provider
-        provider = Provider()
-        ass = Assembly()
-        ass.addComponent('provider', provider)
-
-        # list of user-providers
-        ups = []
-
-        # user-providers created only if N > 2
-        for i in range(0, num-2):
-            ups.append(UserProvider())
-            name = "up" + str(i)
-            ass.addComponent(name, ups[i])
-            if i > 0:
-                ass.addConnection(ups[i-1], 'servicep', ups[i], 'serviceu')
-            else:
-                ass.addConnection(provider, 'service', ups[i], 'serviceu')
-
-        # last user
-        user = User()
-        ass.addComponent('user', user)
-        if num <= 2:
-            ass.addConnection(provider, 'service', user, 'serviceu')
-        else:
-            ass.addConnection(ups[num-3], 'servicep', user, 'serviceu')
-
-        mad = Mad(ass)
-        mad.run()
+        ass = DeploySeqUp(nb_comp)
+        ass.deploy()

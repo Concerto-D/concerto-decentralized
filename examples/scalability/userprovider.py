@@ -9,9 +9,11 @@ class UserProvider(Component):
             'waiting',
             'started'
         ]
+        
+        self.initial_place = 'waiting'
 
         self.transitions = {
-            'start': ('waiting', 'started', DryRun().run)
+            'start': ('waiting', 'started', 'start', 0, DryRun().run)
         }
 
         self.dependencies = {
