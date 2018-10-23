@@ -46,15 +46,13 @@ class ServerClient(Assembly):
         tprint("Assembly: waiting server")
         self.wait('server')
         
-        
-        
 
-if __name__ == '__main__':
+def time_test() -> float:
     tprint_show(False)
     
-    sca = ServerClient()
-    
     start_time : float = time.clock()
+    
+    sca = ServerClient()
     sca.deploy()
     
     tprint("Main: waiting a little before reconfiguring")
@@ -68,6 +66,13 @@ if __name__ == '__main__':
     sca.restart()
     
     end_time : float = time.clock()
-    print("Total time in seconds: %f"%(end_time-start_time))
+    total_time = end_time-start_time
+    print("Total time in seconds: %f"%total_time)
     
     sca.terminate()
+    return total_time
+    
+        
+
+if __name__ == '__main__':
+    time_test()

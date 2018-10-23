@@ -8,6 +8,7 @@ from madpp.all import *
 from examples.scalability.provider import Provider
 from examples.scalability.user import User
 from examples.scalability.userprovider import UserProvider
+from examples.utils import *
 
 
 class DeploySeqUp(Assembly):
@@ -52,6 +53,29 @@ class DeploySeqUp(Assembly):
     def name_for_up(id : int):
         return "up" + str(id)
 
+
+def time_test(nb_comp : int) -> float:
+    tprint_show(False)
+    
+    if nb_comp < 2:
+        print("*** Warning: at least 2 components are deployed by this "
+        "example. 2 components will be deployed.\n")
+        nb_comp = 2
+    
+    start_time : float = time.clock()
+
+    ass = DeploySeqUp(nb_comp)
+    ass.deploy()
+    
+    end_time : float = time.clock()
+    total_time = end_time-start_time
+    print("Total time in seconds: %f"%total_time)
+    
+    ass.terminate()
+    return total_time
+
+
+
 if __name__ == '__main__':
 
     if len(sys.argv) != 2:
@@ -59,14 +83,6 @@ if __name__ == '__main__':
         print("deploy_seq_up.py <number of components to deploy "
               "sequentially>\n")
         sys.exit(-1)
-    else:
-        nb_comp = int(sys.argv[1])
-        if nb_comp < 2:
-            print("*** Warning: at least 2 components are deployed by this "
-              "example. 2 components will be deployed.\n")
-            nb_comp = 2
-
-
-        # Composant Provider
-        ass = DeploySeqUp(nb_comp)
-        ass.deploy()
+    
+    nb_comp = int(sys.argv[1])
+    time_test(nb_comp)

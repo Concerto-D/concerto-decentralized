@@ -7,6 +7,7 @@ from madpp.all import *
 
 from examples.scalability.provider import Provider
 from examples.scalability.user_Ntrans import UserNTrans
+from examples.utils import *
 
 
 class DeployParUp(Assembly):
@@ -41,30 +42,44 @@ class DeployParUp(Assembly):
         return "u" + str(id)
         
 
-if __name__ == '__main__':
+def time_test(nb_comp : int, nb_trans : int) -> float:
+    tprint_show(False)
+    
+    if nb_comp < 1:
+        print("*** Warning: at least 1 user component is deployed by "
+                "this example. 1 component will be deployed.\n")
+        nb_comp = 1
+    if nb_trans < 1:
+        print("*** Warning: at least 1 transition is needed inside the "
+                "user components. 1 transition will be deployed.\n")
+        nb_trans = 1
+    
+    start_time : float = time.clock()
+        
+    tprint("Creating assembly")
 
+    ass = DeployParUp(nb_comp, nb_trans)
+        
+    tprint("Deploying")
+
+    ass.deploy()
+    
+    end_time : float = time.clock()
+    total_time = end_time-start_time
+    print("Total time in seconds: %f"%total_time)
+    
+    ass.terminate()
+    return total_time
+    
+        
+
+if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("*** Error: missing parameters!\n")
         print("deploy_par_up.py <number of user components> <number of "
               "transitions inside user components>\n")
         sys.exit(-1)
-    else:
-        nb_comp = int(sys.argv[1])
-        nb_trans = int(sys.argv[2])
-        if nb_comp < 1:
-            print("*** Warning: at least 1 user component is deployed by "
-                  "this example. 1 component will be deployed.\n")
-            nb_comp = 1
-        if nb_trans < 1:
-            print("*** Warning: at least 1 transition is needed inside the "
-                  "user components. 1 transition will be deployed.\n")
-            nb_trans = 1
-            
-        print("Creating assembly")
-
-        ass = DeployParUp(nb_comp, nb_trans)
-            
-        print("Deploying")
-
-        ass.deploy()
-        ass.terminate()
+    
+    nb_comp = int(sys.argv[1])
+    nb_trans = int(sys.argv[2])
+    time_test(nb_comp, nb_trans)
