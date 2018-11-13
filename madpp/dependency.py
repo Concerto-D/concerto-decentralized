@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -7,7 +6,7 @@
 """
 
 from enum import Enum
-from madpp.whiteboard import *
+from typing import Dict, Tuple, List, Set
 
 class DepMandatory(Enum):
     """
@@ -56,12 +55,21 @@ class Dependency (object):
     This class represents a dependency.
     """
 
-    def __init__(self, name : str, type : DepType, bindings):
+    def __init__(self, component, name : str, type : DepType):
+        self.component = component
         self.name = name
         self.type = type
+        self.connections : Set = set()
         self.nb_users = 0
-        self.bindings = bindings # list of transitions or places
-        self.wb = WhiteBoard()
+        self.data = None
+    
+    def get_component(self):
+        """
+        This method returns the component of the dependency
+
+        :return: component
+        """
+        return self.component
 
     def get_name(self) -> str:
         """
@@ -78,28 +86,35 @@ class Dependency (object):
         :return: type
         """
         return self.type
+    
+    def get_data(self):
+        if self.get_type() is not DepType.DATA_PROVIDE:
+            raise Exception("Trying to get data from dependency '%s' which is not of type data provide"%self.get_name())
+        return self.data
+    
+    def read(self):
+        if self.get_type() is not DepType.DATA_USE:
+            raise Exception("Trying to read from dependency '%s' which is not of type data use"%self.get_name())
+        for c in self.connections:
+            if c.is_active():
+                return c.get_provide_dep().get_data()
+        raise Exception("Trying to read from dependency '%s' which is not served"%self.get_name())
+    
+    def write(self, data):
+        if self.get_type() is not DepType.DATA_PROVIDE:
+            raise Exception("Trying to write to dependency '%s' which is not of type data provide"%self.get_name())
+        self.data = data
 
-    def get_bindings(self):
+    def is_connected(self) -> bool:
         """
-        This method returns the place or the transition to which the
-        dependency is bound. If the dependency is of type DepType.USE or
-        DepType.DATA_USE it is bound to a transition, otherwise it is bound
-        to a place.
-
-        :return: the transition or the place self.binding
-        """
-        return self.bindings
-
-    def is_free(self) -> bool:
-        """
-        This method indicates if the dependency is free or not, ie if it is
+        This method indicates if the dependency is connected or not, ie if it is
         already connected to another dependency within the assembly
 
-        :return: True if not connected, False if free
+        :return: True if connected, False otherwise
         """
-        return self.nb_users == 0
+        return len(self.connections) > 0
 
-    def connect(self):
+    def connect(self, c):
         """
         This method set self.free to False to indicate that the dependency
         has been connected in the assembly. Note that a dependency can be
@@ -108,18 +123,33 @@ class Dependency (object):
 
         :return: self.free
         """
-        self.nb_users += 1
-        
-    def set_wb(self, wb : WhiteBoard):
-        self.wb = wb
-        # Used for data use ports
-        # TODO: Create separate classes for Read and Use dependencies
+        self.connections.add(c)
     
-    def disconnect(self):
-        if (self.nb_users > 0):
-            self.nb_users -= 1
-            if self.nb_users == 0:
-                self.wb = None
-
-    def get_wb(self) -> WhiteBoard:
-        return self.wb
+    def disconnect(self, c):
+        self.connections.remove(c)
+    
+    def is_in_use(self) -> bool:
+        return self.nb_users > 0
+    
+    def start_using(self):
+        self.nb_users += 1
+    
+    def stop_using(self):
+        self.nb_users -= 1
+        
+    def is_served(self):
+        if self.type != DepType.DATA_USE and self.type != DepType.USE:
+            raise Exception("Trying to check if a (data) provide port is served")
+        for c in self.connections:
+            if c.is_active():
+                return True
+        return False
+    
+    def is_locked(self):
+        if self.type != DepType.DATA_PROVIDE and self.type != DepType.PROVIDE:
+            raise Exception("Trying to check if a (data) use port is active")
+        for c in self.connections:
+            if c.is_locked():
+                return True
+        return False
+            

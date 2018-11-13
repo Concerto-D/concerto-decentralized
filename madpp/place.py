@@ -16,8 +16,8 @@ class Dock(object):
 
     DOCK_TYPE = 0
 
-    def __init__(self, place, type, transition):
-        self.mother = place
+    def __init__(self, place, type, transition : Transition):
+        self.place = place
         self.DOCK_TYPE = type
         self.transition = transition
 
@@ -27,7 +27,7 @@ class Dock(object):
 
         :return: a Place object
         """
-        return self.mother
+        return self.place
 
     def get_type(self):
         """
@@ -37,10 +37,10 @@ class Dock(object):
         """
         return self.DOCK_TYPE
 
-    def get_transition(self):
+    def get_transition(self) -> Transition:
         return self.transition
     
-    def get_behavior(self):
+    def get_behavior(self) -> str:
         return self.get_transition().get_behavior()
 
 
@@ -121,21 +121,3 @@ class Place (object):
             return []
         else:
             return self.output_docks[behavior]
-
-    def add_provide(self, dep):
-        """
-        This method is used to add a provide dependency bound to the current
-        place
-
-        :param dep: the provide dependency to add
-        """
-        self.provides.append(dep)
-
-    def get_provides(self):
-        """
-        This method returns the list of provide dependencies bound to the
-        current place
-
-        :return: self.provides
-        """
-        return self.provides

@@ -1,5 +1,5 @@
 from madpp.all import *
-from examples.scalability.transitions import *
+from madpp.utility import empty_transition
 
 
 class UserProvider(Component):
@@ -13,7 +13,7 @@ class UserProvider(Component):
         self.initial_place = 'waiting'
 
         self.transitions = {
-            'start': ('waiting', 'started', 'start', 0, DryRun().run)
+            'start': ('waiting', 'started', 'start', 0, empty_transition)
         }
 
         self.dependencies = {

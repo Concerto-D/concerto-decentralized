@@ -4,6 +4,7 @@ import sys
 import time, datetime
 
 from madpp.all import *
+from madpp.utility import Printer
 
 from examples.scalability.provider import Provider
 from examples.scalability.user_Ntrans import UserNTrans
@@ -20,9 +21,10 @@ class DeployParUp(Assembly):
         self.provider = Provider()
         self.add_component('provider', self.provider)
         self.users = []
-        for i in range(0, self.nb_comp):
+        for i in range(self.nb_comp):
             self.users.append(UserNTrans(self.nb_trans))
             self.add_component(self.name_for_user(i), self.users[i])
+        self.synchronize()
             
     def deploy(self):
         for i in range(0, self.nb_comp):
@@ -31,11 +33,12 @@ class DeployParUp(Assembly):
         self.change_behavior('provider', 'start')
         for i in range(0, self.nb_comp):
             self.change_behavior(self.name_for_user(i), 'start')
-        print("Waiting provider")
+        self.print("Waiting provider")
         self.wait('provider')
         for i in range(0, self.nb_comp):
-            print("Waiting user_n_trans %d"%i)
+            self.print("Waiting user_n_trans %d"%i)
             self.wait(self.name_for_user(i))
+        self.synchronize()
     
     @staticmethod
     def name_for_user(id : int):
@@ -43,8 +46,6 @@ class DeployParUp(Assembly):
         
 
 def time_test(nb_comp : int, nb_trans : int) -> float:
-    tprint_show(False)
-    
     if nb_comp < 1:
         print("*** Warning: at least 1 user component is deployed by "
                 "this example. 1 component will be deployed.\n")
@@ -56,11 +57,12 @@ def time_test(nb_comp : int, nb_trans : int) -> float:
     
     start_time : float = time.clock()
         
-    tprint("Creating assembly")
+    Printer.st_tprint("Creating assembly")
 
     ass = DeployParUp(nb_comp, nb_trans)
+    ass.set_verbosity(-1)
         
-    tprint("Deploying")
+    Printer.st_tprint("Deploying")
 
     ass.deploy()
     

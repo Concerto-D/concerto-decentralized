@@ -3,6 +3,7 @@
 
 from madpp.component import Component
 from madpp.assembly import Assembly
+from madpp.connection import *
 from madpp.transition import Transition
 from madpp.dependency import *
 from madpp.place import *

@@ -1,5 +1,5 @@
 from madpp.all import *
-from examples.scalability.transitions import *
+from madpp.utility import empty_transition
 
 
 class UserNTrans(Component):
@@ -18,11 +18,11 @@ class UserNTrans(Component):
         self.initial_place = 'waiting'
 
         self.transitions = {
-            'init': ('waiting', 'configured', 'start', 0, DryRun().run)
+            'init': ('waiting', 'configured', 'start', 0, empty_transition)
         }
         for i in range(0,int(self.nb_trans)):
             name = "t" + str(i)
-            self.transitions[name] = ('configured', 'started', 'start', 0, DryRun().run)
+            self.transitions[name] = ('configured', 'started', 'start', 0, empty_transition)
 
         self.dependencies = {
             'service': (DepType.USE, ['init'])

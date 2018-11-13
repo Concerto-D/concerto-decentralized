@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from madpp.all import *
+from madpp.utility import Printer
 import time, datetime
 
 from client import Client
@@ -17,52 +18,49 @@ class ServerClient(Assembly):
         self.add_component('server', self.server)
     
     def deploy(self):
-        tprint("### DEPLOYING ####")
+        print("### DEPLOYING ####")
         self.connect('client', 'server_ip',
                     'server', 'ip')
         self.connect('client', 'service',
                     'server', 'service')
         self.change_behavior('client', 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting client")
         self.wait('client')
-        tprint("Assembly: waiting server")
-        self.wait('server')
+        self.synchronize()
         
     def suspend(self):
-        tprint("### SUSPENDING ###")
+        print("### SUSPENDING ###")
         self.change_behavior('client', 'stop')
-        self.wait('client')
         self.change_behavior('server', 'stop')
         self.wait('server')
+        self.synchronize()
         
     def restart(self):
-        tprint("### RESTARTING ###")
-        
+        print("### RESTARTING ###")
         self.change_behavior('client', 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting client")
         self.wait('client')
-        tprint("Assembly: waiting server")
-        self.wait('server')
+        self.synchronize()
         
 
-def time_test() -> float:
-    tprint_show(False)
-    
+def time_test(verbosity : int = 0, print_time : bool = False) -> float:
     start_time : float = time.clock()
     
+    Printer.st_tprint("Main: creating the assembly")
     sca = ServerClient()
+    sca.set_verbosity(verbosity)
+    sca.set_print_time(print_time)
+    
+    Printer.st_tprint("Main: deploying the assembly")
     sca.deploy()
     
-    tprint("Main: waiting a little before reconfiguring")
+    Printer.st_tprint("Main: waiting a little before reconfiguring")
     time.sleep(3)
     
     sca.suspend()
-    tprint("Main: server maintenance")
+    Printer.st_tprint("Main: waiting a little before restarting")
     time.sleep(5)
     
-    tprint("Main: maintenance over")
     sca.restart()
     
     end_time : float = time.clock()
@@ -75,4 +73,7 @@ def time_test() -> float:
         
 
 if __name__ == '__main__':
-    time_test()
+    time_test(
+        verbosity = 0,
+        print_time = True
+    )

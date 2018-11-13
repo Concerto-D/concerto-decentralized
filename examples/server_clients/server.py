@@ -32,23 +32,23 @@ class Server(Component):
         Component.__init__(self)
 
     def allocate(self):
-        tprint("Server: allocating resources")
+        self.print_color("allocating resources")
         time.sleep(4)
         self.my_ip = "123.124.1.2"
-        tprint("Server: got IP %s" % self.my_ip)
+        self.print_color("got IP %s" % self.my_ip)
         self.write('ip', self.my_ip)
-        tprint("Server: finished allocation")
+        self.print_color("finished allocation")
 
     def run(self):
-        tprint("Server: preparing to run")
+        self.print_color("preparing to run")
         time.sleep(4)
-        tprint("Server: running")
+        self.print_color("running")
 
     def suspend(self):
-        tprint("Server: suspending")
+        self.print_color("suspending")
         time.sleep(1)
-        tprint("Server: suspended")
+        self.print_color("suspended")
 
     def restart(self):
-        tprint("Server: restarting")
+        self.print_color("restarting")
         time.sleep(0.5) 

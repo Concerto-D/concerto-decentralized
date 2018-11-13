@@ -9,34 +9,13 @@
 import sys
 from typing import Dict, Tuple, List, Set
 from threading import Thread, Lock, Event
-from copy import deepcopy
-from madpp.whiteboard import *
-from madpp.dependency import *
-from madpp.component import *
-from madpp.utility import Messages, COLORS, remove_if
+from queue import Queue
+from madpp.dependency import DepType, Dependency
+from madpp.component import Component
+from madpp.connection import Connection
+from madpp.internal_instruction import InternalInstruction
+from madpp.utility import Messages, COLORS, Printer
 
-class Connection(object):
-    """
-    This class is used by the assembly to store connections between components
-    """
-
-    def __init__(self, comp1 : Component, dep1 : Dependency, comp2 : Component, dep2 : Dependency):
-        self.active = False
-        self.tuple = (comp1, dep1, comp2, dep2)
-        self.names = (comp1.get_name(), dep1.get_name(), comp2.get_name(),
-                          dep2.get_name())
-
-    def activate(self):
-        self.active = True
-
-    def gettuple(self):
-        return self.tuple
-
-    def get_names(self):
-        return self.names
-
-    def isactive(self):
-        return self.active
 
 class Assembly (object):
     """This Assembly class is used to create a assembly.
@@ -52,66 +31,125 @@ class Assembly (object):
     """
 
     def __init__(self):
-        self.printed = False
         # dict of Component objects: id => object
         self.components : Dict[str, Component] = {}
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
-        self.connections : List[Tuple[Component,Dependency,Component,Dependency]] = []
-
-        # list of white boards, 1 for each data provide
-        self.wbs : Dict[Dependency, WhiteBoard] = {}
+        self.connections : Dict[Tuple[Dependency,Dependency],Connection] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
         # this is used to improve performance of the semantics
-        self.places_connections = {}
+        self.places_connections : Dict[str,List[Connection]] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
         # this is used to improve performance of the semantics
-        self.component_connections = {}
+        self.component_connections : Dict[str,Set[Connection]] = {}
         
         # Operational semantics
         
         # thread running the semantics of the assembly in a loop
-        self.semantics_thread = Thread(target=self.loop_smeantics)
-        self.alive = True
-        self.activate_component_lock : Lock = Lock()
+        self.semantics_thread : Thread = Thread(target=self.loop_smeantics)
+        self.alive : bool = True
         
-        # dictionary active Component objects (with a behavior) -> event in case of wait
-        self.act_components : Dict[str,Event] = {}
-        #set of newly active Component objects (to initialize them)
-        self.new_act_components : Set[str] = set()
-
-        # a set of active places and connections within the assembly (global)
-        self.act_places = []
-        self.act_connections = []
-        # set of active places and connections of the previous iteration
-        self.old_places = []
-        self.old_connections = []
+        # queue of instructions (synchronized with semantics thread)
+        self.instructions_queue = Queue() # thread-safe
+        self.current_instruction = None
         
+        # set of active components
+        self.act_components : Set[str] = set()
+        
+        self.verbosity : int = 0
+        self.print_time : bool = False
+        self.dryrun : bool = False
+        self.name : str = None
+    
+    
+    def set_verbosity(self, level : int):
+        self.verbosity = level
+        for c in self.components:
+            self.components[c].set_verbosity(level)
+        
+    def set_print_time(self, value : bool):
+        self.print_time = value
+        for c in self.components:
+            self.components[c].set_print_time(value)
+    
+    def set_dryrun(self, value : int):
+        self.dryrun = value
+        for c in self.components:
+            self.components[c].set_dryrun(value)
+            
+    def set_name(self, name : str):
+        self.name = name
+    
+    def get_name(self) -> str:
+        return self.name
+    
     def terminate(self):
+        self.synchronize()
         self.alive = False
         self.semantics_thread.join()
+    
+    def print(self, string : str):
+        if self.verbosity < 0:
+            return
+        if self.name is None:
+            name = "Assembly"
+        else:
+            name = self.name
+        message : str = "[%s] %s"%(name, string)
+        if self.print_time:
+            Printer.st_tprint(message)
+        else:
+            print(message)
+    
+    
+    def add_instruction(self, instruction : InternalInstruction):
+        self.instructions_queue.put(instruction)
+        if not self.semantics_thread.is_alive():
+            self.semantics_thread.start()
+
 
     def add_component(self, name : str, comp : Component):
+        self.add_instruction(InternalInstruction.build_add(name,comp))
+
+    def _add(self, name : str, comp : Component) -> bool:
         """
         This method adds a component instance to the assembly
 
         :param comp: the component instance to add
         """
+        if name in self.components:
+            raise Exception("Trying to add '%s' as a component while it is already a component"%name)
         comp.set_name(name)
         comp.set_color(COLORS[len(self.components)%len(COLORS)])
-        self.component_connections[name] = []
-        if name not in self.components:
-            self.components[name]=comp
-        else:
-            print(Messages.fail() + "ERROR - Already instantiate component "+name +
-                  + Messages.endc())
-            sys.exit(0)
+        comp.set_verbosity(self.verbosity)
+        comp.set_print_time(self.print_time)
+        comp.set_dryrun(self.dryrun)
+        self.components[name]=comp
+        self.component_connections[name] = set()
+        return True
+        
+    
+    def del_component(self, component_name : str):
+        self.add_instruction(InternalInstruction.build_del(component_name))
+    
+    def _del(self, component_name : str) -> bool:
+        if component_name in self.act_components:
+            return False
+        if len(self.component_connections[component_name]) > 0:
+            return False
+        del self.component_connections[component_name]
+        del self.components[component_name]
+        return True
+
 
     def connect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
+        self.add_instruction(InternalInstruction.build_connect(comp1_name,dep1_name,comp2_name,dep2_name))
+
+    def _connect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str) -> bool:
         """
         This method adds a connection between two components dependencies.
 
@@ -123,8 +161,9 @@ class Assembly (object):
         
         comp1 = self.get_component(comp1_name)
         comp2 = self.get_component(comp2_name)
-        dep1 = comp1.st_dependencies[dep1_name]
-        dep2 = comp2.st_dependencies[dep2_name]
+        
+        dep1 = comp1.get_dependency(dep1_name)
+        dep2 = comp2.get_dependency(dep2_name)
         
         if DepType.valid_types(dep1.get_type(),
                               dep2.get_type()):
@@ -132,64 +171,28 @@ class Assembly (object):
             # check if a dependency is already connected
 
             # create connection
-            new_connection = Connection(comp1, dep1, comp2,
-                                        dep2)
-            self.connections.append(new_connection.gettuple())
+            new_connection = Connection(dep1, dep2)
+            
+            provide_dep = new_connection.get_provide_dep()
+            use_dep = new_connection.get_use_dep()
+            
+            if (provide_dep, use_dep) in self.connections:
+                raise Exception("Trying to add already existing connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
+            
+            self.connections[(provide_dep, use_dep)] = new_connection
+            self.component_connections[comp1_name].add(new_connection)
+            self.component_connections[comp2_name].add(new_connection)
 
-            # fill component_connections
-            if comp1.get_name() in self.component_connections:
-                self.component_connections[comp1.get_name()].append(new_connection)
-            else:
-                self.component_connections[comp1.get_name()] = [new_connection]
-            if comp2.get_name() in self.component_connections:
-                self.component_connections[comp2.get_name()].append(new_connection)
-            else:
-                self.component_connections[comp2.get_name()] = [new_connection]
-
-            # fill places_connections
-            if dep1.get_type() == DepType.PROVIDE or \
-               dep1.get_type() == DepType.DATA_PROVIDE:
-                for binding in dep1.get_bindings():
-                    if binding in self.places_connections:
-                        self.places_connections[binding].append(new_connection)
-                    else:
-                        self.places_connections[binding] = [new_connection]
-            elif dep2.get_type() == DepType.PROVIDE or \
-               dep2.get_type() == DepType.DATA_PROVIDE:
-                for binding in dep2.get_bindings():
-                    if binding in self.places_connections:
-                        self.places_connections[binding].append(new_connection)
-                    else:
-                        self.places_connections[binding] = [new_connection]
-
-            # white board management
-            # if we have a DATA connection, create a whiteboard and attached it
-            if (dep1.get_type() == DepType.DATA_PROVIDE) \
-                or (dep1.get_type() == DepType.DATA_USE):
-                # get user and provider of the connection
-                if dep1.get_type() == DepType.DATA_PROVIDE:
-                    provider = dep1
-                    user = dep2
-                else:
-                    provider = dep2
-                    user = dep1
-                self.wbs[provider] = provider.get_wb()
-                user.set_wb(self.wbs[provider])
-            # else we have a service connection to connect
-            else:
-                dep1.connect()
-                dep2.connect()
+            return True
 
         else:
-            print(Messages.fail() + "ERROR - you try to connect dependencies "
-                                 "with incompatible types. DepType.USE and "
-                                  "DepType.DATA-USE should be respectively "
-                                  "connected to DepType.PROVIDE and "
-                                  "DepType.DATA-PROVIDE dependencies."
-                  + Messages.endc())
-            sys.exit(0)
+            raise Exception("Trying to connect uncompatible dependencies %s.%s and %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
+
 
     def disconnect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
+        self.add_instruction(InternalInstruction.build_disconnect(comp1_name,dep1_name,comp2_name,dep2_name))
+
+    def _disconnect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str) -> bool:
         """
         This method adds a connection between two components dependencies.
 
@@ -199,74 +202,60 @@ class Assembly (object):
         :param dep2_name:  The name of the dependency of the second component to connect
         """
         
-        #TODO: Check that it is not breaking any active behavior
-        
         comp1 = self.get_component(comp1_name)
         comp2 = self.get_component(comp2_name)
-        dep1 = comp1.st_dependencies[dep1_name]
-        dep2 = comp2.st_dependencies[dep2_name]
         
-        is_connection_tuple = \
-            lambda e : e == (comp1, dep1, comp2, dep2)
-        remove_if(self.connections, is_connection_tuple)
+        dep1 = comp1.get_dependency(dep1_name)
+        dep2 = comp2.get_dependency(dep2_name)
         
-        is_connection = \
-            lambda e : e.gettuple() == (comp1, dep1, comp2, dep2)
-        remove_if(self.component_connections[comp1.get_name()], is_connection)
-        remove_if(self.component_connections[comp2.get_name()], is_connection)
-
-        # fill places_connections
-        if dep1.get_type() == DepType.PROVIDE or \
-            dep1.get_type() == DepType.DATA_PROVIDE:
-            for binding in dep1.get_bindings():
-                remove_if(self.places_connections[binding], is_connection)
-        elif dep2.get_type() == DepType.PROVIDE or \
-            dep2.get_type() == DepType.DATA_PROVIDE:
-            for binding in dep2.get_bindings():
-                remove_if(self.places_connections[binding], is_connection)
-
-        dep1.disconnect()
-        dep2.disconnect()
-    
-    def is_component_idle(self, component_name):
-        if component_name in self.act_behaviors:
-            if self.act_behaviors[component_name].is_alive():
-                return False
-            else:
-                del self.act_behaviors[component_name]
-        return True
+        dep1type = dep1.get_type()
+        if dep1type == DepType.PROVIDE or dep1type == DepType.DATA_PROVIDE:
+            provide_dep = dep1
+            use_dep = dep2
+        else:
+            provide_dep = dep2
+            use_dep = dep1
             
-    def change_behavior(self, component_name : str, behavior : str):
-        component = self.get_component(component_name)
-        self.activate_component_lock.acquire()
-        try:
-            if component_name in self.act_components:
-                raise Exception("Error: trying to change the behavior of component %s to %s while it is still running behavior %s"%(component_name, behavior, component.get_active_behavior()))
-                #TODO Maybe wait? To decide
-            component.set_behavior(behavior)
-            # Create a new thread for the behavior, ready to join in case of wait
-            self.act_components[component_name] = Event()
-            self.new_act_components.add(component_name)
-        finally:
-            self.activate_component_lock.release()
-        if not self.semantics_thread.is_alive():
-            self.semantics_thread.start()
+        if (provide_dep, use_dep) not in self.connections:
+            raise Exception("Trying to remove unexisting connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
+        
+        connection : Connection = self.connections[(provide_dep, use_dep)]
+        if connection.can_remove():
+            connection.disconnect()
+            self.component_connections[comp1_name].discard(connection)
+            self.component_connections[comp2_name].discard(connection)
+            del self.connections[(provide_dep, use_dep)]
+            return True
+        else:
+            return False
         
     
-    def wait(self, component_name, printing=False):
-        self.activate_component_lock.acquire()
-        event = None
-        try:
-            if component_name not in self.act_components or self.act_components[component_name].is_set():
-                if printing:
-                    print("wait returns immediatly")
-                return
-            event = self.act_components[component_name]
-        finally:
-            self.activate_component_lock.release()
-        if printing:
-            print("wait is waiting for event %s"%str(event))
-        event.wait()
+    def change_behavior(self, component_name : str, behavior : str):
+        self.add_instruction(InternalInstruction.build_change_behavior(component_name, behavior))
+            
+    def _change_behavior(self, component_name : str, behavior : str):
+        component = self.get_component(component_name)
+        if component_name in self.act_components:
+            return False
+        else:
+            component.set_behavior(behavior)
+            self.act_components.add(component_name)
+            return True
+        
+    
+    def wait(self, component_name : str):
+        self.add_instruction(InternalInstruction.build_wait(component_name))
+    
+    def _wait(self, component_name : str):
+        return self.is_component_idle(component_name)
+
+
+    def synchronize(self):
+        self.instructions_queue.join()
+    
+    
+    def is_component_idle(self, component_name : str) -> bool:
+        return (not component_name in self.act_components)
         
 
     def get_component(self, name : str) -> Component:
@@ -275,8 +264,9 @@ class Assembly (object):
         else:
             raise(Exception("ERROR - Unknown component %s"%name))
 
-    def get_components(self):
-        return self.components.values()
+
+    def get_components(self) -> List[Component]:
+        return list(self.components.values())
 
     """
     CHECK ASSEMBLY
@@ -316,109 +306,46 @@ class Assembly (object):
     OPERATIONAL SEMANTICS
     """
     
-    def loop_smeantics(self, dryrun=False, printing=False):
+    def loop_smeantics(self):
         while self.alive:
-            self.semantics(dryrun, printing)
+            self.semantics()
 
-    def init_semantics(self):
-        """
-        This method activate the initial places of each component and builds
-        the global self.act_places
-        """
-        for c in self.new_act_components:
-            comp_places = self.components[c].init(
-                self.component_connections[c])
-            self.act_places.extend(comp_places)
-        self.new_act_components.clear()
 
-    def semantics(self, dryrun : bool, printing : bool):
+    def semantics(self):
         """
-        This method runs one semantics iteration by first updating the list
-        of enbled connections and then by running semantics of each component
+        This method runs one semantics iteration by first consuming the list
+        of assembly instructions and then by running semantics of each component
         of the assembly.
-        :param dryrun: boolean representing if the semantics is run in dryrun mode
-        :param printing: boolean representing if the semantics must print output
         """
         
-        active_components = []
-        self.activate_component_lock.acquire()
-        try:
-            self.init_semantics()
-            active_components = deepcopy(list(self.act_components.keys()))
-        finally:
-            self.activate_component_lock.release()
+        if self.current_instruction is not None:
+            finished = self.current_instruction.apply_to(self)
+            if finished:
+                self.current_instruction = None
+                self.instructions_queue.task_done()
+            
+        # Consume instructions queue
+        while (not self.instructions_queue.empty()) and (self.current_instruction is None):
+            instruction : InternalInstruction = self.instructions_queue.get()
+            finished = instruction.apply_to(self)
+            if finished:
+                self.instructions_queue.task_done()
+            else:
+                self.current_instruction = instruction
         
 
         # semantics for each component
-        for c in active_components:
-            new_places = []
+        idle_components : Set[str] = set()
         
-            # enable / disable connections
-            if self.act_places != self.old_places:
-                # enable/disable connections
-                new_connections = self.disable_enable_connections(printing)
-                # highest priority according to the model to guarantee the
-                # disconnection of services when no more provided
-                # before doing anything else
-                self.old_connections = self.act_connections.copy()
-                self.act_connections = new_connections.copy()
-                
-            connections = []
-            if c in self.component_connections:
-                for conn in self.component_connections[c]:
-                    if conn.isactive():
-                        connections.append(conn.gettuple())
-
-            c_places = self.components[c].semantics(connections, dryrun, printing)
-            new_places = new_places + c_places
-
-            # build the new configuration / ended
-            self.old_places = self.act_places.copy()
-            self.act_places = new_places.copy()
+        for c in self.act_components:
+            is_idle = self.components[c].semantics()
+            if is_idle:
+                idle_components.add(c)
         
-        idle_components = []
-        for c in active_components:
-            if self.components[c].is_idle():
-                idle_components.append(c)
-                
-        self.activate_component_lock.acquire()
-        try:
-            for c in idle_components:
-                self.act_components[c].set()
-                del self.act_components[c]
-                self.components[c].set_behavior(None)
-        finally:
-            self.activate_component_lock.release()
-        
+        self.act_components.difference_update(idle_components)
         
 
-
-    def disable_enable_connections(self, printing : bool):
-        """
-        This method build the new list of enabled connections according to
-        the current states of "activated" places (ie the ones getting a token).
-
-        :param configuration: the current configuration of the deployment
-        :return: the new list of activated connections
-        """
-
-        # create the new list of activated connections
-        activated_connections = []
-
-        for place in self.act_places:
-            if place in self.places_connections:
-                connections = self.places_connections[place]
-                for conn in connections:
-                    activated_connections.append(conn.gettuple())
-                    if not conn.isactive():
-                        conn.activate()
-                        if printing:
-                            print("[Assembly] Enable connection ("
-                                  + str(conn.get_names()) + ")")
-
-        return activated_connections
-
-    def is_idle(self):
+    def is_idle(self) -> bool:
         """
         This method checks if the current reconfiguration is finished
 
@@ -427,14 +354,5 @@ class Assembly (object):
 
         # the deployment cannot be finished if at least all components have
         # not reached a place
-        if len(self.act_places) >= len(self.components):
-            # if all places are finals (ie without output docks) the
-            # deployment has finished
-            all_finals = True
-            for place in self.act_places:
-                if len(place.get_output_docks()) > 0:
-                    all_finals = False
-            return all_finals
-        else:
-            return False
+        return len(self.act_components) == 0
 

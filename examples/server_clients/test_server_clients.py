@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from madpp.all import *
+from madpp.utility import Printer
 import time, datetime
 
 from client import Client
@@ -9,70 +10,72 @@ from examples.utils import *
 
 
 class ServerClient(Assembly):
-    def __init__(self):
+    def __init__(self, nb_clients):
+        self.nb_clients = nb_clients
         Assembly.__init__(self)
-        self.nb_clients = 2000
+        
         self.clients = []
         for i in range(self.nb_clients):
-            new_client = Client()
-            self.clients.append(new_client)
-            self.add_component('client%d'%i, new_client)
+            self.clients.append(Client())
+            self.add_component(self.client_name(i), self.clients[i])
+        
         self.server = Server()
         self.add_component('server', self.server)
+        self.synchronize()
+    
+    @staticmethod
+    def client_name(id : int):
+        return 'client%d'%id
     
     def deploy(self):
-        tprint("### DEPLOYING ####")
+        print("### DEPLOYING ####")
         for i in range(self.nb_clients):
-            self.connect('client%d'%i, 'server_ip',
-                        'server', 'ip')
-            self.connect('client%d'%i, 'service',
-                        'server', 'service')
-            self.change_behavior('client%d'%i, 'install_start')
+            self.connect(self.client_name(i), 'server_ip',
+                    'server', 'ip')
+            self.connect(self.client_name(i), 'service',
+                    'server', 'service')
+            self.change_behavior(self.client_name(i), 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting clients")
         for i in range(self.nb_clients):
-            self.wait('client%d'%i)
-        tprint("Assembly: waiting server")
-        self.wait('server')
+            self.wait(self.client_name(i))
+        self.synchronize()
         
     def suspend(self):
-        tprint("### SUSPENDING ###")
+        print("### SUSPENDING ###")
         for i in range(self.nb_clients):
-            self.change_behavior('client%d'%i, 'stop')
-        for i in range(self.nb_clients):
-            self.wait('client%d'%i)
+            self.change_behavior(self.client_name(i), 'stop')
         self.change_behavior('server', 'stop')
         self.wait('server')
+        self.synchronize()
         
     def restart(self):
-        tprint("### RESTARTING ###")
-        
+        print("### RESTARTING ###")
         for i in range(self.nb_clients):
-            self.change_behavior('client%d'%i, 'install_start')
+            self.change_behavior(self.client_name(i), 'install_start')
         self.change_behavior('server', 'deploy')
-        tprint("Assembly: waiting clients")
         for i in range(self.nb_clients):
-            self.wait('client%d'%i)
-        tprint("Assembly: waiting server")
-        self.wait('server')
+            self.wait(self.client_name(i))
+        self.synchronize()
         
-    
-def time_test() -> float:
-    tprint_show(False)
-    
+
+def time_test(nb_clients : int, verbosity : int = 0, print_time : bool = False) -> float:
     start_time : float = time.clock()
     
-    sca = ServerClient()
+    Printer.st_tprint("Main: creating the assembly")
+    sca = ServerClient(nb_clients)
+    sca.set_verbosity(verbosity)
+    sca.set_print_time(print_time)
+    
+    Printer.st_tprint("Main: deploying the assembly")
     sca.deploy()
     
-    tprint("Main: waiting a little before reconfiguring")
+    Printer.st_tprint("Main: waiting a little before reconfiguring")
     time.sleep(3)
     
     sca.suspend()
-    tprint("Main: server maintenance")
+    Printer.st_tprint("Main: waiting a little before restarting")
     time.sleep(5)
     
-    tprint("Main: maintenance over")
     sca.restart()
     
     end_time : float = time.clock()
@@ -81,7 +84,12 @@ def time_test() -> float:
     
     sca.terminate()
     return total_time
+    
         
 
 if __name__ == '__main__':
-    time_test()
+    time_test(
+        nb_clients = 1000,
+        verbosity = -1,
+        print_time = True
+    )

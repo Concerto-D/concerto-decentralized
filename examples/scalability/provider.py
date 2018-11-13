@@ -1,5 +1,4 @@
 from madpp.all import *
-from examples.scalability.transitions import *
 
 
 class Provider(Component):
@@ -16,10 +15,13 @@ class Provider(Component):
         self.initial_place = 'waiting'
 
         self.transitions = {
-            'start': ('waiting', 'started', 'start', 0, DryRun().testargs, (self.echo1,
+            'start': ('waiting', 'started', 'start', 0, self.testargs, (self.echo1,
                                                                 self.echo2))
         }
 
         self.dependencies = {
             'service': (DepType.PROVIDE, ['started'])
         }
+
+    def testargs(self, arg1, arg2):
+        self.print_color("arg1=" + str(arg1) + " and arg2=" + str(arg2))

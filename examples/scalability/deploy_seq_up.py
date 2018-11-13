@@ -42,12 +42,15 @@ class DeploySeqUp(Assembly):
         else:
             self.connect(self.name_for_up(self.nb_comp-3), 'servicep',
                               'user', 'serviceu')
+        self.synchronize()
             
     def deploy(self):
         self.change_behavior('provider', 'start')
         for i in range(0, self.nb_comp-2):
             self.change_behavior(self.name_for_up(i), 'start')
         self.change_behavior('user', 'start')
+        self.wait('user')
+        self.synchronize()
     
     @staticmethod
     def name_for_up(id : int):
@@ -55,8 +58,6 @@ class DeploySeqUp(Assembly):
 
 
 def time_test(nb_comp : int) -> float:
-    tprint_show(False)
-    
     if nb_comp < 2:
         print("*** Warning: at least 2 components are deployed by this "
         "example. 2 components will be deployed.\n")
@@ -65,6 +66,7 @@ def time_test(nb_comp : int) -> float:
     start_time : float = time.clock()
 
     ass = DeploySeqUp(nb_comp)
+    ass.set_verbosity(-1)
     ass.deploy()
     
     end_time : float = time.clock()
