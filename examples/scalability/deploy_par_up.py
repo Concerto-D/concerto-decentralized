@@ -55,7 +55,7 @@ def time_test(nb_comp : int, nb_trans : int) -> float:
                 "user components. 1 transition will be deployed.\n")
         nb_trans = 1
     
-    start_time : float = time.clock()
+    start_time : float = time.perf_counter()
         
     Printer.st_tprint("Creating assembly")
 
@@ -66,7 +66,7 @@ def time_test(nb_comp : int, nb_trans : int) -> float:
 
     ass.deploy()
     
-    end_time : float = time.clock()
+    end_time : float = time.perf_counter()
     total_time = end_time-start_time
     print("Total time in seconds: %f"%total_time)
     

@@ -63,13 +63,13 @@ def time_test(nb_comp : int) -> float:
         "example. 2 components will be deployed.\n")
         nb_comp = 2
     
-    start_time : float = time.clock()
+    start_time : float = time.perf_counter()
 
     ass = DeploySeqUp(nb_comp)
     ass.set_verbosity(-1)
     ass.deploy()
     
-    end_time : float = time.clock()
+    end_time : float = time.perf_counter()
     total_time = end_time-start_time
     print("Total time in seconds: %f"%total_time)
     
