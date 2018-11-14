@@ -57,7 +57,7 @@ class DeploySeqUp(Assembly):
         return "up" + str(id)
 
 
-def time_test(nb_comp : int) -> float:
+def time_test(nb_comp : int, printing : bool = False) -> float:
     if nb_comp < 2:
         print("*** Warning: at least 2 components are deployed by this "
         "example. 2 components will be deployed.\n")
@@ -71,7 +71,7 @@ def time_test(nb_comp : int) -> float:
     
     end_time : float = time.perf_counter()
     total_time = end_time-start_time
-    print("Total time in seconds: %f"%total_time)
+    if (printing): print("Total time in seconds: %f"%total_time)
     
     ass.terminate()
     return total_time
@@ -87,4 +87,7 @@ if __name__ == '__main__':
         sys.exit(-1)
     
     nb_comp = int(sys.argv[1])
-    time_test(nb_comp)
+    time_test(
+        nb_comp=nb_comp,
+        printing=False
+    )

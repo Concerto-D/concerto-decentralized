@@ -45,7 +45,7 @@ class DeployParUp(Assembly):
         return "u" + str(id)
         
 
-def time_test(nb_comp : int, nb_trans : int) -> float:
+def time_test(nb_comp : int, nb_trans : int, printing : bool = False) -> float:
     if nb_comp < 1:
         print("*** Warning: at least 1 user component is deployed by "
                 "this example. 1 component will be deployed.\n")
@@ -57,18 +57,18 @@ def time_test(nb_comp : int, nb_trans : int) -> float:
     
     start_time : float = time.perf_counter()
         
-    Printer.st_tprint("Creating assembly")
+    if (printing): Printer.st_tprint("Creating assembly")
 
     ass = DeployParUp(nb_comp, nb_trans)
     ass.set_verbosity(-1)
         
-    Printer.st_tprint("Deploying")
+    if (printing): Printer.st_tprint("Deploying")
 
     ass.deploy()
     
     end_time : float = time.perf_counter()
     total_time = end_time-start_time
-    print("Total time in seconds: %f"%total_time)
+    if (printing): print("Total time in seconds: %f"%total_time)
     
     ass.terminate()
     return total_time

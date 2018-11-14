@@ -18,7 +18,7 @@ class ServerClient(Assembly):
         self.add_component('server', self.server)
     
     def deploy(self):
-        print("### DEPLOYING ####")
+        self.print("### DEPLOYING ####")
         self.connect('client', 'server_ip',
                     'server', 'ip')
         self.connect('client', 'service',
@@ -29,43 +29,43 @@ class ServerClient(Assembly):
         self.synchronize()
         
     def suspend(self):
-        print("### SUSPENDING ###")
+        self.print("### SUSPENDING ###")
         self.change_behavior('client', 'stop')
         self.change_behavior('server', 'stop')
         self.wait('server')
         self.synchronize()
         
     def restart(self):
-        print("### RESTARTING ###")
+        self.print("### RESTARTING ###")
         self.change_behavior('client', 'install_start')
         self.change_behavior('server', 'deploy')
         self.wait('client')
         self.synchronize()
         
 
-def time_test(verbosity : int = 0, print_time : bool = False) -> float:
+def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     start_time : float = time.clock()
     
-    Printer.st_tprint("Main: creating the assembly")
+    if printing: Printer.st_tprint("Main: creating the assembly")
     sca = ServerClient()
     sca.set_verbosity(verbosity)
     sca.set_print_time(print_time)
     
-    Printer.st_tprint("Main: deploying the assembly")
+    if printing: Printer.st_tprint("Main: deploying the assembly")
     sca.deploy()
     
-    Printer.st_tprint("Main: waiting a little before reconfiguring")
+    if printing: Printer.st_tprint("Main: waiting a little before reconfiguring")
     time.sleep(3)
     
     sca.suspend()
-    Printer.st_tprint("Main: waiting a little before restarting")
+    if printing: Printer.st_tprint("Main: waiting a little before restarting")
     time.sleep(5)
     
     sca.restart()
     
     end_time : float = time.clock()
     total_time = end_time-start_time
-    print("Total time in seconds: %f"%total_time)
+    if printing: Printer.st_tprint("Total time in seconds: %f"%total_time)
     
     sca.terminate()
     return total_time
@@ -74,6 +74,7 @@ def time_test(verbosity : int = 0, print_time : bool = False) -> float:
 
 if __name__ == '__main__':
     time_test(
-        verbosity = 0,
+        verbosity = -1,
+        printing = False,
         print_time = True
     )

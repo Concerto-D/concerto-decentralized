@@ -208,6 +208,8 @@ class Component (object, metaclass=ABCMeta):
         self.group_dependencies[name] = []
         self.st_groups[name].add_places(places)
         for place_name in places:
+            if place_name not in self.st_places:
+                raise Exception("Error: trying to add non-existing place '%s' to group '%s'"%(place_name, name))
             self.place_groups[place_name].append(self.st_groups[name])
 
 
