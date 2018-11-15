@@ -42,6 +42,7 @@ if __name__ == '__main__':
     writer.writeheader()
     
     for c in range(2, nb_comp+1, step):
+        print("%d/%d"%(c,nb_comp))
         row_dict = {
             'nb_comp': c,
             'nb_samples': nb_samples
