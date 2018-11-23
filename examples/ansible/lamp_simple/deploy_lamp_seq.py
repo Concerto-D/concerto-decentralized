@@ -96,9 +96,9 @@ class Db(Component):
 class PlbAssembly(Assembly):
     def __init__(self):
         Assembly.__init__(self)
-        self.common = Common("host", "plb_common.yml")
-        self.web = Web("host", "plb_web.yml")
-        self.db = Db("host", "plb_db.yml")
+        self.common = Common("hosts", "plb_common.yml")
+        self.web = Web("hosts", "plb_web.yml")
+        self.db = Db("hosts", "plb_db.yml")
         
     def deploy(self):
         self.add_component("common", self.common)
