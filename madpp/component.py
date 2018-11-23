@@ -6,13 +6,14 @@
    :synopsis: this file contains the Component class.
 """
 
-import sys
+import sys, time
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set
 
 from madpp.place import Dock, Place
 from madpp.dependency import DepType, Dependency
 from madpp.transition import Transition
+from madpp.gantt_chart import GanttChart
 from madpp.utility import Messages, Printer
 
 class Group(object):
@@ -115,6 +116,8 @@ class Component (object, metaclass=ABCMeta):
         self.verbosity : int = 0
         self.print_time : bool = False
         self.dryrun : bool = False
+        self.gantt : GanttChart = None
+        self.hidden_from_gantt_chart = False
         
         self.places : List[str] = []
         self.transitions : Dict[str,Tuple] = {}
@@ -156,6 +159,14 @@ class Component (object, metaclass=ABCMeta):
         
     def set_dryrun(self, value : bool):
         self.dryrun = value
+        
+    def set_gantt_chart(self, gc : GanttChart):
+        if not self.hidden_from_gantt_chart:
+            self.gantt = gc
+    
+    def force_hide_from_gantt_chart(self):
+        self.hidden_from_gantt_chart = True
+        self.gantt = None
 
 
     def add_places(self, places : List[str], initial=None):
@@ -204,12 +215,17 @@ class Component (object, metaclass=ABCMeta):
             raise Exception("Trying to add '%s' as a group while it is already a transition")
         elif name in self.st_groups:
             raise Exception("Trying to add '%s' as a group while it is already a group")
+        
+        for place_name in places:
+            if place_name not in self.st_places:
+                raise Exception("Error: trying to add non-existing place '%s' to group '%s'"%(place_name, name))
+            elif place_name is self.initial_place:
+                raise Exception("Error: trying to add initial place '%s' to group '%s' (framework limitation: initial place cannot be in a group, for now...)"%(place_name, name))
+        
         self.st_groups[name] = Group(name)
         self.group_dependencies[name] = []
         self.st_groups[name].add_places(places)
         for place_name in places:
-            if place_name not in self.st_places:
-                raise Exception("Error: trying to add non-existing place '%s' to group '%s'"%(place_name, name))
             self.place_groups[place_name].append(self.st_groups[name])
 
 
@@ -675,7 +691,11 @@ class Component (object, metaclass=ABCMeta):
                 dep.start_using()
                 if self.verbosity >= 2:
                     self.print_color("Starting to use transition dependency '%s'"%dep.get_name())
-            trans.start_thread(self.dryrun)
+            if self.gantt is None:
+                gantt_tuple = None
+            else:
+                gantt_tuple = (self.gantt,(self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
+            trans.start_thread(gantt_tuple, self.dryrun)
             self.act_transitions.add(trans)
             docks_to_remove.add(od)
 
@@ -692,7 +712,11 @@ class Component (object, metaclass=ABCMeta):
 
         # check if some of these running transitions are finished
         for trans in self.act_transitions:
-            joined = trans.join_thread(self.dryrun)
+            if self.gantt is None:
+                gantt_tuple = None
+            else:
+                gantt_tuple = (self.gantt,(self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
+            joined = trans.join_thread(gantt_tuple, self.dryrun)
             # get the new set of activated input docks
             if not joined:
                 continue

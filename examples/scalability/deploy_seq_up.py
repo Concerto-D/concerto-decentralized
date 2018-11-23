@@ -89,5 +89,5 @@ if __name__ == '__main__':
     nb_comp = int(sys.argv[1])
     time_test(
         nb_comp=nb_comp,
-        printing=False
+        printing=True
     )

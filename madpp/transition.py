@@ -7,6 +7,7 @@
 """
 
 import threading
+from madpp.gantt_chart import GanttChart
 
 class Transition (object):
     """This Transition class is used to create a transition.
@@ -92,7 +93,7 @@ class Transition (object):
         """
         return self.behavior
 
-    def start_thread(self, dryrun):
+    def start_thread(self, gantt_tuple, dryrun):
         """
         This method creates the thread of the transition
 
@@ -100,11 +101,14 @@ class Transition (object):
         """
         if not dryrun:
             self.thread = threading.Thread(target=self.code, args=self.args)
+            if gantt_tuple is not None:
+                (gantt_chart,args) = gantt_tuple
+                gantt_chart.start_transition(*args)
             self.thread.start()
         else:
             pass
 
-    def join_thread(self, dryrun):
+    def join_thread(self, gantt_tuple, dryrun):
         """
         This method tries to join self.thread. The default behavior has no
         timeout.
@@ -114,6 +118,9 @@ class Transition (object):
         if not dryrun:
             if not self.thread.is_alive():
                 self.thread.join()
+                if gantt_tuple is not None:
+                    (gantt_chart,args) = gantt_tuple
+                    gantt_chart.stop_transition(*args)
                 return True
             else:
                 return False

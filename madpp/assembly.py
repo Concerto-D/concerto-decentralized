@@ -14,6 +14,7 @@ from madpp.dependency import DepType, Dependency
 from madpp.component import Component
 from madpp.connection import Connection
 from madpp.internal_instruction import InternalInstruction
+from madpp.gantt_chart import GanttChart
 from madpp.utility import Messages, COLORS, Printer
 
 
@@ -63,6 +64,7 @@ class Assembly (object):
         self.verbosity : int = 0
         self.print_time : bool = False
         self.dryrun : bool = False
+        self.gantt : GanttChart = None
         self.name : str = None
     
     
@@ -81,13 +83,40 @@ class Assembly (object):
         for c in self.components:
             self.components[c].set_dryrun(value)
             
+    def set_use_gantt_chart(self, value : bool):
+        if value:
+            if self.gantt is None:
+                self.gantt = GanttChart()
+                for c in self.components:
+                    self.components[c].set_gantt_chart(self.gantt)
+        else:
+            self.gantt = None
+            for c in self.components:
+                self.components[c].set_gantt_chart(None)
+        
+    def get_gantt_chart(self):
+        return self.gantt
+            
     def set_name(self, name : str):
         self.name = name
     
     def get_name(self) -> str:
         return self.name
     
-    def terminate(self):
+    def terminate(self, debug=False):
+        for component_name in self.act_components:
+            self.wait(component_name)
+            if debug:
+                print("DEBUG terminate: waiting component '%s'"%component_name)
+                print("  active places: %s" % ','.join([p.get_name() for p in self.components[component_name].act_places]))
+                print("  active transitions: %s" % ','.join([t.get_name() for t in self.components[component_name].act_transitions]))
+                print("  active odocks (transition): %s" % ','.join([d.get_transition().get_name() for d in self.components[component_name].act_odocks]))
+                print("  active idocks (transition): %s" % ','.join([d.get_transition().get_name() for d in self.components[component_name].act_idocks]))
+        self.synchronize()
+        self.alive = False
+        self.semantics_thread.join()
+    
+    def force_terminate(self):
         self.synchronize()
         self.alive = False
         self.semantics_thread.join()
@@ -128,6 +157,7 @@ class Assembly (object):
         comp.set_verbosity(self.verbosity)
         comp.set_print_time(self.print_time)
         comp.set_dryrun(self.dryrun)
+        comp.set_gantt_chart(self.gantt)
         self.components[name]=comp
         self.component_connections[name] = set()
         return True
