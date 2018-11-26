@@ -1,0 +1,12 @@
+- hosts: all
+  become: true
+  gather_facts: false
+  - name: Gathering Facts
+    setup:
+  roles:
+    - python2
+    - apache2
+    - mysql
+    - php-fpm
+  vars:
+    mysql_root_password: "mypass"
