@@ -1,11 +1,10 @@
-from subprocess import run
-
 from madpp.all import *
+from madpp.plugins.ansible import call_ansible_on_host, AnsibleCallResult
 
 class Python2(Component):
 
-    def __init__(self, inventory, playbook):
-        self.inventory = inventory
+    def __init__(self, host, playbook):
+        self.host = host
         self.playbook = playbook
         Component.__init__(self)
 
@@ -27,15 +26,5 @@ class Python2(Component):
 
     def install(self):
         self.print_color("Installing Python 2")
-        tag = "python2-0"
-        command = "ansible-playbook -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
-        self.print_color(command)
-        return_code = run(command, shell=True, check=False).returncode
-        self.print_color("Installed Python 2, return code: %d"%return_code)
-        return return_code
-        #return run(["ansible-playbook",
-                    #"-vv",
-                    #"-i", self.inventory,
-                    #self.playbook,
-                    #"--tags", "\"" + tag +"\""],
-                #shell=True).returncode
+        result = call_ansible_on_host(self.host, self.playbook, "python2-0")
+        self.print_color("Installed Python 2 (code %d) with command: %s" % (result.return_code, result.command))
