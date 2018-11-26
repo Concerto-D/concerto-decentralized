@@ -30,15 +30,12 @@ class Python2(Component):
         tag = "python2-0"
         command = "ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
         self.print_color(command)
-        try:
-            return run(command, shell=True, check=False).returncode
-        except:
-            print("Error")
-            return -1
+        return_code = run(command, shell=True, check=False).returncode
+        self.print_color("Installed Python 2, return code: %d"%return_code)
+        return return_code
         #return run(["ansible-playbook",
                     #"-vv",
                     #"-i", self.inventory,
                     #self.playbook,
                     #"--tags", "\"" + tag +"\""],
                 #shell=True).returncode
-        self.print_color("Installed Python 2")
