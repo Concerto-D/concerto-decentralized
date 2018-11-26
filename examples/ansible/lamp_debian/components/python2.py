@@ -31,7 +31,7 @@ class Python2(Component):
         command = "ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
         self.print_color(command)
         try:
-            return run(command, shell=True).returncode
+            return run(command, shell=True, check=False).returncode
         finally:
             print("Error")
             return -1
