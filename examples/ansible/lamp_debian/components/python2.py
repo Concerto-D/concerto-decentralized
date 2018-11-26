@@ -26,9 +26,11 @@ class Python2(Component):
         self.initial_place = 'waiting'
 
     def install(self):
+        self.print_color("Installing Python 2")
         tag = "python2-0"
         print("ansible-playbook -i " + self.inventory + " " + self.playbook + "--tags \"" + tag + "\"")
         return run(["ansible-playbook",
                     "-i", self.inventory,
                     self.playbook,
                     "--tags", "\"" + tag +"\""]).returncode
+        self.print_color("Installed Python 2")
