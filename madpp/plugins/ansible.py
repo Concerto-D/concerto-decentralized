@@ -1,7 +1,7 @@
 from subprocess import run, CompletedProcess
 
 class AnsibleCallResult:
-    def __init__(self, command : str, return_code : int, stdout : str, stderr : str):
+    def __init__(self, command : str, return_code : int, stdout : str = None, stderr : str = None):
         self.command = command
         self.return_code = return_code
         self.stdout = stdout
