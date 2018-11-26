@@ -28,11 +28,13 @@ class Python2(Component):
     def install(self):
         self.print_color("Installing Python 2")
         tag = "python2-0"
-        print("ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\"")
-        return run(["ansible-playbook",
-                    "-vv",
-                    "-i", self.inventory,
-                    self.playbook,
-                    "--tags", "\"" + tag +"\""],
-                shell=True).returncode
+        command = "ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
+        self.print_color(command)
+        return run(command, shell=True).returncode
+        #return run(["ansible-playbook",
+                    #"-vv",
+                    #"-i", self.inventory,
+                    #self.playbook,
+                    #"--tags", "\"" + tag +"\""],
+                #shell=True).returncode
         self.print_color("Installed Python 2")
