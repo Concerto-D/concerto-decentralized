@@ -33,5 +33,6 @@ class Python2(Component):
                     "-vv",
                     "-i", self.inventory,
                     self.playbook,
-                    "--tags", "\"" + tag +"\""]).returncode
+                    "--tags", "\"" + tag +"\""],
+                shell=True).returncode
         self.print_color("Installed Python 2")
