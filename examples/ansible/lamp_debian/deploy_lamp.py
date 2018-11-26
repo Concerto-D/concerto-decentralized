@@ -5,7 +5,7 @@ from components.python2 import Python2
 class LampAssembly(Assembly):
     def __init__(self):
         Assembly.__init__(self)
-        self.python2 = Python2("hosts", "lamp-playbook.yml")
+        self.python2 = Python2("econome-4,", "lamp-playbook.yml")
         #self.common = Common("hosts", "plb_common.yml")
         #self.web = Web("hosts", "plb_web.yml")
         #self.db = Db("hosts", "plb_db.yml")

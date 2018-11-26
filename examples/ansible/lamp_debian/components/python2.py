@@ -28,7 +28,7 @@ class Python2(Component):
     def install(self):
         self.print_color("Installing Python 2")
         tag = "python2-0"
-        command = "ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
+        command = "ansible-playbook -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
         self.print_color(command)
         return_code = run(command, shell=True, check=False).returncode
         self.print_color("Installed Python 2, return code: %d"%return_code)
