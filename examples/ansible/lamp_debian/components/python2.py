@@ -30,7 +30,11 @@ class Python2(Component):
         tag = "python2-0"
         command = "ansible-playbook -vv -i " + self.inventory + " " + self.playbook + " --tags \"" + tag + "\""
         self.print_color(command)
-        return run(command, shell=True).returncode
+        try:
+            return run(command, shell=True).returncode
+        finally:
+            print("Error")
+            return -1
         #return run(["ansible-playbook",
                     #"-vv",
                     #"-i", self.inventory,
