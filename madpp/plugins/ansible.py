@@ -9,10 +9,12 @@ class AnsibleCallResult:
 
 def call_ansible_on_host(host, playbook, tag="all", capture_output=False) -> AnsibleCallResult:
     command = "ansible-playbook -i %s, %s --tags \"%s\"" % (host,playbook,tag)
-    completed_process = run(command, shell=True, check=False, capture_output=capture_output)
+    #Commented: python 3.7 required
+    #completed_process = run(command, shell=True, check=False, capture_output=capture_output)
+    completed_process = run(command, shell=True, check=False)
     return AnsibleCallResult(
         command = command,
         return_code = completed_process.returncode,
-        stdout = completed_process.stdout,
-        stderr = completed_process.stderr
+        #stdout = completed_process.stdout,
+        #stderr = completed_process.stderr
     )
