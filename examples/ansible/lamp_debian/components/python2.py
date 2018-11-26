@@ -32,7 +32,7 @@ class Python2(Component):
         self.print_color(command)
         try:
             return run(command, shell=True, check=False).returncode
-        finally:
+        except:
             print("Error")
             return -1
         #return run(["ansible-playbook",
