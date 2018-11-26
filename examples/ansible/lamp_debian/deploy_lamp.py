@@ -30,3 +30,4 @@ class LampAssembly(Assembly):
 if __name__ == '__main__':
     ass = LampAssembly()
     ass.deploy()
+    ass.terminate()
