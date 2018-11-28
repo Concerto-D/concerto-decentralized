@@ -1,11 +1,16 @@
 * TODOs
 
+** Urgent
+
+- Corriger suppression de DataProvider
+
 ** Vérifications
 
 - Vérifier que le groupes se comportent comme prévu
 
 ** Fonctionalités
 
+- Ne pas bloquer lors de deux change_behavior consécutifs
 - Gantt chart : exporter dans un format automatiquement dessinable
 - Vérifier que les noms de composants / transitions / groupes / places / comportements ne contiennent pas ',' et ne commencent pas par '_' (pour évolutions futures)
 - Clarifier le cas où la place initiale est dans un groupe (pour l'instant : interdit)

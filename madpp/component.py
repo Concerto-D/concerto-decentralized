@@ -7,6 +7,7 @@
 """
 
 import sys, time
+from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set
 
@@ -141,6 +142,7 @@ class Component (object, metaclass=ABCMeta):
         self.act_odocks : Set[Dock] = set()
         self.act_idocks : Set[Dock] = set()
         self.act_behavior : str = None
+        self.queued_behaviors : Queue = Queue()
         
         self.initialized : bool = False
         
@@ -519,6 +521,17 @@ class Component (object, metaclass=ABCMeta):
         
     def get_active_behavior(self):
         return self.act_behavior
+    
+    def queue_behavior(self, behavior : str):
+        if self.get_active_behavior() is None:
+            self.set_behavior(behavior)
+        else:
+            if behavior not in self.st_behaviors and behavior is not None:
+                raise Exception("Trying to queue behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
+            self.queued_behaviors.put(behavior)
+            if self.verbosity >= 1:
+                self.print_color("Queing behavior '%s'"%behavior)
+            
             
             
 
@@ -589,6 +602,11 @@ class Component (object, metaclass=ABCMeta):
                 if len(place.get_output_docks(self.act_behavior)) > 0:
                     idle = False
                     break
+        
+        if idle:
+            if not self.queued_behaviors.empty():
+                idle = False
+                self.set_behavior(self.queued_behaviors.get())
         
         if idle:
             self.set_behavior(None)

@@ -3,7 +3,7 @@
   apt: pkg={{ item }} state=installed update_cache=true
   with_items:
   - apache2
-  - libapache2
+  - libapache2-mod-fastcgi
   tags: apache2-0
 
 - name: Enable apache2 modules

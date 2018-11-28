@@ -266,7 +266,8 @@ class Assembly (object):
     def _change_behavior(self, component_name : str, behavior : str):
         component = self.get_component(component_name)
         if component_name in self.act_components:
-            return False
+            component.queue_behavior(behavior)
+            return True
         else:
             component.set_behavior(behavior)
             self.act_components.add(component_name)

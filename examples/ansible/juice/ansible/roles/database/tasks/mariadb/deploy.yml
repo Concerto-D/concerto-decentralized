@@ -1,0 +1,40 @@
+---
+- name: Mount /database-mariadb in tmpfs to store MariaDB
+  mount:
+    path: /database-mariadb
+    src: tmpfs
+    fstype: tmpfs
+    state: mounted
+    opts: size=16G
+  tags: mariadb-0
+
+- name: Pull the MariaDB container
+  docker_image:
+      name: "mariadb"
+  tags: mariadb-3
+
+- name: Start the MariaDB container
+  docker_container:
+    name: "mariadb-{{ inventory_hostname_short }}"
+    image: "mariadb"
+    detach: True
+    exposed_ports:
+      - 4567
+    published_ports:
+      - "3306:3306"
+      - "4567:4567"
+      - "4567:4567/udp"
+      - "4568:4568"
+      - "4444:4444"
+    volumes:
+      - "/database-mariadb:/var/lib/mysql"
+    env:
+      MYSQL_INITDB_SKIP_TZINFO=yes
+      MYSQL_ROOT_PASSWORD=my-secret-pw
+  tags: mariadb-4
+
+- name: Waiting for MariaDB to be ready
+  wait_for:
+    host: "{{ hostvars[dbmaster_node]['ansible_' + database_network]['ipv4']['address'] }}"
+    port: 3306
+  tags: mariadb-5

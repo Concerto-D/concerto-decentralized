@@ -1,0 +1,9 @@
+---
+- name: Create the /sysbench directory for storing results
+  file:
+    path: /sysbench
+    state: directory
+  tags: sysbench-0
+
+- include: "{{ db }}/deploy.yml"
+  when: inventory_hostname == dbmaster_node
