@@ -298,7 +298,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.clock()
-    gass = GaleraAssembly("orion-4", "hercule-2", ["hercule-3","hercule-4"])
+    gass = GaleraAssembly("econome-5", "econome-6", ["econome-7","econome-7"])
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
     gass.set_use_gantt_chart(True)
