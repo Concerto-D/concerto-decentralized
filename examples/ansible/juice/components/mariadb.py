@@ -9,7 +9,7 @@ class MariaDB(Component):
 
     def __init__(self, host):
         self.host = host
-        self.playbook = "ansible/scaffolding.yml"
+        self.playbook = "ansible/mariadb.yml"
         self.pulled = False
         Component.__init__(self)
 

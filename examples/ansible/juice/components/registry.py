@@ -9,7 +9,7 @@ class Registry(Component):
     
     def __init__(self, host):
         self.host = host
-        self.playbook = "ansible/scaffolding.yml"
+        self.playbook = "ansible/registry.yml"
         Component.__init__(self)
 
     def create(self):

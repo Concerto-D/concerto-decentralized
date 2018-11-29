@@ -9,7 +9,7 @@ class Chrony(Component):
     
     def __init__(self, host):
         self.host = host
-        self.playbook = "ansible/scaffolding.yml"
+        self.playbook = "ansible/chrony.yml"
         Component.__init__(self)
 
     def create(self):
