@@ -15,8 +15,9 @@ def g5k_deploy(g5k_config, force_deploy=False, **kwargs):
     return env
 
 
-def deploy(conf, provider='g5k', force_deployment=False, env=None, **kwargs):
+def deploy(conf, provider='g5k', force_deployment=False, **kwargs):
     config = {}
+    env = {}
 
     if isinstance(conf, str):
         # Get the config object from a yaml file
