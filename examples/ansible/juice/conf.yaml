@@ -1,0 +1,49 @@
+# One of cockroachdb, mariadb, galera
+database: mariadb
+
+# Should we deployed the monitoring stack?
+monitoring: false
+
+g5k:
+  # reservation: "2018-03-12 19:00:01"
+  walltime: "02:00:00"
+  dhcp: true
+  job_name: juice-tests
+  env_name: debian9-x64-nfs
+  resources:
+    machines:
+      - roles:
+          - database
+        cluster: paravance
+        nodes: 3
+        primary_network: n1
+        secondary_networks: [n2]
+      - roles:
+          - registry
+        cluster: paravance
+        nodes: 1
+        primary_network: n1
+        secondary_networks: []
+    networks:
+      - id: n1
+        roles:
+          - control_network
+        type: prod
+        site: rennes
+      - id: n2
+        roles:
+          - database_network
+        type: kavlan
+        site: rennes
+
+
+registry:
+  type: internal
+  ceph: True
+  ceph_id: discovery
+  ceph_keyring: /home/discovery/.ceph/ceph.client.discovery.keyring
+  ceph_mon_host:
+    - ceph0.rennes.grid5000.fr
+    - ceph1.rennes.grid5000.fr
+    - ceph2.rennes.grid5000.fr
+  ceph_rbd: discovery_kolla_registry/datas
