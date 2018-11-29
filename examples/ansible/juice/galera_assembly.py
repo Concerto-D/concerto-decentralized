@@ -7,15 +7,15 @@ from madpp.utility import Printer
 from madpp.components.data_provider import DataProvider
 from madpp.gantt_chart import GanttChart
 
-from apt_utils import AptUtils
-from ceph import Ceph
-from chrony import Chrony
-from docker import Docker
-from mariadb import MariaDB
-from python import Python
-from registry import Registry
-from sysbench import Sysbench
-from sysbench_master import SysbenchMaster
+from components.apt_utils import AptUtils
+from components.ceph import Ceph
+from components.chrony import Chrony
+from components.docker import Docker
+from components.mariadb import MariaDB
+from components.python import Python
+from components.registry import Registry
+from components.sysbench import Sysbench
+from components.sysbench_master import SysbenchMaster
 
 
 class GaleraAssembly(Assembly):
