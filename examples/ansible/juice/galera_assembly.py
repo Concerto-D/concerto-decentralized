@@ -7,15 +7,15 @@ from madpp.utility import Printer
 from madpp.components.data_provider import DataProvider
 from madpp.gantt_chart import GanttChart
 
-from components.apt_utils import AptUtils
-from components.ceph import Ceph
-from components.chrony import Chrony
-from components.docker import Docker
-from components.mariadb import MariaDB
-from components.python import Python
-from components.registry import Registry
-from components.sysbench import Sysbench
-from components.sysbench_master import SysbenchMaster
+from apt_utils import AptUtils
+from ceph import Ceph
+from chrony import Chrony
+from docker import Docker
+from mariadb import MariaDB
+from python import Python
+from registry import Registry
+from sysbench import Sysbench
+from sysbench_master import SysbenchMaster
 
 
 class GaleraAssembly(Assembly):
@@ -34,47 +34,49 @@ class GaleraAssembly(Assembly):
             self.sysbench = None
             
         @staticmethod
-        def _build_common_set():
+        def _build_common_set(host):
             ass = GaleraAssembly.ComponentSet()
-            ass.apt_utils = AptUtils()
-            ass.python = Python()
-            ass.docker = Docker()
-            ass.chrony = Chrony()
+            ass.apt_utils = AptUtils(host)
+            ass.python = Python(host)
+            ass.docker = Docker(host)
+            ass.chrony = Chrony(host)
             return ass
             
         @staticmethod
-        def build_registry_set():
-            ass = GaleraAssembly.ComponentSet._build_common_set()
-            ass.ceph = Ceph()
-            ass.registry = Registry()
+        def build_registry_set(host):
+            ass = GaleraAssembly.ComponentSet._build_common_set(host)
+            ass.ceph = Ceph(host)
+            ass.registry = Registry(host)
             return ass
             
         @staticmethod
-        def _build_db_set():
-            ass = GaleraAssembly.ComponentSet._build_common_set()
-            ass.mariadb = MariaDB()
-            ass.sysbench = Sysbench()
+        def _build_db_set(host):
+            ass = GaleraAssembly.ComponentSet._build_common_set(host)
+            ass.mariadb = MariaDB(host)
+            ass.sysbench = Sysbench(host)
             return ass
             
         @staticmethod
-        def build_master_set():
-            ass = GaleraAssembly.ComponentSet._build_db_set()
-            ass.sysbench_master = SysbenchMaster()
+        def build_master_set(host):
+            ass = GaleraAssembly.ComponentSet._build_db_set(host)
+            ass.sysbench_master = SysbenchMaster(host)
             return ass
             
         @staticmethod
-        def build_worker_set():
-            ass = GaleraAssembly.ComponentSet._build_db_set()
+        def build_worker_set(host):
+            ass = GaleraAssembly.ComponentSet._build_db_set(host)
             return ass
     
-    def __init__(self, nb_workers = 2):
-        if nb_workers < 2:
+    def __init__(self, master_host, registry_host, workers_hosts):
+        if len(workers_hosts) < 2:
             raise Exception("GaleraAssembly: error, the number of workers must be at least 2 for Galera to work")
-        self.nb_workers = nb_workers
+        self.master_host = master_host
+        self.registry_host = registry_host
+        self.workers_hosts = workers_hosts
         Assembly.__init__(self)
         
         # Registry
-        self.registry_set = self.ComponentSet.build_registry_set()
+        self.registry_set = self.ComponentSet.build_registry_set(registry_host)
         self.add_component('registry_apt_utils', self.registry_set.apt_utils)
         self.add_component('registry_python', self.registry_set.python)
         self.add_component('registry_docker', self.registry_set.docker)
@@ -91,7 +93,7 @@ class GaleraAssembly(Assembly):
                      'registry_registry', 'docker')
         
         # DB Master
-        self.master_set = self.ComponentSet.build_master_set()
+        self.master_set = self.ComponentSet.build_master_set(master_host)
         self.add_component('master_apt_utils', self.master_set.apt_utils)
         self.add_component('master_python', self.master_set.python)
         self.add_component('master_docker', self.master_set.docker)
@@ -112,9 +114,9 @@ class GaleraAssembly(Assembly):
         
         # DB Workers
         self.worker_sets = []
-        for i in range(self.nb_workers):
+        for i in range(len(self.workers_hosts)):
             prefix = 'worker%d'%i
-            self.worker_sets.append(self.ComponentSet.build_worker_set())
+            self.worker_sets.append(self.ComponentSet.build_worker_set(self.workers_hosts[i]))
             current_worker_set = self.worker_sets[i]
             self.add_component(prefix+'_apt_utils', current_worker_set.apt_utils)
             self.add_component(prefix+'_python', current_worker_set.python)
@@ -296,7 +298,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.clock()
-    gass = GaleraAssembly()
+    gass = GaleraAssembly("econome-5", "econome-6", ["econome-7","econome-7"])
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
     gass.set_use_gantt_chart(True)
