@@ -3,11 +3,11 @@ import os, yaml, logging, time
 
 from enoslib.task import enostask, _save_env
 
-@enostask(new=True)
-def g5k_deploy(g5k_config, env=None, force_deploy=False, **kwargs):
+def g5k_deploy(g5k_config, force_deploy=False, **kwargs):
     from enoslib.infra.enos_g5k.provider import G5k
     provider = G5k(g5k_config)
     roles, networks = provider.init(force_deploy=force_deploy)
+    env = {}
     env['roles'] = roles
     env['networks'] = networks
     logging.info('Wait 30 seconds for iface to be ready...')
@@ -15,9 +15,7 @@ def g5k_deploy(g5k_config, env=None, force_deploy=False, **kwargs):
     return env
 
 
-@enostask()
-def deploy(conf, provider='g5k', force_deployment=False, xp_name=None,
-           env=None, **kwargs):
+def deploy(conf, provider='g5k', force_deployment=False, env=None, **kwargs):
     config = {}
 
     if isinstance(conf, str):
@@ -39,8 +37,7 @@ def deploy(conf, provider='g5k', force_deployment=False, xp_name=None,
     # Claim resources on Grid'5000
     if provider == 'g5k' and 'g5k' in config:
         env['provider'] = 'g5k'
-        updated_env = g5k_deploy(config['g5k'], env=xp_name,
-                                    force_deploy=force_deployment)
+        updated_env = g5k_deploy(config['g5k'], force_deploy=force_deployment)
         env.update(updated_env)
     else:
         raise Exception(
