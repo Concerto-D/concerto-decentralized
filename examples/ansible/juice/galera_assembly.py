@@ -9,7 +9,6 @@ from madpp.gantt_chart import GanttChart
 
 from components.apt_utils import AptUtils
 from components.ceph import Ceph
-from components.chrony import Chrony
 from components.docker import Docker
 from components.mariadb import MariaDB
 from components.python import Python
@@ -26,7 +25,6 @@ class GaleraAssembly(Assembly):
             self.docker = None
             self.ceph = None
             self.registry = None
-            self.chrony = None
             self.mariadb = None
             self.galera_master = None
             self.galera_worker = None
@@ -39,7 +37,6 @@ class GaleraAssembly(Assembly):
             ass.apt_utils = AptUtils(host)
             ass.python = Python(host)
             ass.docker = Docker(host)
-            ass.chrony = Chrony(host)
             return ass
             
         @staticmethod
@@ -82,7 +79,6 @@ class GaleraAssembly(Assembly):
         self.add_component('registry_docker', self.registry_set.docker)
         self.add_component('registry_ceph', self.registry_set.ceph)
         self.add_component('registry_registry', self.registry_set.registry)
-        self.add_component('registry_chrony', self.registry_set.chrony)
         self.connect('registry_apt_utils', 'apt_utils',
                      'registry_docker', 'apt_utils')
         self.connect('registry_python', 'python_full',
@@ -100,7 +96,6 @@ class GaleraAssembly(Assembly):
         self.add_component('master_mariadb', self.master_set.mariadb)
         self.add_component('master_sysbench', self.master_set.sysbench)
         self.add_component('master_sysbench_master', self.master_set.sysbench_master)
-        self.add_component('master_chrony', self.master_set.chrony)
         self.connect('master_apt_utils', 'apt_utils',
                      'master_docker', 'apt_utils')
         self.connect('master_python', 'python_full',
@@ -123,7 +118,6 @@ class GaleraAssembly(Assembly):
             self.add_component(prefix+'_docker', current_worker_set.docker)
             self.add_component(prefix+'_mariadb', current_worker_set.mariadb)
             self.add_component(prefix+'_sysbench', current_worker_set.sysbench)
-            self.add_component(prefix+'_chrony', current_worker_set.chrony)
             self.connect(prefix+'_apt_utils', 'apt_utils',
                          prefix+'_docker', 'apt_utils')
             self.connect(prefix+'_python', 'python_full',
@@ -160,10 +154,8 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_docker', 'install')
             self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
-            self.change_behavior('registry_chrony', 'install')
             #dummy data
             self._provide_data('', 'registry_docker', 'config')
-            self._provide_data('', 'registry_chrony', 'config')
             self._provide_data('', 'registry_ceph', 'config')
             self._provide_data('', 'registry_ceph', 'id')
             self._provide_data('', 'registry_ceph', 'rdb')
@@ -174,10 +166,8 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_mariadb', 'install')
             self.change_behavior('master_sysbench', 'install')
             self.change_behavior('master_sysbench_master', 'install')
-            self.change_behavior('master_chrony', 'install')
             #dummy data
             self._provide_data('', 'master_docker', 'config')
-            self._provide_data('', 'master_chrony', 'config')
             self._provide_data(mariadb_config, 'master_mariadb', 'config')
             self._provide_data(mariadb_command, 'master_mariadb', 'command')
             self._provide_data('', 'master_mariadb', 'root_pw')
@@ -192,10 +182,8 @@ class GaleraAssembly(Assembly):
             if deploy_mariadb:
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
-            self.change_behavior(prefix+'_chrony', 'install')
             #dummy data
             self._provide_data('', prefix+'_docker', 'config')
-            self._provide_data('', prefix+'_chrony', 'config')
             if deploy_mariadb:
                 self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
                 self._provide_data(mariadb_command, prefix+'_mariadb', 'command')
@@ -215,13 +203,11 @@ class GaleraAssembly(Assembly):
     def _deploy_cleanup(self, galera=False):
         def cleanup_registry():
             self._stop_provide_data('registry_docker', 'config')
-            self._stop_provide_data('registry_chrony', 'config')
             self._stop_provide_data('registry_ceph', 'config')
             self._stop_provide_data('registry_ceph', 'id')
             self._stop_provide_data('registry_ceph', 'rdb')
         def cleanup_master():
             self._stop_provide_data('master_docker', 'config')
-            self._stop_provide_data('master_chrony', 'config')
             self._stop_provide_data('master_mariadb', 'config')
             self._stop_provide_data('master_mariadb', 'command')
             self._stop_provide_data('master_mariadb', 'root_pw')
@@ -231,7 +217,6 @@ class GaleraAssembly(Assembly):
         def cleanup_worker(i, mariadb_deployed=False):
             prefix = 'worker%d'%i
             self._stop_provide_data(prefix+'_docker', 'config')
-            self._stop_provide_data(prefix+'_chrony', 'config')
             if mariadb_deployed:
                 self._stop_provide_data(prefix+'_mariadb', 'config')
                 self._stop_provide_data(prefix+'_mariadb', 'command')

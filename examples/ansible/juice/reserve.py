@@ -15,7 +15,7 @@ def g5k_deploy(g5k_config, force_deploy=False, **kwargs):
     return env
 
 
-def deploy(conf, provider='g5k', force_deployment=False, **kwargs):
+def allocate(conf, provider='g5k', force_deployment=False):
     config = {}
     env = {}
 
@@ -43,13 +43,102 @@ def deploy(conf, provider='g5k', force_deployment=False, **kwargs):
     else:
         raise Exception(
             'The provider {!r} is not supported or it lacks a configuration'.format(provider))
-        
-    print("  Roles:")
-    print(env['roles'])
-    print("  Networks:")
-    print(env['networks'])
-    print("  Config:")
-    print(env)
+    return env
+
+#{
+    #'roles': {
+        #'database': [Host(ecotype - 47. nantes.grid5000.fr, address = ecotype - 47. nantes.grid5000.fr), Host(ecotype - 45. nantes.grid5000.fr, address = ecotype - 45. nantes.grid5000.fr), Host(ecotype - 19. nantes.grid5000.fr, address = ecotype - 19. nantes.grid5000.fr)],
+        #'registry': [Host(ecotype - 48. nantes.grid5000.fr, address = ecotype - 48. nantes.grid5000.fr)]
+    #},
+    #'config': {
+        #'database': 'mariadb',
+        #'registry': {
+            #'ceph_id': 'discovery',
+            #'ceph': True,
+            #'type': 'internal',
+            #'ceph_mon_host': ['ceph0.rennes.grid5000.fr', 'ceph1.rennes.grid5000.fr', 'ceph2.rennes.grid5000.fr'],
+            #'ceph_keyring': '/home/discovery/.ceph/ceph.client.discovery.keyring',
+            #'ceph_rbd': 'discovery_kolla_registry/datas'
+        #},
+        #'monitoring': False,
+        #'g5k': {
+            #'dhcp': True,
+            #'job_name': 'juice-tests',
+            #'env_name': 'debian9-x64-nfs',
+            #'walltime': '02:00:00',
+            #'resources': {
+                #'machines': [{
+                    #'roles': ['database'],
+                    #'nodes': 3,
+                    #'primary_network': 'n1',
+                    #'cluster': 'ecotype',
+                    #'secondary_networks': []
+                #}, {
+                    #'roles': ['registry'],
+                    #'nodes': 1,
+                    #'primary_network': 'n1',
+                    #'cluster': 'ecotype',
+                    #'secondary_networks': []
+                #}],
+                #'networks': [{
+                    #'roles': ['control_network', 'database_network'],
+                    #'id': 'n1',
+                    #'site': 'nantes',
+                    #'type': 'prod'
+                #}]
+            #}
+        #}
+    #},
+    #'db': 'mariadb',
+    #'provider': 'g5k',
+    #'networks': [{
+        #'roles': ['control_network', 'database_network'],
+        #'gateway': '172.16.207.254',
+        #'cidr': '172.16.192.0/20',
+        #'dns': '131.254.203.235'
+    #}],
+    #'monitoring': False
+#}
+
+
+def deploy(conf, provider='g5k', force_deployment=False):
+    from execo.action import Put, Get, Remote
+    from execo.host import Host
+    from json import dump
+    
+    env = allocate(conf, provider, force_deployment)
+    database_machines = [host.address for host in env['roles']['database']]
+    master_machine = database_machines[0]
+    worker_marchines = database_machines[1..len(master_machine)]
+    registry_machine = env['roles']['registry'][0]
+    madpp_machine = env['roles']['madpp'][0]
+    madpp_config = {
+        "database_machines": database_machines,
+        "master_machine" : master_machine,
+        "worker_marchines": worker_marchines,
+        "registry_machine": registry_machine,
+        "madpp_machine": madpp_machine
+    }
+    madpp_config_file = open("madpp_config.json", "w")
+    dump(madpp_config, madpp_config_file)
+    madpp_config_file.close()
+    remote_host = Host(madpp_machine, user="root")
+    put = Put(
+        hosts=[remote_host],
+        local_file="madpp_config.json",
+        remote_location= "."
+    ).run()
+    exp = Remote(
+        cmd="cd madpp;source source_dir.sh;cd examples/ansible/juice/;python3.6 galera_assembly.py >stdout 2>stderr",
+        hosts=[remote_host]
+    ).run()
+    Get(
+        hosts=[remote_host],
+        remote_files=['stdout', 'stderr'],
+        local_location='.'
+    ).run()
+    
+    
     
 
 SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-sweeper')
@@ -82,7 +171,7 @@ def experiments():
             xp_name = "%s-%s-%s" % (db, combination['db-nodes'], combination['delay'])
 
             # Let's get it started hun!
-            deploy(conf, db, xp_name)
+            allocate(conf, db, xp_name)
 
             # Everything works well, mark combination as done
             sweeper.done(combination)

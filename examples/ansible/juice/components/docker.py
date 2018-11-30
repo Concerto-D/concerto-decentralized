@@ -64,8 +64,13 @@ class Docker(Component):
     #TODO stop cheating
     def change_config(self):
         #time.sleep(3)
-        self.print_color("Changing config to:\n%s"%self.read('config'))
-        result = call_ansible_on_host(self.host, self.playbook, "docker-4", extra_vars={"enos_action":"deploy","monitor":"false"})
+        config = self.read('config')
+        self.print_color("Changing config to:\n%s"%config)
+        result = call_ansible_on_host(self.host, self.playbook, "docker-4", extra_vars={
+            "enos_action":"deploy",
+            "monitor":"false",
+            "docker_config":config
+        })
         self.print_color("Changed config (code %d) with command: %s" % (result.return_code, result.command))
         
     def restart(self):

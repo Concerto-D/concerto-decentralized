@@ -24,6 +24,12 @@ g5k:
         nodes: 1
         primary_network: n1
         secondary_networks: []
+      - roles:
+          - madpp
+        cluster: ecotype
+        nodes: 1
+        primary_network: n1
+        secondary_networks: []
     networks:
       - id: n1
         roles:
