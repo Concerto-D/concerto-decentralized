@@ -6,12 +6,18 @@
     - ceph-common
   tags: ceph-0
 
+#- name: Copy Ceph configuration
+  #template: src=ceph.conf.j2 dest=/etc/ceph/ceph.conf
+  #tags: ceph-1
+  
 - name: Copy Ceph configuration
-  template: src=ceph.conf.j2 dest=/etc/ceph/ceph.conf
+  copy:
+    content: "{{ ceph_config }}"
+    dest: /etc/ceph/ceph.conf
   tags: ceph-1
 
 - name: Copy Ceph Keyring
-  copy: src={{ registry.ceph_keyring }} dest=/etc/ceph/
+  copy: src={{ ceph_keyring }} dest=/etc/ceph/
   tags: ceph-2
 
 - name: Add rbd kernel module
@@ -19,7 +25,7 @@
   tags: ceph-3
 
 - name: Checking rbd maps
-  shell: "rbd --id {{ registry.ceph_id }} showmapped --format json"
+  shell: "rbd --id {{ ceph_id }} showmapped --format json"
   register: output
   tags: ceph-4
 
@@ -27,12 +33,12 @@
 # TODO: be more precise:
 # check if the rbd is already in the mapped rbd
 - name: Add rbd mapping
-  command: "rbd --id {{ registry.ceph_id }} map {{ registry.ceph_rbd }}"
+  command: "rbd --id {{ ceph_id }} map {{ ceph_rbd }}"
   when: output.stdout == "{}"
   tags: ceph-4
 
 - name: Checking rbd maps
-  shell: "rbd --id {{ registry.ceph_id }} showmapped --format json"
+  shell: "rbd --id {{ ceph_id }} showmapped --format json"
   register: output
   tags: ceph-5
 
@@ -56,6 +62,6 @@
     fstype: auto
   with_dict: "{{ rbd_maps }}"
   when:
-    - item.value.pool in registry.ceph_rbd
-    - item.value.name in registry.ceph_rbd
+    - item.value.pool in ceph_rbd
+    - item.value.name in ceph_rbd
   tags: ceph-7
