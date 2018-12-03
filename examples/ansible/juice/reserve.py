@@ -139,6 +139,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
               "source source_dir.sh;"+\
               "cd examples/ansible/juice/;"+\
               "python3 galera_assembly.py >stdout 2>stderr"
+    print("Executing commands: %s"%run_cmd)
     exp = Remote(
         cmd=run_cmd,
         hosts=[remote_host]
