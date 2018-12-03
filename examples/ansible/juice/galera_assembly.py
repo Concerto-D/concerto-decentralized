@@ -342,7 +342,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
 def load_config(conf_file_location):
     from json import load
     with open(conf_file_location, "r") as file:
-        conf = load(conf_file_location)
+        conf = load(file)
     return conf
 
 
