@@ -108,6 +108,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     
     env = allocate(conf, provider, force_deployment)
     database_machines = [host.address for host in env['roles']['database']]
+    print(database_machines) #DEBUG TODO: REMOVE
     master_machine = database_machines[0]
     workers_marchines = database_machines[1..len(database_machines)]
     registry_machine = env['roles']['registry'][0]
