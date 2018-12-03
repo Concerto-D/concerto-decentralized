@@ -220,7 +220,7 @@ class GaleraAssembly(Assembly):
         self.print("### DEPLOYING ####")
         deploy_registry()
         deploy_master()
-        for i in range(self.nb_workers):
+        for i in range(len(self.workers_hosts)):
             if galera:
                 deploy_worker(i, True)
             else:
@@ -252,7 +252,7 @@ class GaleraAssembly(Assembly):
     
         cleanup_registry()
         cleanup_master()
-        for i in range(self.nb_workers):
+        for i in range(len(self.workers_hosts)):
             if galera:
                 cleanup_worker(i, True)
             else:
@@ -297,10 +297,10 @@ class GaleraAssembly(Assembly):
             
         
         self.print("## RECONFIGURING ##")
-        for i in range(self.nb_workers):
+        for i in range(len(self.workers_hosts)):
             reconf_worker(i)
         reconf_master()
-        for i in range(self.nb_workers):
+        for i in range(len(self.workers_hosts)):
             prefix = 'worker%d'%i
             self.wait(prefix+'_mariadb')
         self.synchronize()
