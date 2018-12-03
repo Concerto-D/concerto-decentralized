@@ -133,6 +133,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     ).run()
     run_cmd = "mkdir -p madppnode;"+\
               "cd madppnode;"+\
+              "rm -r madpp;"+\
               "git clone https://gitlab.inria.fr/mchardet/madpp.git;" +\
               "cd madpp;"+\
               "source source_dir.sh;"+\
