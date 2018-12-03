@@ -140,6 +140,11 @@ def deploy(conf, provider='g5k', force_deployment=False):
         local_files=["madpp_config.json"],
         remote_location= "madppnode/madpp/examples/ansible/juice"
     ).run()
+    put = Put(
+        hosts=[remote_host],
+        local_files=["~/.ssh/id_rsa","~/.ssh/id_rsa.pub"],
+        remote_location= "~/.ssh"
+    ).run()
     run_cmd = "cd madppnode/madpp;"+\
               "source source_dir.sh;"+\
               "cd examples/ansible/juice/;"+\
