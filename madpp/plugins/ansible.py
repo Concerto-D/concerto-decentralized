@@ -13,7 +13,7 @@ class AnsibleCallResult:
         self.stdout = stdout
         self.stderr = stderr
 
-def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_output=False) -> AnsibleCallResult:
+def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_output=False, debug_printing=False) -> AnsibleCallResult:
     global _ansible_call_lock
     global _ansible_call_id
     with _ansible_call_lock:
@@ -28,6 +28,8 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_out
     if playbook[0] != '/':
         playbook = "../../" + playbook
     command = "cd %s;ansible-playbook -i %s, %s --tags \"%s\"%s" % (directory,host,playbook,tag,extra_vars_string)
+    if debug_printing:
+        sys.stderr.write("Executing command: %s\n"%command)
     if sys.version_info >= (3, 7):
         completed_process = run(command, shell=True, check=False, capture_output=capture_output)
         return AnsibleCallResult(
