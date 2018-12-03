@@ -126,16 +126,21 @@ def deploy(conf, provider='g5k', force_deployment=False):
     dump(madpp_config, madpp_config_file)
     madpp_config_file.close()
     remote_host = Host(madpp_machine, user="root")
-    put = Put(
-        hosts=[remote_host],
-        local_files=["madpp_config.json"],
-        remote_location= "."
-    ).run()
     run_cmd = "mkdir -p madppnode;"+\
               "cd madppnode;"+\
               "rm -r madpp;"+\
-              "git clone https://gitlab.inria.fr/mchardet/madpp.git;" +\
-              "cd madpp;"+\
+              "git clone https://gitlab.inria.fr/mchardet/madpp.git"
+    print("Executing commands: %s"%run_cmd)
+    exp = Remote(
+        cmd=run_cmd,
+        hosts=[remote_host]
+    ).run()
+    put = Put(
+        hosts=[remote_host],
+        local_files=["madpp_config.json"],
+        remote_location= "madppnode/madpp/examples/ansible/juice"
+    ).run()
+    run_cmd = "cd madppnode/madpp;"+\
               "source source_dir.sh;"+\
               "cd examples/ansible/juice/;"+\
               "python3 galera_assembly.py >stdout 2>stderr"
@@ -146,7 +151,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['stdout', 'stderr'],
+        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr'],
         local_location='.'
     ).run()
     
