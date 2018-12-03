@@ -347,7 +347,7 @@ def load_config(conf_file_location):
 
 
 if __name__ == '__main__':
-    config = load_config("conf.yaml")
+    config = load_config("madpp_config.json")
     master_host = config['master_host']
     workers_hosts = config['workers_hosts']
     registry_host = config['registry_host']
