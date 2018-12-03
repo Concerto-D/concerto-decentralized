@@ -196,4 +196,5 @@ def experiments():
 
 if __name__ == '__main__':
     #Testing
+    logging.basicConfig(level=logging.DEBUG)
     deploy("conf.yaml")
