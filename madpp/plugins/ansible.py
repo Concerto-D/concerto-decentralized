@@ -33,6 +33,9 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_out
         sys.stderr.flush()
     if sys.version_info >= (3, 7):
         completed_process = run(command, shell=True, check=False, capture_output=capture_output)
+        if debug_printing:
+            sys.stderr.write("Stdout:\n%s\nStderr:\n%s\n"%(completed_process.stdout,completed_process.stderr))
+            sys.stderr.flush()
         return AnsibleCallResult(
             command = command,
             return_code = completed_process.returncode,
@@ -41,6 +44,9 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_out
         )
     else:
         completed_process = run(command, shell=True, check=False)
+        if debug_printing:
+            sys.stderr.write("Stdout:\n%s\nStderr:\n%s\n"%(completed_process.stdout,completed_process.stderr))
+            sys.stderr.flush()
         return AnsibleCallResult(
             command = command,
             return_code = completed_process.returncode,
