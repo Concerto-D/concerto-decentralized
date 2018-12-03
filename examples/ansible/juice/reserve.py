@@ -131,7 +131,9 @@ def deploy(conf, provider='g5k', force_deployment=False):
         local_files="madpp_config.json",
         remote_location= "."
     ).run()
-    run_cmd = "git clone https://gitlab.inria.fr/mchardet/madpp.git" +\
+    run_cmd = "mkdir -p madppnode;"+\
+              "cd madppnode;"+\
+              "git clone https://gitlab.inria.fr/mchardet/madpp.git;" +\
               "cd madpp;"+\
               "source source_dir.sh;"+\
               "cd examples/ansible/juice/;python3.6 galera_assembly.py >stdout 2>stderr"
