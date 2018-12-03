@@ -1,6 +1,7 @@
 from subprocess import run, CompletedProcess
 import sys
 import os
+import shutil
 import threading
 
 _ansible_call_lock = threading.Lock()
@@ -21,6 +22,7 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_out
         _ansible_call_id += 1
     if not os.path.exists(directory):
         os.makedirs(directory)
+    shutil.copy("ansible.cfg",directory)
     if extra_vars is None:
         extra_vars_string = ""
     else:
