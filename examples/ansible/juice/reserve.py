@@ -128,7 +128,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     remote_host = Host(madpp_machine, user="root")
     put = Put(
         hosts=[remote_host],
-        local_files="madpp_config.json",
+        local_files=["madpp_config.json"],
         remote_location= "."
     ).run()
     run_cmd = "mkdir -p madppnode;"+\
