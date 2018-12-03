@@ -30,6 +30,6 @@ class AptUtils(Component):
 
     def install(self):
         #time.sleep(12.5)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy", "monitor":"false", "registry_type":"internal"})
         self.print_color("Installed apt_utils (code %d) with command: %s" % (result.return_code, result.command))
 
