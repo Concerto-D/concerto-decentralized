@@ -109,15 +109,17 @@ def deploy(conf, provider='g5k', force_deployment=False):
     env = allocate(conf, provider, force_deployment)
     database_machines = [host.address for host in env['roles']['database']]
     master_machine = database_machines[0]
-    worker_marchines = database_machines[1..len(master_machine)]
+    workers_marchines = database_machines[1..len(master_machine)]
     registry_machine = env['roles']['registry'][0]
     madpp_machine = env['roles']['madpp'][0]
+    ceph_mon_host = env['config']['registry']['ceph_mon_host']
     madpp_config = {
-        "database_machines": database_machines,
-        "master_machine" : master_machine,
-        "worker_marchines": worker_marchines,
-        "registry_machine": registry_machine,
-        "madpp_machine": madpp_machine
+        "database_hosts": database_machines,
+        "master_host" : master_machine,
+        "workers_hosts": workers_marchines,
+        "registry_host": registry_machine,
+        "madpp_host": madpp_machine,
+        "ceph_mon_host": ceph_mon_host
     }
     madpp_config_file = open("madpp_config.json", "w")
     dump(madpp_config, madpp_config_file)

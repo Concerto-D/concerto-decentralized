@@ -65,12 +65,12 @@ class GaleraAssembly(Assembly):
             ass = GaleraAssembly.ComponentSet._build_db_set(host)
             return ass
     
-    def __init__(self, master_host, registry_host, workers_hosts, registry_ceph_mon_host):
+    def __init__(self, master_host, workers_hosts, registry_host, registry_ceph_mon_host):
         if len(workers_hosts) < 2:
             raise Exception("GaleraAssembly: error, the number of workers must be at least 2 for Galera to work")
         self.master_host = master_host
-        self.registry_host = registry_host
         self.workers_hosts = workers_hosts
+        self.registry_host = registry_host
         self.registry_ceph_mon_host = registry_ceph_mon_host
         Assembly.__init__(self)
         
@@ -306,11 +306,11 @@ class GaleraAssembly(Assembly):
         self.synchronize()
         
 
-def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
+def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.clock()
-    gass = GaleraAssembly("econome-5", "econome-6", ["econome-7","econome-7"])
+    gass = GaleraAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
     gass.set_use_gantt_chart(True)
@@ -338,10 +338,22 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     gc.export_gnuplot("results.gpl")
     return total_time
     
-        
+
+def load_config(conf_file_location):
+    from json import load
+    with open(conf_file_location, "r") as file:
+        conf = load(conf_file_location)
+    return conf
+
 
 if __name__ == '__main__':
+    config = load_config("conf.yaml")
+    master_host = config['master_host']
+    workers_hosts = config['workers_hosts']
+    registry_host = config['registry_host']
+    ceph_mon_host = config['ceph_mon_host']
     time_test(
+        master_host, workers_hosts, registry_host, ceph_mon_host,
         verbosity = 1,
         printing = True,
         print_time = True
