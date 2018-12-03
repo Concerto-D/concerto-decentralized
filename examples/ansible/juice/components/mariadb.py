@@ -76,7 +76,7 @@ class MariaDB(Component):
 
     def go_ready(self):
         #time.sleep(5.8)
-        result = call_ansible_on_host(self.host, self.playbook, "mariadb-5", extra_vars={"enos_action":"deploy","monitor":"false","db":"mariadb"})
+        result = call_ansible_on_host(self.host, self.playbook, "mariadb-5", extra_vars={"enos_action":"deploy", "monitor":"false", "db":"mariadb", "db_host":self.host})
         self.print_color("Database ready (code %d) with command: %s" % (result.return_code, result.command))
 
     def change_config(self):

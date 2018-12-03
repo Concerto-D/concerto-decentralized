@@ -35,6 +35,6 @@
 
 - name: Waiting for MariaDB to be ready
   wait_for:
-    host: "{{ hostvars[dbmaster_node]['ansible_' + database_network]['ipv4']['address'] }}"
+    host: "{{ db_host }}"
     port: 3306
   tags: mariadb-5
