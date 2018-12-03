@@ -309,7 +309,7 @@ class GaleraAssembly(Assembly):
 def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     
     if printing: Printer.st_tprint("Main: creating the assembly")
-    deploy_start_time : float = time.clock()
+    deploy_start_time : float = time.perf_counter()
     gass = GaleraAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
@@ -317,16 +317,16 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
     gass.deploy_mariadb()
-    deploy_end_time : float = time.clock()
+    deploy_end_time : float = time.perf_counter()
     #gass.deploy_mariadb_cleanup()
     
     if printing: Printer.st_tprint("Main: waiting before reconfiguration")
     time.sleep(5)
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
-    reconf_start_time : float = time.clock()
+    reconf_start_time : float = time.perf_counter()
     gass.mariadb_to_galera()
-    reconf_end_time : float = time.clock()
+    reconf_end_time : float = time.perf_counter()
     
     total_deploy_time = deploy_end_time - deploy_start_time
     total_reconf_time = reconf_end_time - reconf_start_time

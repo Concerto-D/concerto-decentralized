@@ -59,7 +59,7 @@ class ServerClient(Assembly):
         
 
 def time_test(nb_clients : int, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
-    start_time : float = time.clock()
+    start_time : float = time.perf_counter()
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     sca = ServerClient(nb_clients)
@@ -78,7 +78,7 @@ def time_test(nb_clients : int, verbosity : int = 0, printing : bool = False, pr
     
     sca.restart()
     
-    end_time : float = time.clock()
+    end_time : float = time.perf_counter()
     total_time = end_time-start_time
     if printing: Printer.st_tprint("Total time in seconds: %f"%total_time)
     
