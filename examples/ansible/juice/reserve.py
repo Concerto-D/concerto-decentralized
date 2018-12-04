@@ -108,12 +108,15 @@ def deploy(conf, provider='g5k', force_deployment=False):
     
     env = allocate(conf, provider, force_deployment)
     database_machines = [host.address for host in env['roles']['database']]
-    print(database_machines) #DEBUG TODO: REMOVE
     master_machine = database_machines[0]
     workers_marchines = database_machines[1:len(database_machines)]
     registry_machine = env['roles']['registry'][0].address
     madpp_machine = env['roles']['madpp'][0].address
     ceph_mon_host = env['config']['registry']['ceph_mon_host']
+    print("Databases: %s"%str(database_machines))
+    print("Registry: %s"%str(registry_machine))
+    print("Madpp: %s"%str(madpp_machine))
+    print("Ceph: %s"%str(ceph_mon_host))
     madpp_config = {
         "database_hosts": database_machines,
         "master_host" : master_machine,
