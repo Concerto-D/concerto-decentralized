@@ -331,7 +331,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
     reconf_start_time : float = time.perf_counter()
-    gass.mariadb_to_galera()
+    #gass.mariadb_to_galera()
     reconf_end_time : float = time.perf_counter()
     
     total_deploy_time = deploy_end_time - deploy_start_time
