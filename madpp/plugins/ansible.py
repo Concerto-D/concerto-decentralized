@@ -14,7 +14,7 @@ class AnsibleCallResult:
         self.stdout = stdout
         self.stderr = stderr
 
-def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_output=False, debug_printing=True) -> AnsibleCallResult:
+def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root", capture_output=False, debug_printing=True) -> AnsibleCallResult:
     global _ansible_call_lock
     global _ansible_call_id
     with _ansible_call_lock:
@@ -29,7 +29,7 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, capture_out
         extra_vars_string = " --extra-vars \"%s\"" % ' '.join(["%s=%s"%(key, str(value)) for key,value in extra_vars.items()])
     if playbook[0] != '/':
         playbook = "../../" + playbook
-    command = "cd %s;ansible-playbook -i %s, %s --tags \"%s\"%s" % (directory,host,playbook,tag,extra_vars_string)
+    command = "cd %s;ansible-playbook -u %s -i %s, %s --tags \"%s\"%s" % (directory, user, host, playbook, tag, extra_vars_string)
     if debug_printing:
         sys.stderr.write("Executing command: %s\n"%command)
         sys.stderr.flush()
