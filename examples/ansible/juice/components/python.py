@@ -38,11 +38,11 @@ class Python(Component):
 
     def install_python(self):
         #time.sleep(24)
-        result = call_ansible_on_host(self.host, self.playbook, "python-0", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "python-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
 
     def install_libs(self):
         #time.sleep(16)
-        result = call_ansible_on_host(self.host, self.playbook, "python-1", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "python-1", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed Python libs (code %d) with command: %s" % (result.return_code, result.command))
 

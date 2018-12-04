@@ -49,14 +49,14 @@ class SysbenchMaster(Component):
         db_credentials = self.read('db_credentials')
         self.print_color("Going to user with ip \'%s\', user credentials \'%s\' and DB credentials \'%s\'"%(my_ip, user_credentials, db_credentials))
         #time.sleep(0.9)
-        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-0", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-0", extra_vars={"enos_action": "deploy", "hostname": self.host})
         self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_database(self):
         my_ip = self.read('my_ip')
         self.print_color("Going to database with ip \'%s\'"%my_ip)
         #time.sleep(0.9)
-        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-1", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-1", extra_vars={"enos_action": "deploy", "hostname": self.host})
         self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
 
     def suspend(self):

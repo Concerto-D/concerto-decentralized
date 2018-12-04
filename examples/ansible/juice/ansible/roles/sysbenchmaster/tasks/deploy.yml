@@ -6,14 +6,14 @@
     host: "%"
     login_user: root
     login_password: my-secret-pw
-    login_host: "{{ hostvars[inventory_hostname]['ansible_' + database_network]['ipv4']['address'] }}"
+    login_host: "{{ hostname }}"
     priv: '*.*:ALL,GRANT'
   tags: sysbenchmaster-0
 
 - name: Create MariaDB sbtest database for sysbench
   mysql_db:
     name: sbtest
-    login_host: "{{ hostvars[inventory_hostname]['ansible_' + database_network]['ipv4']['address'] }}"
+    login_host: "{{ hostname }}"
     login_user: sbtest
     login_password: sbtest
     state: present

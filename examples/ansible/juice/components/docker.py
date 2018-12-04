@@ -43,22 +43,22 @@ class Docker(Component):
         self.initial_place = 'uninstalled'
         
     def mount_run(self):
-        result = call_ansible_on_host(self.host, self.playbook, "docker-0", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Mounted /run (code %d) with command: %s" % (result.return_code, result.command))
         
     def to_repo_key(self):
         #time.sleep(3)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-1", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-1", extra_vars={"enos_action":"deploy"})
         self.print_color("Added repository key (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_repo(self):
         #time.sleep(3.2)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-2", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-2", extra_vars={"enos_action":"deploy"})
         self.print_color("Added repository (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_installed(self):
         #time.sleep(24)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-3", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-3", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed Docker (code %d) with command: %s" % (result.return_code, result.command))
     
     #TODO stop cheating
@@ -76,6 +76,6 @@ class Docker(Component):
         
     def restart(self):
         #time.sleep(3) /+/
-        result = call_ansible_on_host(self.host, self.playbook, "docker-5", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-5", extra_vars={"enos_action":"deploy"})
         self.print_color("Restarted (code %d) with command: %s" % (result.return_code, result.command))
 
