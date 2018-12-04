@@ -69,12 +69,13 @@ class Docker(Component):
         result = call_ansible_on_host(self.host, self.playbook, "docker-4", extra_vars={
             "enos_action":"deploy",
             "monitor":"false",
-            "docker_config":config
+            "docker_config":config,
+            "registry_type":"internal"
         })
         self.print_color("Changed config (code %d) with command: %s" % (result.return_code, result.command))
         
     def restart(self):
         #time.sleep(3) /+/
-        result = call_ansible_on_host(self.host, self.playbook, "docker-5", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "docker-5", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
         self.print_color("Restarted (code %d) with command: %s" % (result.return_code, result.command))
 

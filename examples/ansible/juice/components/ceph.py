@@ -54,21 +54,21 @@ class Ceph(Component):
 
     def install(self):
         #time.sleep(20.6)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-0", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-0", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
         self.print_color("Installed Ceph (code %d) with command: %s" % (result.return_code, result.command))
 
     def configure_conf(self):
         config = self.read('config')
         self.print_color("Using config:\n%s"%config)
         #time.sleep(1.2)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-1", extra_vars={"enos_action":"deploy","monitor":"false","ceph_config":config})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-1", extra_vars={"enos_action":"deploy","monitor":"false","ceph_config":config, "registry_type":"internal"})
         self.print_color("Copied configuration (code %d) with command: %s" % (result.return_code, result.command))
 
     def configure_keyring(self):
         keyring = self.read('keyring')
         self.print_color("Using keyring:\n%s"%keyring)
         #time.sleep(1.1)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-2", extra_vars={"enos_action":"deploy","monitor":"false","ceph_keyring":keyring})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-2", extra_vars={"enos_action":"deploy","monitor":"false","ceph_keyring":keyring, "registry_type":"internal"})
         self.print_color("Copied keyring (code %d) with command: %s" % (result.return_code, result.command))
         
     def add_rdb_kernel_module(self):
@@ -78,11 +78,11 @@ class Ceph(Component):
     def add_rdb_map(self):
         self.id = self.read('id')
         self.rdb = self.read('rdb')
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-4", extra_vars={"enos_action":"deploy","monitor":"false","ceph_id":self.id,"ceph_rdb":self.rdb})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-4", extra_vars={"enos_action":"deploy","monitor":"false","ceph_id":self.id,"ceph_rdb":self.rdb, "registry_type":"internal"})
         self.print_color("Added rdb map (code %d) with command: %s" % (result.return_code, result.command))
         
     def set_fact(self):
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-5", extra_vars={"enos_action":"deploy","monitor":"false","ceph_id":self.id})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-5", extra_vars={"enos_action":"deploy","monitor":"false","ceph_id":self.id, "registry_type":"internal"})
         self.print_color("Fact set (code %d) with command: %s" % (result.return_code, result.command))
         
     def create_registry_directory(self):
@@ -91,7 +91,7 @@ class Ceph(Component):
     
     def mount_registry(self):
         #time.sleep(0.8)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-7", extra_vars={"enos_action":"deploy","monitor":"false","ceph_rdb":self.rdb})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-7", extra_vars={"enos_action":"deploy","monitor":"false","ceph_rdb":self.rdb, "registry_type":"internal"})
         self.print_color("Copied keyring (code %d) with command: %s" % (result.return_code, result.command))
 
     #def add_rdb_mapping(self):
