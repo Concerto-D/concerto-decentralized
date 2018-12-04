@@ -2,5 +2,5 @@
 - name: Common configuration
   hosts: all
   roles:
-    - { role: common,
-        tags: common }
+    - { role: python,
+        tags: python }

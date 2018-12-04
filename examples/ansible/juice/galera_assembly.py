@@ -182,7 +182,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
             #dummy data
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': None}, 'registry_docker', 'config')
+            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_mon_host}, 'registry_ceph', 'config')
             self._provide_data('', 'registry_ceph', 'id')
             self._provide_data('', 'registry_ceph', 'rdb')
@@ -194,7 +194,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_sysbench', 'install')
             self.change_behavior('master_sysbench_master', 'install')
             #dummy data
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': None}, 'master_docker', 'config')
+            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
             self._provide_data(mariadb_config, 'master_mariadb', 'config')
             self._provide_data(mariadb_command, 'master_mariadb', 'command')
             self._provide_data('', 'master_mariadb', 'root_pw')
@@ -209,7 +209,7 @@ class GaleraAssembly(Assembly):
             if deploy_mariadb:
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': None}, prefix+'_docker', 'config')
+            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
             #dummy data
             if deploy_mariadb:
                 self._provide_data(mariadb_config, prefix+'_mariadb', 'config')

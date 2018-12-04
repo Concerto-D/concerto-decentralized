@@ -4,6 +4,3 @@
     path: /sysbench
     state: directory
   tags: sysbench-0
-
-- include: "{{ db }}/deploy.yml"
-  when: inventory_hostname == dbmaster_node

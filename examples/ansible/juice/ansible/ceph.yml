@@ -1,0 +1,6 @@
+---
+- name: Ceph deployment
+  hosts: all
+  roles:
+    - { role: ceph,
+        tags: ceph}

@@ -1,0 +1,10 @@
+- name: Installing dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - apt-transport-https
+    - software-properties-common
+    - ca-certificates
+  tags: aptutils-0

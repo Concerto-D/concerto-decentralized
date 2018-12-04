@@ -8,7 +8,7 @@ class AptUtils(Component):
     
     def __init__(self, host):
         self.host = host
-        self.playbook = "ansible/registry.yml"
+        self.playbook = "ansible/aptutils.yml"
         Component.__init__(self)
 
     def create(self):
@@ -30,6 +30,6 @@ class AptUtils(Component):
 
     def install(self):
         #time.sleep(12.5)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy", "monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed apt_utils (code %d) with command: %s" % (result.return_code, result.command))
 

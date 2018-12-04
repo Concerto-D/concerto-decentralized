@@ -7,6 +7,8 @@ from madpp.plugins.ansible import call_ansible_on_host, AnsibleCallResult
 
 class Registry(Component):
     
+    REGISTRY_PORT = 4000
+    
     def __init__(self, host):
         self.host = host
         self.playbook = "ansible/registry.yml"
@@ -51,11 +53,11 @@ class Registry(Component):
 
     def start_r(self):
         #time.sleep(6.7)
-        result = call_ansible_on_host(self.host, self.playbook, "registry-0", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "registry-0", extra_vars={"enos_action":"deploy", "registry_ip": self.host, "registry_port":self.REGISTRY_PORT})
         self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_ready(self):
         #time.sleep(3)
-        result = call_ansible_on_host(self.host, self.playbook, "registry-1", extra_vars={"enos_action":"deploy","monitor":"false", "registry_type":"internal"})
+        result = call_ansible_on_host(self.host, self.playbook, "registry-1", extra_vars={"enos_action":"deploy", "registry_ip": self.host, "registry_port":self.REGISTRY_PORT})
         self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
 
