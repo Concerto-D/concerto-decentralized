@@ -29,6 +29,7 @@ class Python(Component):
         }
 
         self.dependencies = {
+            'apt_utils': (DepType.USE, ['install_python']),
             'python': (DepType.PROVIDE, ['providing_python']),
             'python_full': (DepType.PROVIDE, ['full'])
         }

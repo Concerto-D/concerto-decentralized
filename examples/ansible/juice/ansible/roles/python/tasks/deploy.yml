@@ -21,5 +21,4 @@
     - influxdb
     - psycopg2
     - flent
-    - docker-py #test
   tags: python-1

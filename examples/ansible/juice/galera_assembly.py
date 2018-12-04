@@ -83,6 +83,8 @@ class GaleraAssembly(Assembly):
         self.add_component('registry_registry', self.registry_set.registry)
         self.connect('registry_apt_utils', 'apt_utils',
                      'registry_docker', 'apt_utils')
+        self.connect('registry_apt_utils', 'apt_utils',
+                     'registry_python', 'apt_utils')
         self.connect('registry_python', 'python_full',
                      'registry_registry', 'python_full')
         self.connect('registry_ceph', 'ceph',
@@ -100,6 +102,8 @@ class GaleraAssembly(Assembly):
         self.add_component('master_sysbench_master', self.master_set.sysbench_master)
         self.connect('master_apt_utils', 'apt_utils',
                      'master_docker', 'apt_utils')
+        self.connect('master_apt_utils', 'apt_utils',
+                     'master_python', 'apt_utils')
         self.connect('master_python', 'python_full',
                      'master_mariadb', 'python_full')
         self.connect('master_docker', 'docker',
@@ -122,6 +126,8 @@ class GaleraAssembly(Assembly):
             self.add_component(prefix+'_sysbench', current_worker_set.sysbench)
             self.connect(prefix+'_apt_utils', 'apt_utils',
                          prefix+'_docker', 'apt_utils')
+            self.connect(prefix+'_apt_utils', 'apt_utils',
+                         prefix+'_python', 'apt_utils')
             self.connect(prefix+'_python', 'python_full',
                          prefix+'_mariadb', 'python_full')
             self.connect(prefix+'_docker', 'docker',
