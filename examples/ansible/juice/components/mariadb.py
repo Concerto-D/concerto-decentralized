@@ -51,17 +51,21 @@ class MariaDB(Component):
         self.initial_place = 'uninstalled'
         
     def mount(self):
+        self.print_color("Mounting")
         #time.sleep(0.8)
         result = call_ansible_on_host(self.host, self.playbook, "mariadb-0", extra_vars={"enos_action":"deploy","monitor":"false","db":"mariadb"})
         self.print_color("Mounted database dir (code %d) with command: %s" % (result.return_code, result.command))
         
     def config1(self):
+        self.print_color("Config 1")
         time.sleep(1.3)
         
     def config2(self):
+        self.print_color("Config 2")
         time.sleep(1.3)
         
     def pull(self):
+        self.print_color("Pulling image")
         if not self.pulled:
             self.print_color("Pulling image")
             #time.sleep(6.5)
@@ -70,16 +74,19 @@ class MariaDB(Component):
             self.pulled = True
 
     def start(self):
+        self.print_color("Starting container")
         #time.sleep(1.4)
         result = call_ansible_on_host(self.host, self.playbook, "mariadb-4", extra_vars={"enos_action":"deploy","monitor":"false","db":"mariadb"})
         self.print_color("Started container (code %d) with command: %s" % (result.return_code, result.command))
 
     def go_ready(self):
+        self.print_color("going ready")
         #time.sleep(5.8)
         result = call_ansible_on_host(self.host, self.playbook, "mariadb-5", extra_vars={"enos_action":"deploy", "monitor":"false", "db":"mariadb", "db_host":self.host})
         self.print_color("Database ready (code %d) with command: %s" % (result.return_code, result.command))
 
     def change_config(self):
+        self.print_color("Changing config")
         time.sleep(1) # TODO: check
 
     def stop(self):
