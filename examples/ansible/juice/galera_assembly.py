@@ -219,12 +219,12 @@ class GaleraAssembly(Assembly):
         
         self.print("### DEPLOYING ####")
         deploy_registry()
-        deploy_master()
-        for i in range(len(self.workers_hosts)):
-            if galera:
-                deploy_worker(i, True)
-            else:
-                deploy_worker(i, False)
+        #deploy_master()
+        #for i in range(len(self.workers_hosts)):
+            #if galera:
+                #deploy_worker(i, True)
+            #else:
+                #deploy_worker(i, False)
     
     
     def _deploy_cleanup(self, galera=False):
