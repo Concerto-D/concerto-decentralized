@@ -225,7 +225,7 @@ class GaleraAssembly(Assembly):
         
         self.print("### DEPLOYING ####")
         deploy_registry()
-        #deploy_master()
+        deploy_master()
         #for i in range(len(self.workers_hosts)):
             #if galera:
                 #deploy_worker(i, True)
