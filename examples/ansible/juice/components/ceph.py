@@ -30,8 +30,8 @@ class Ceph(Component):
             'install': ('uninstalled', 'installed', 'install', 0, self.install),
             'configure_conf': ('installed', 'configured', 'install', 0, self.configure_conf),
             'configure_keyring': ('installed', 'configured', 'install', 0, self.configure_keyring),
-            'add_rdb_kernel_module': ('configured', 'kernel_module_added', 'install', 0, self.add_rdb_kernel_module),
-            'add_rdb_map': ('kernel_module_added', 'rdb_map_added', 'install', 0, self.add_rdb_map),
+            'add_rbd_kernel_module': ('configured', 'kernel_module_added', 'install', 0, self.add_rbd_kernel_module),
+            'add_rbd_map': ('kernel_module_added', 'rdb_map_added', 'install', 0, self.add_rbd_map),
             'set_fact': ('rdb_map_added', 'fact_set', 'install', 0, self.set_fact),
             'create_registry_directory': ('fact_set', 'registry_directory_created', 'install', 0, self.create_registry_directory),
             'mount_registry': ('registry_directory_created', 'running', 'install', 0, self.mount_registry),
@@ -42,9 +42,9 @@ class Ceph(Component):
 
         self.dependencies = {
             'config': (DepType.DATA_USE, ['configure_conf']),
-            'keyring': (DepType.DATA_USE, ['configure_keyring']),
-            'rdb': (DepType.DATA_USE, ['add_rdb_map', 'mount_registry']),
-            'id': (DepType.DATA_USE, ['add_rdb_map', 'set_fact']),
+            'keyring_path': (DepType.DATA_USE, ['configure_keyring']),
+            'rbd': (DepType.DATA_USE, ['add_rbd_map', 'mount_registry']),
+            'id': (DepType.DATA_USE, ['add_rbd_map', 'set_fact']),
             #'rdb_map': (DepType.DATA_PROVIDE, ['rdb_map_pl']),
             'ceph': (DepType.PROVIDE, ['running'])
         }
@@ -65,21 +65,21 @@ class Ceph(Component):
         self.print_color("Copied configuration (code %d) with command: %s" % (result.return_code, result.command))
 
     def configure_keyring(self):
-        keyring = self.read('keyring')
-        self.print_color("Using keyring:\n%s"%keyring)
+        keyring_path = self.read('keyring_path')
+        self.print_color("Using keyring file:\n%s"%keyring_path)
         #time.sleep(1.1)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-2", extra_vars={"enos_action":"deploy","ceph_keyring":keyring})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-2", extra_vars={"enos_action":"deploy","ceph_keyring_path":keyring_path})
         self.print_color("Copied keyring (code %d) with command: %s" % (result.return_code, result.command))
         
-    def add_rdb_kernel_module(self):
+    def add_rbd_kernel_module(self):
         result = call_ansible_on_host(self.host, self.playbook, "ceph-3", extra_vars={"enos_action":"deploy"})
-        self.print_color("Added rdb kernel module (code %d) with command: %s" % (result.return_code, result.command))
+        self.print_color("Added rbd kernel module (code %d) with command: %s" % (result.return_code, result.command))
         
-    def add_rdb_map(self):
+    def add_rbd_map(self):
         self.id = self.read('id')
-        self.rdb = self.read('rdb')
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-4", extra_vars={"enos_action":"deploy","ceph_id":self.id,"ceph_rdb":self.rdb})
-        self.print_color("Added rdb map (code %d) with command: %s" % (result.return_code, result.command))
+        self.rbd = self.read('rbd')
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-4", extra_vars={"enos_action":"deploy","ceph_id":self.id,"ceph_rdb":self.rbd})
+        self.print_color("Added rbd map (code %d) with command: %s" % (result.return_code, result.command))
         
     def set_fact(self):
         result = call_ansible_on_host(self.host, self.playbook, "ceph-5", extra_vars={"enos_action":"deploy","ceph_id":self.id})
@@ -91,11 +91,11 @@ class Ceph(Component):
     
     def mount_registry(self):
         #time.sleep(0.8)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-7", extra_vars={"enos_action":"deploy","ceph_rdb":self.rdb})
+        result = call_ansible_on_host(self.host, self.playbook, "ceph-7", extra_vars={"enos_action":"deploy","ceph_rbd":self.rbd})
         self.print_color("Copied keyring (code %d) with command: %s" % (result.return_code, result.command))
 
     #def add_rdb_mapping(self):
-        #self.print_color("Adding rdb mapping (id: %s): %s"%(self.read('id'),self.read('rdb')))
+        #self.print_color("Adding rbd mapping (id: %s): %s"%(self.read('id'),self.read('rbd')))
         ##time.sleep(0.8)
 
     #def get_rdb_mapping(self):

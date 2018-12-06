@@ -65,13 +65,13 @@ class GaleraAssembly(Assembly):
             ass = GaleraAssembly.ComponentSet._build_db_set(host)
             return ass
     
-    def __init__(self, master_host, workers_hosts, registry_host, registry_ceph_mon_host):
+    def __init__(self, master_host, workers_hosts, registry_host, registry_ceph_config):
         if len(workers_hosts) < 2:
             raise Exception("GaleraAssembly: error, the number of workers must be at least 2 for Galera to work")
         self.master_host = master_host
         self.workers_hosts = workers_hosts
         self.registry_host = registry_host
-        self.registry_ceph_mon_host = registry_ceph_mon_host
+        self.registry_ceph_config = registry_ceph_config
         Assembly.__init__(self)
         
         # Registry
@@ -189,11 +189,11 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_docker', 'install')
             self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
-            #dummy data
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_mon_host}, 'registry_ceph', 'config')
-            self._provide_data('', 'registry_ceph', 'id')
-            self._provide_data('', 'registry_ceph', 'rdb')
+            self._provide_data(self.registry_ceph_config.keyring_path, 'registry_ceph', 'keyring_path')
+            self._provide_data(self.registry_ceph_config.rbd, 'registry_ceph', 'rbd')
+            self._provide_data(self.registry_ceph_config.id, 'registry_ceph', 'id')
         def deploy_master(mariadb_config='', mariadb_command=''):
             self.change_behavior('master_apt_utils', 'install')
             self.change_behavior('master_python', 'install')
@@ -205,6 +205,7 @@ class GaleraAssembly(Assembly):
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
             self._provide_data(mariadb_config, 'master_mariadb', 'config')
             self._provide_data(mariadb_command, 'master_mariadb', 'command')
+            #dummy data
             self._provide_data('', 'master_mariadb', 'root_pw')
             self._provide_data('', 'master_sysbench_master', 'db_credentials')
             self._provide_data('', 'master_sysbench_master', 'user_credentials')
@@ -362,9 +363,9 @@ if __name__ == '__main__':
     master_host = config['master_host']
     workers_hosts = config['workers_hosts']
     registry_host = config['registry_host']
-    ceph_mon_host = config['ceph_mon_host']
+    registry_ceph_config = config['ceph']
     time_test(
-        master_host, workers_hosts, registry_host, ceph_mon_host,
+        master_host, workers_hosts, registry_host, registry_ceph_config,
         verbosity = 1,
         printing = True,
         print_time = True

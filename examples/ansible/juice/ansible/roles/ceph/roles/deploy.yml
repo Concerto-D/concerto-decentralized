@@ -17,7 +17,7 @@
   tags: ceph-1
 
 - name: Copy Ceph Keyring
-  copy: src={{ ceph_keyring }} dest=/etc/ceph/
+  copy: src={{ ceph_keyring_path }} dest=/etc/ceph/
   tags: ceph-2
 
 - name: Add rbd kernel module

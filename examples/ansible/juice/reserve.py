@@ -113,17 +113,31 @@ def deploy(conf, provider='g5k', force_deployment=False):
     registry_machine = env['roles']['registry'][0].address
     madpp_machine = env['roles']['madpp'][0].address
     ceph_mon_host = env['config']['registry']['ceph_mon_host']
+    ceph_keyring_path = env['config']['registry']['ceph_keyring']
+    ceph_id = env['config']['registry']['ceph_id']
+    ceph_rbd = env['config']['registry']['ceph_rbd']
     print("Databases: %s"%str(database_machines))
     print("Registry: %s"%str(registry_machine))
     print("Madpp: %s"%str(madpp_machine))
     print("Ceph: %s"%str(ceph_mon_host))
+            #'ceph_id': 'discovery',
+            #'ceph': True,
+            #'type': 'internal',
+            #'ceph_mon_host': ['ceph0.rennes.grid5000.fr', 'ceph1.rennes.grid5000.fr', 'ceph2.rennes.grid5000.fr'],
+            #'ceph_keyring': '/home/discovery/.ceph/ceph.client.discovery.keyring',
+            #'ceph_rbd': 'discovery_kolla_registry/datas'
     madpp_config = {
         "database_hosts": database_machines,
         "master_host" : master_machine,
         "workers_hosts": workers_marchines,
         "registry_host": registry_machine,
         "madpp_host": madpp_machine,
-        "ceph_mon_host": ceph_mon_host
+        "ceph": {
+            "mon_host": ceph_mon_host,
+            "keyring_path": ceph_keyring_path,
+            "id": ceph_id,
+            "rbd": ceph_rbd
+        }
     }
     madpp_config_file = open("madpp_config.json", "w")
     dump(madpp_config, madpp_config_file)
