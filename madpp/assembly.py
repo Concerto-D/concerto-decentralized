@@ -104,6 +104,7 @@ class Assembly (object):
         return self.name
     
     def terminate(self, debug=False):
+        if (debug): print("DEBUG terminate")
         for component_name in self.act_components:
             self.wait(component_name)
             if debug:
