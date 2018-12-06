@@ -69,8 +69,8 @@ class MariaDB(Component):
         if not self.pulled:
             self.print_color("Pulling image")
             #time.sleep(6.5)
-            #result = call_ansible_on_host(self.host, self.playbook, "mariadb-3", extra_vars={"enos_action":"deploy","db":"mariadb"})
-            #self.print_color("Pulled image (code %d) with command: %s" % (result.return_code, result.command))
+            result = call_ansible_on_host(self.host, self.playbook, "mariadb-3", extra_vars={"enos_action":"deploy","db":"mariadb"})
+            self.print_color("Pulled image (code %d) with command: %s" % (result.return_code, result.command))
             self.pulled = True
 
     def start(self):
