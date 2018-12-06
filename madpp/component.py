@@ -144,6 +144,7 @@ class Component (object, metaclass=ABCMeta):
         self.act_idocks : Set[Dock] = set()
         self.act_behavior : str = None
         self.queued_behaviors : Queue = Queue()
+        self.visited_places : List[Place] = set()
         
         self.initialized : bool = False
         
@@ -523,6 +524,7 @@ class Component (object, metaclass=ABCMeta):
             raise Exception("Trying to set behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
+        self.visited_places = set()
         if self.get_verbosity() >= 1:
             self.print_color("Changing behavior to '%s'"%behavior)
         
@@ -645,6 +647,8 @@ class Component (object, metaclass=ABCMeta):
         places_to_remove : Set[Place] = set()
 
         for place in self.act_places:
+            if place in self.visited_places:
+                continue
             odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) is 0:
                 continue
@@ -692,9 +696,7 @@ class Component (object, metaclass=ABCMeta):
                     self.print_color("Deactivating group '%s'"%( group.get_name()))
             self.act_odocks.update(odocks)
             places_to_remove.add(place)
-
-        # TODO warning the current implementation is limited compared to the
-        # model. The group notion has not been implemented properly.
+            self.visited_places.add(place)
         
         self.act_places.difference_update(places_to_remove)
         

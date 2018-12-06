@@ -11,6 +11,7 @@
 ** Fonctionalités
 
 - Discuter de la sémantique du composant : faire les quatre étapes d'un coup ou une seule ? Modifié actuallement aux quatre étapes d'un coup en commençant par idocks to place pour ne pas fournir un provide si l'état n'est pas stable
+- S'assurer que la sémantique "on ne peut pas quitter une place deux fois dans le même comportement" correspond à ce qui est attendu (objectif : éviter les boucles)
 - Vérifier que les noms de composants / transitions / groupes / places / comportements ne contiennent pas ',' et ne commencent pas par '_' (pour évolutions futures)
 - Clarifier le cas où la place initiale est dans un groupe (pour l'instant : interdit)
 - Gérer les ports de la place initiale (suggestion : mettre un token dans un dock input au lieu de la place directement)
