@@ -191,9 +191,9 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_registry', 'install')
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_mon_host}, 'registry_ceph', 'config')
-            self._provide_data(self.registry_ceph_config.keyring_path, 'registry_ceph', 'keyring_path')
-            self._provide_data(self.registry_ceph_config.rbd, 'registry_ceph', 'rbd')
-            self._provide_data(self.registry_ceph_config.id, 'registry_ceph', 'id')
+            self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
+            self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
+            self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
         def deploy_master(mariadb_config='', mariadb_command=''):
             self.change_behavior('master_apt_utils', 'install')
             self.change_behavior('master_python', 'install')
