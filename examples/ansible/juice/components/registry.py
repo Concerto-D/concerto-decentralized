@@ -54,10 +54,10 @@ class Registry(Component):
     def start_r(self):
         #time.sleep(6.7)
         result = call_ansible_on_host(self.host, self.playbook, "registry-0", extra_vars={"enos_action":"deploy", "registry_ip": self.host, "registry_port":self.REGISTRY_PORT})
-        self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
+        self.print_color("Started registry (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_ready(self):
         #time.sleep(3)
         result = call_ansible_on_host(self.host, self.playbook, "registry-1", extra_vars={"enos_action":"deploy", "registry_ip": self.host, "registry_port":self.REGISTRY_PORT})
-        self.print_color("Installed Python (code %d) with command: %s" % (result.return_code, result.command))
+        self.print_color("Made registry ready (code %d) with command: %s" % (result.return_code, result.command))
 

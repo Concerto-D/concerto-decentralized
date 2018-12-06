@@ -10,8 +10,7 @@
 
 ** Fonctionalités
 
-- Ne pas bloquer lors de deux change_behavior consécutifs
-- Gantt chart : exporter dans un format automatiquement dessinable
+- Discuter de la sémantique du composant : faire les quatre étapes d'un coup ou une seule ? Modifié actuallement aux quatre étapes d'un coup en commençant par idocks to place pour ne pas fournir un provide si l'état n'est pas stable
 - Vérifier que les noms de composants / transitions / groupes / places / comportements ne contiennent pas ',' et ne commencent pas par '_' (pour évolutions futures)
 - Clarifier le cas où la place initiale est dans un groupe (pour l'instant : interdit)
 - Gérer les ports de la place initiale (suggestion : mettre un token dans un dock input au lieu de la place directement)

@@ -89,8 +89,6 @@ class GaleraAssembly(Assembly):
                      'registry_registry', 'python_full')
         self.connect('registry_ceph', 'ceph',
                      'registry_registry', 'ceph')
-        self.connect('registry_docker', 'docker',
-                     'registry_registry', 'docker')
         
         # DB Master
         self.master_set = self.ComponentSet.build_master_set(master_host)
@@ -190,6 +188,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
+            self.change_behavior('registry_docker', 'change_config')
             self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
             self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
             self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
@@ -203,6 +202,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_sysbench_master', 'install')
             #dummy data
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
+            self.change_behavior('master_docker', 'change_config')
             self._provide_data(mariadb_config, 'master_mariadb', 'config')
             self._provide_data(mariadb_command, 'master_mariadb', 'command')
             #dummy data
@@ -219,6 +219,7 @@ class GaleraAssembly(Assembly):
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
+            self.change_behavior(prefix+'_docker', 'change_config')
             #dummy data
             if deploy_mariadb:
                 self._provide_data(mariadb_config, prefix+'_mariadb', 'config')

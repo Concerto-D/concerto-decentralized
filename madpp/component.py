@@ -594,16 +594,26 @@ class Component (object, metaclass=ABCMeta):
         if not self.initialized:
             self.init()
         
-        done = False
+        #done = False
         
+        #if self.act_places:
+            #done = self._place_to_odocks()
+        #if (not done) and self.act_odocks:
+            #done = self._start_transition()
+        #if (not done) and self.act_transitions:
+            #done = self._end_transition()
+        #if (not done) and self.act_idocks:
+            #done = self._idocks_to_place()
+        
+        #TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a provide is not stable it doesn't get activated)
+        if self.act_idocks:
+            self._idocks_to_place()
         if self.act_places:
-            done = self._place_to_odocks()
-        if (not done) and self.act_odocks:
-            done = self._start_transition()
-        if (not done) and self.act_transitions:
-            done = self._end_transition()
-        if (not done) and self.act_idocks:
-            done = self._idocks_to_place()
+            self._place_to_odocks()
+        if self.act_odocks:
+            self._start_transition()
+        if self.act_transitions:
+            self._end_transition()
         
         # Checks if the component is IDLE
         idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
