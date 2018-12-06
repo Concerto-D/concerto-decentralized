@@ -114,7 +114,8 @@ class Component (object, metaclass=ABCMeta):
     def __init__(self):
         self.name : str = ""
         self.color : str = ''
-        self.verbosity : int = 0
+        self._verbosity : int = 0
+        self.forced_verobisty : int = None
         self.print_time : bool = False
         self.dryrun : bool = False
         self.gantt : GanttChart = None
@@ -154,7 +155,7 @@ class Component (object, metaclass=ABCMeta):
     
     
     def set_verbosity(self, level : int):
-        self.verbosity = level
+        self._verbosity = level
         
     def set_print_time(self, value : bool):
         self.print_time = value
@@ -169,6 +170,15 @@ class Component (object, metaclass=ABCMeta):
     def force_hide_from_gantt_chart(self):
         self.hidden_from_gantt_chart = True
         self.gantt = None
+    
+    def force_vebosity(self, forced_verobisty : int):
+        self.forced_verobisty = forced_verobisty
+    
+    def get_verbosity(self):
+        if self.forced_verobisty is None:
+            return self._verbosity
+        else:
+            return self.forced_verobisty
 
 
     def add_places(self, places : List[str], initial=None):
@@ -437,7 +447,7 @@ class Component (object, metaclass=ABCMeta):
         return self.color
     
     def print_color(self, string : str):
-        if self.verbosity < 0:
+        if self.get_verbosity() < 0:
             return
         message : str = "%s[%s] %s%s"%(self.get_color(), self.get_name(), string, Messages.endc())
         if self.print_time:
@@ -513,7 +523,7 @@ class Component (object, metaclass=ABCMeta):
             raise Exception("Trying to set behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
-        if self.verbosity >= 1:
+        if self.get_verbosity() >= 1:
             self.print_color("Changing behavior to '%s'"%behavior)
         
     def get_behaviors(self):
@@ -529,7 +539,7 @@ class Component (object, metaclass=ABCMeta):
             if behavior not in self.st_behaviors and behavior is not None:
                 raise Exception("Trying to queue behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
             self.queued_behaviors.put(behavior)
-            if self.verbosity >= 1:
+            if self.get_verbosity() >= 1:
                 self.print_color("Queing behavior '%s'"%behavior)
             
             
@@ -610,7 +620,7 @@ class Component (object, metaclass=ABCMeta):
         
         if idle:
             self.set_behavior(None)
-            if self.verbosity >= 1:
+            if self.get_verbosity() >= 1:
                 self.print_color("Going IDLE")
         
         return idle
@@ -655,20 +665,20 @@ class Component (object, metaclass=ABCMeta):
                 continue
             
             did_something = True
-            if self.verbosity >= 1:
+            if self.get_verbosity() >= 1:
                 self.print_color("Leaving place '%s'"%(place.get_name()))
             for dep in self.place_dependencies[place.get_name()]:
                 if dep.get_type() is not DepType.DATA_PROVIDE:
                     dep.stop_using()
-                    if self.verbosity >= 2:
+                    if self.get_verbosity() >= 2:
                         self.print_color("Stopping to use place dependency '%s'"%dep.get_name())
             for group in deactivating_groups_operation:
                 group.apply(deactivating_groups_operation[group])
                 for dep in self.group_dependencies[group.get_name()]:
                     dep.stop_using()
-                    if self.verbosity >= 2:
+                    if self.get_verbosity() >= 2:
                         self.print_color("Stopping to use group dependency '%s'"%dep.get_name())
-                if self.verbosity >= 2:
+                if self.get_verbosity() >= 2:
                     self.print_color("Deactivating group '%s'"%( group.get_name()))
             self.act_odocks.update(odocks)
             places_to_remove.add(place)
@@ -703,11 +713,11 @@ class Component (object, metaclass=ABCMeta):
                 continue
             
             did_something = True
-            if self.verbosity >= 1:
+            if self.get_verbosity() >= 1:
                 self.print_color("Starting transition '%s'"%(trans.get_name()))
             for dep in self.trans_dependencies[trans.get_name()]:
                 dep.start_using()
-                if self.verbosity >= 2:
+                if self.get_verbosity() >= 2:
                     self.print_color("Starting to use transition dependency '%s'"%dep.get_name())
             if self.gantt is None:
                 gantt_tuple = None
@@ -741,9 +751,9 @@ class Component (object, metaclass=ABCMeta):
             
             for dep in self.trans_dependencies[trans.get_name()]:
                 dep.stop_using()
-                if self.verbosity >= 2:
+                if self.get_verbosity() >= 2:
                     self.print_color("Stopping to use transition dependency '%s'"%dep.get_name())
-            if self.verbosity >= 1:
+            if self.get_verbosity() >= 1:
                 self.print_color("Ending transition '%s'"%(trans.get_name()))
             self.act_idocks.add(trans.get_dst_dock())
             transitions_to_remove.add(trans)
@@ -807,18 +817,18 @@ class Component (object, metaclass=ABCMeta):
                 
                 did_something = True
                 for group in activating_groups_operation:
-                    if self.verbosity >= 2:
+                    if self.get_verbosity() >= 2:
                         self.print_color("Activating group '%s'"%( group.get_name()))
                     group.apply(activating_groups_operation[group])
                     for dep in self.group_dependencies[group.get_name()]:
                         dep.start_using()
-                        if self.verbosity >= 2:
+                        if self.get_verbosity() >= 2:
                             self.print_color("Starting to use group dependency '%s'"%dep.get_name())
-                if self.verbosity >= 1:
+                if self.get_verbosity() >= 1:
                     self.print_color("Entering place '%s'"%( place.get_name()))
                 for dep in self.place_dependencies[place.get_name()]:
                     dep.start_using()
-                    if self.verbosity >= 2:
+                    if self.get_verbosity() >= 2:
                         self.print_color("Starting to use place dependency '%s'"%dep.get_name())
                 self.act_places.add(place)
                 docks_to_remove.update(inp_docks)

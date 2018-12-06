@@ -16,6 +16,7 @@ class MariaDB(Component):
     def create(self):
         self.places = [
             'uninstalled',
+            'ready_to_pull',
             'mounted',
             'configured_pulled',
             'started',
@@ -23,6 +24,7 @@ class MariaDB(Component):
         ]
         
         self.groups = {
+            'using_docker': ['ready_to_pull','configured_pulled','started','ready']
         }
 
         self.transitions = {
@@ -42,8 +44,8 @@ class MariaDB(Component):
             'config': (DepType.DATA_USE, ['config1', 'change_config']),
             'command': (DepType.DATA_USE, ['start']),
             'root_pw': (DepType.DATA_USE, ['start']),
-            'python_full': (DepType.USE, ['pull']),
-            'docker': (DepType.USE, ['start']),
+            'python_full': (DepType.USE, ['using_docker']),
+            'docker': (DepType.USE, ['using_docker']),
             'registry': (DepType.USE, ['pull']),
             'mariadb': (DepType.PROVIDE, ['ready'])
         }

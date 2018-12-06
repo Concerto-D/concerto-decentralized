@@ -138,6 +138,7 @@ class GaleraAssembly(Assembly):
     def _provide_data_custom(self, provider_name, data, component_name, input_port):
         dp = DataProvider(data)
         dp.force_hide_from_gantt_chart()
+        dp.force_vebosity(-1)
         self.add_component(provider_name, dp)
         self.connect(provider_name, 'data',
                      component_name, input_port)
@@ -166,6 +167,7 @@ class GaleraAssembly(Assembly):
                 const_parameters_values[p] = parameters[p]
         j2 = Jinja2(template_text, var_parameters_names, const_parameters_values)
         j2.force_hide_from_gantt_chart()
+        j2.force_vebosity(-1)
         provider_name = "%s_%s"%(component_name, input_port)
         self.add_component(provider_name, j2)
         self.connect(provider_name, 'jinja2_result',
