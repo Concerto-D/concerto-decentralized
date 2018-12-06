@@ -108,10 +108,7 @@ class Assembly (object):
             self.wait(component_name)
             if debug:
                 print("DEBUG terminate: waiting component '%s'"%component_name)
-                print("  active places: %s" % ','.join([p.get_name() for p in self.components[component_name].act_places]))
-                print("  active transitions: %s" % ','.join([t.get_name() for t in self.components[component_name].act_transitions]))
-                print("  active odocks (transition): %s" % ','.join([d.get_transition().get_name() for d in self.components[component_name].act_odocks]))
-                print("  active idocks (transition): %s" % ','.join([d.get_transition().get_name() for d in self.components[component_name].act_idocks]))
+                print(self.components[component_name].get_debug_info())
         self.synchronize()
         self.alive = False
         self.semantics_thread.join()

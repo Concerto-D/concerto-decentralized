@@ -835,3 +835,11 @@ class Component (object, metaclass=ABCMeta):
         
         self.act_idocks.difference_update(docks_to_remove)
         return did_something
+    
+    def get_debug_info(self) -> str:
+        debug_string = "== Component '%s' status ==\n" % self.get_name()
+        debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self.act_places]))
+        debug_string += ("  active transitions: %s\n" % ','.join([t.get_name() for t in self.act_transitions]))
+        debug_string += ("  active odocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_odocks]))
+        debug_string += ("  active idocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_idocks]))
+        return debug_string

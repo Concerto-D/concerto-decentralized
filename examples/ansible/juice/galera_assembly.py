@@ -269,6 +269,9 @@ class GaleraAssembly(Assembly):
         
     def deploy_mariadb(self):
         self._deploy(False)
+        #DEBUG
+        time.sleep(40)
+        Printer.st_tprint(self.master_set.mariadb.get_debug_info())
         self.wait('master_sysbench_master')
         self.synchronize()
         
