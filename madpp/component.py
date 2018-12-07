@@ -621,7 +621,7 @@ class Component (object, metaclass=ABCMeta):
         idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
         if idle:
             for place in self.act_places:
-                if len(place.get_output_docks(self.act_behavior)) > 0:
+                if place not in self.visited_places and len(place.get_output_docks(self.act_behavior)) > 0:
                     idle = False
                     break
         
