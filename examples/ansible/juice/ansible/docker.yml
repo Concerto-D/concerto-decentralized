@@ -2,5 +2,5 @@
 - name: Docker deployment
   hosts: all
   roles:
-    - { role: ceph,
-        tags: ceph}
+    - { role: docker,
+        tags: docker}
