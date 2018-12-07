@@ -104,8 +104,6 @@ class GaleraAssembly(Assembly):
                      'master_python', 'apt_utils')
         self.connect('master_python', 'python_full',
                      'master_mariadb', 'python_full')
-        self.connect('master_docker', 'docker',
-                     'master_mariadb', 'docker')
         self.connect('master_mariadb', 'mariadb',
                      'master_sysbench_master', 'mysql')
         self.connect('registry_registry', 'registry',
@@ -128,8 +126,6 @@ class GaleraAssembly(Assembly):
                          prefix+'_python', 'apt_utils')
             self.connect(prefix+'_python', 'python_full',
                          prefix+'_mariadb', 'python_full')
-            self.connect(prefix+'_docker', 'docker',
-                         prefix+'_mariadb', 'docker')
             self.connect('registry_registry', 'registry',
                          prefix+'_mariadb', 'registry')
     
