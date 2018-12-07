@@ -48,19 +48,32 @@ class Printer():
         if self._show:
             self.st_tprint(message)
     
+    def err_tprint(self, message : str):
+        if self._show:
+            self.st_err_tprint(message)
+    
     def print(self, message : str):
         if self._show:
             print(message)
-        
+            
     
     @staticmethod
-    def st_tprint(message : str):
+    def _format_tprint(message : str):
         now = datetime.now()
         hour = ("%d"%now.hour).rjust(2, '0')
         minute = ("%d"%now.minute).rjust(2, '0')
         second = ("%d"%now.second).rjust(2, '0')
         ms = ("%d"%(now.microsecond/1000)).rjust(3, '0')
-        print("[%s:%s:%s:%s] %s"%(hour,minute,second,ms, message))
+        return "[%s:%s:%s:%s] %s" % (hour,minute,second,ms, message)
+        
+    @staticmethod
+    def st_tprint(message : str):
+        print(Printer._format_tprint(message))
+    
+    @staticmethod
+    def st_err_tprint(message : str):
+        from sys import stderr
+        print(Printer._format_tprint(message), file=stderr)
 
 
 def remove_if(l : List[Any], remove_cond : Callable[[Any], bool]):

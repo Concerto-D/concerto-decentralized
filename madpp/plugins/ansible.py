@@ -14,7 +14,7 @@ class AnsibleCallResult:
         self.stdout = stdout
         self.stderr = stderr
 
-def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root", capture_output=False, debug_printing=True) -> AnsibleCallResult:
+def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root", capture_output=False, debug_printing=False) -> AnsibleCallResult:
     global _ansible_call_lock
     global _ansible_call_id
     with _ansible_call_lock:
