@@ -30,7 +30,7 @@
 - name: Allow Docker to use an insecure registry (inline config)
   copy:
     content: "{{ docker_config }}"
-    dest: /etc/mine.conf'
+    dest: /etc/systemd/system/docker.service
   tags: docker-4
 
 - name: Restart docker daemon
