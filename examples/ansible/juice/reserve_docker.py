@@ -122,7 +122,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
         "madpp_host": madpp_machine,
     }
     docker_config_file = open("docker_config.json", "w")
-    dump(docker_config, docker_config)
+    dump(docker_config, docker_config_file)
     docker_config_file.close()
     remote_host = Host(madpp_machine, user="root")
     run_cmd = "mkdir -p madppnode;"+\
