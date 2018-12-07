@@ -83,7 +83,7 @@ class DockerAssembly(Assembly):
         self.print("### DEPLOYING ####")
         self.change_behavior('apt_utils', 'install')
         self.change_behavior('docker', 'install')
-        self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'docker', 'config')
+        self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.host, 'registry_port': Registry.REGISTRY_PORT}, 'docker', 'config')
         self.change_behavior('docker', 'change_config')
         self.wait('docker')
         self.wait('apt_utils')
