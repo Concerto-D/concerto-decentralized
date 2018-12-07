@@ -99,7 +99,7 @@ def time_test(master_host, verbosity : int = 0, printing : bool = False, print_t
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.perf_counter()
-    dass = DockerAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
+    dass = DockerAssembly(master_host)
     dass.set_verbosity(verbosity)
     dass.set_print_time(print_time)
     dass.set_use_gantt_chart(True)
