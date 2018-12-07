@@ -228,8 +228,11 @@ class GaleraAssembly(Assembly):
             
         
         self.print("### DEPLOYING ####")
+        Printer.st_err_tprint("DEBUG: deploying registry")
         deploy_registry()
+        Printer.st_err_tprint("DEBUG: deploying master")
         deploy_master()
+        Printer.st_err_tprint("DEBUG: deploying workers")
         #for i in range(len(self.workers_hosts)):
             #if galera:
                 #deploy_worker(i, True)
