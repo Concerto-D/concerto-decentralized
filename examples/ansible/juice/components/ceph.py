@@ -46,7 +46,8 @@ class Ceph(Component):
             'rbd': (DepType.DATA_USE, ['add_rbd_map', 'mount_registry']),
             'id': (DepType.DATA_USE, ['add_rbd_map', 'set_fact']),
             #'rdb_map': (DepType.DATA_PROVIDE, ['rdb_map_pl']),
-            'ceph': (DepType.PROVIDE, ['running'])
+            'ceph': (DepType.PROVIDE, ['running']),
+            'apt_python': (DepType.USE, ['install'])
         }
         
         self.initial_place = 'uninstalled'

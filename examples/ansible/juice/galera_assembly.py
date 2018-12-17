@@ -89,6 +89,8 @@ class GaleraAssembly(Assembly):
                      'registry_registry', 'python_full')
         self.connect('registry_ceph', 'ceph',
                      'registry_registry', 'ceph')
+        self.connect('registry_python', 'python',
+                     'registry_ceph', 'apt_python')
         
         # DB Master
         self.master_set = self.ComponentSet.build_master_set(master_host)
