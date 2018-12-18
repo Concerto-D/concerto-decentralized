@@ -44,7 +44,7 @@ class MariaDB(Component):
             'config': (DepType.DATA_USE, ['config1', 'change_config']),
             'command': (DepType.DATA_USE, ['start']),
             'root_pw': (DepType.DATA_USE, ['start']),
-            'python_full': (DepType.USE, ['using_docker']),
+            'pip_libs': (DepType.USE, ['using_docker']),
             'docker': (DepType.USE, ['using_docker']),
             'registry': (DepType.USE, ['pull']),
             'mariadb': (DepType.PROVIDE, ['ready'])

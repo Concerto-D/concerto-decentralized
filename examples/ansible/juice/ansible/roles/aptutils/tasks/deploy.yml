@@ -8,3 +8,47 @@
     - software-properties-common
     - ca-certificates
   tags: aptutils-0
+
+
+- name: Install Ceph
+  apt: name={{ item }} state=present
+  with_items:
+    - ceph
+    - ceph-common
+  tags: aptutils-ceph
+
+- name: Add docker repository key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  tags: aptutils-docker
+
+- name: Add docker repository
+  apt_repository:
+   repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+   state: present
+  tags: aptutils-docker
+
+- name: Install docker
+  apt:
+    name: docker-ce
+    state: present
+    update_cache: yes
+  tags: aptutils-docker
+
+- name: hack to resolve Problem with MergeList Issue
+  shell: 'find /var/lib/apt/lists -maxdepth 1 -type f -exec rm -v {} \;'
+  tags: aptutils-python
+
+- name: Installing dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - python-setuptools
+    - libpq-dev
+    # python-mysql for collectd
+    - python-mysqldb
+    - python-pip
+  tags: aptutils-python

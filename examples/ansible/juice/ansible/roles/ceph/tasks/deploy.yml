@@ -1,11 +1,4 @@
 ---
-- name: Install Ceph
-  apt: name={{ item }} state=present
-  with_items:
-    - ceph
-    - ceph-common
-  tags: ceph-0
-
 #- name: Copy Ceph configuration
   #template: src=ceph.conf.j2 dest=/etc/ceph/ceph.conf
   #tags: ceph-1

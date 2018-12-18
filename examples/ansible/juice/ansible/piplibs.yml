@@ -2,5 +2,5 @@
 - name: Common configuration
   hosts: all
   roles:
-    - { role: python,
-        tags: python }
+    - { role: piplibs,
+        tags: piplibs }

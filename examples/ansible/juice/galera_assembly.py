@@ -12,7 +12,7 @@ from components.apt_utils import AptUtils
 from components.ceph import Ceph
 from components.docker import Docker
 from components.mariadb import MariaDB
-from components.python import Python
+from components.pip_libs import PipLibs
 from components.registry import Registry
 from components.sysbench import Sysbench
 from components.sysbench_master import SysbenchMaster
@@ -22,7 +22,7 @@ class GaleraAssembly(Assembly):
     class ComponentSet():
         def __init__(self):
             self.apt_utils = None
-            self.python = None
+            self.pip_libs = None
             self.docker = None
             self.ceph = None
             self.registry = None
@@ -35,14 +35,14 @@ class GaleraAssembly(Assembly):
         @staticmethod
         def _build_common_set(host):
             ass = GaleraAssembly.ComponentSet()
-            ass.apt_utils = AptUtils(host)
-            ass.python = Python(host)
+            ass.pip_libs = PipLibs(host)
             ass.docker = Docker(host)
             return ass
             
         @staticmethod
         def build_registry_set(host):
             ass = GaleraAssembly.ComponentSet._build_common_set(host)
+            ass.apt_utils = AptUtils(host, True)
             ass.ceph = Ceph(host)
             ass.registry = Registry(host)
             return ass
@@ -50,6 +50,7 @@ class GaleraAssembly(Assembly):
         @staticmethod
         def _build_db_set(host):
             ass = GaleraAssembly.ComponentSet._build_common_set(host)
+            ass.apt_utils = AptUtils(host, False)
             ass.mariadb = MariaDB(host)
             ass.sysbench = Sysbench(host)
             return ass
@@ -77,35 +78,35 @@ class GaleraAssembly(Assembly):
         # Registry
         self.registry_set = self.ComponentSet.build_registry_set(registry_host)
         self.add_component('registry_apt_utils', self.registry_set.apt_utils)
-        self.add_component('registry_python', self.registry_set.python)
+        self.add_component('registry_pip_libs', self.registry_set.pip_libs)
         self.add_component('registry_docker', self.registry_set.docker)
         self.add_component('registry_ceph', self.registry_set.ceph)
         self.add_component('registry_registry', self.registry_set.registry)
-        self.connect('registry_apt_utils', 'apt_utils',
-                     'registry_docker', 'apt_utils')
-        self.connect('registry_apt_utils', 'apt_utils',
-                     'registry_python', 'apt_utils')
-        self.connect('registry_python', 'python_full',
-                     'registry_registry', 'python_full')
+        self.connect('registry_apt_utils', 'apt_ceph',
+                     'registry_ceph', 'apt_ceph')
+        self.connect('registry_apt_utils', 'apt_python',
+                     'registry_pip_libs', 'apt_python')
+        self.connect('registry_apt_utils', 'apt_docker',
+                     'registry_docker', 'apt_docker')
+        self.connect('registry_pip_libs', 'pip_libs',
+                     'registry_registry', 'pip_libs')
         self.connect('registry_ceph', 'ceph',
                      'registry_registry', 'ceph')
-        self.connect('registry_python', 'python',
-                     'registry_ceph', 'apt_python')
         
         # DB Master
         self.master_set = self.ComponentSet.build_master_set(master_host)
         self.add_component('master_apt_utils', self.master_set.apt_utils)
-        self.add_component('master_python', self.master_set.python)
+        self.add_component('master_pip_libs', self.master_set.pip_libs)
         self.add_component('master_docker', self.master_set.docker)
         self.add_component('master_mariadb', self.master_set.mariadb)
         self.add_component('master_sysbench', self.master_set.sysbench)
         self.add_component('master_sysbench_master', self.master_set.sysbench_master)
-        self.connect('master_apt_utils', 'apt_utils',
-                     'master_docker', 'apt_utils')
-        self.connect('master_apt_utils', 'apt_utils',
-                     'master_python', 'apt_utils')
-        self.connect('master_python', 'python_full',
-                     'master_mariadb', 'python_full')
+        self.connect('master_apt_utils', 'apt_python',
+                     'master_pip_libs', 'apt_python')
+        self.connect('master_apt_utils', 'apt_docker',
+                     'master_docker', 'apt_docker')
+        self.connect('master_pip_libs', 'pip_libs',
+                     'master_mariadb', 'pip_libs')
         self.connect('master_mariadb', 'mariadb',
                      'master_sysbench_master', 'mysql')
         self.connect('registry_registry', 'registry',
@@ -118,16 +119,16 @@ class GaleraAssembly(Assembly):
             self.worker_sets.append(self.ComponentSet.build_worker_set(self.workers_hosts[i]))
             current_worker_set = self.worker_sets[i]
             self.add_component(prefix+'_apt_utils', current_worker_set.apt_utils)
-            self.add_component(prefix+'_python', current_worker_set.python)
+            self.add_component(prefix+'_pip_libs', current_worker_set.pip_libs)
             self.add_component(prefix+'_docker', current_worker_set.docker)
             self.add_component(prefix+'_mariadb', current_worker_set.mariadb)
             self.add_component(prefix+'_sysbench', current_worker_set.sysbench)
-            self.connect(prefix+'_apt_utils', 'apt_utils',
-                         prefix+'_docker', 'apt_utils')
-            self.connect(prefix+'_apt_utils', 'apt_utils',
-                         prefix+'_python', 'apt_utils')
-            self.connect(prefix+'_python', 'python_full',
-                         prefix+'_mariadb', 'python_full')
+            self.connect(prefix+'_apt_utils', 'apt_python',
+                         prefix+'_pip_libs', 'apt_python')
+            self.connect(prefix+'_pip_libs', 'pip_libs',
+                         prefix+'_mariadb', 'pip_libs')
+            self.connect(prefix+'_apt_utils', 'apt_docker',
+                         prefix+'_docker', 'apt_docker')
             self.connect('registry_registry', 'registry',
                          prefix+'_mariadb', 'registry')
     
@@ -181,7 +182,7 @@ class GaleraAssembly(Assembly):
     def _deploy(self, galera=False):
         def deploy_registry():
             self.change_behavior('registry_apt_utils', 'install')
-            self.change_behavior('registry_python', 'install')
+            self.change_behavior('registry_pip_libs', 'install')
             self.change_behavior('registry_docker', 'install')
             self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
@@ -195,7 +196,7 @@ class GaleraAssembly(Assembly):
             self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
         def deploy_master(mariadb_config='', mariadb_command=''):
             self.change_behavior('master_apt_utils', 'install')
-            self.change_behavior('master_python', 'install')
+            self.change_behavior('master_pip_libs', 'install')
             self.change_behavior('master_docker', 'install')
             self.change_behavior('master_mariadb', 'install')
             self.change_behavior('master_sysbench', 'install')
@@ -215,7 +216,7 @@ class GaleraAssembly(Assembly):
         def deploy_worker(i, deploy_mariadb=False, mariadb_config='', mariadb_command=''):
             prefix = 'worker%d'%i
             self.change_behavior(prefix+'_apt_utils', 'install')
-            self.change_behavior(prefix+'_python', 'install')
+            self.change_behavior(prefix+'_pip_libs', 'install')
             self.change_behavior(prefix+'_docker', 'install')
             if deploy_mariadb:
                 self.change_behavior(prefix+'_mariadb', 'install')

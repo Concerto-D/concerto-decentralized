@@ -38,7 +38,7 @@ class Registry(Component):
 
         self.dependencies = {
             'docker': (DepType.USE, ['start_r']),
-            'python_full': (DepType.USE, ['start_r']),
+            'pip_libs': (DepType.USE, ['start_r']),
             'ceph': (DepType.USE, ['using_ceph']),
             'registry': (DepType.PROVIDE, ['r_ready'])
         }

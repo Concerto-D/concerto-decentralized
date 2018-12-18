@@ -15,28 +15,24 @@ class Docker(Component):
         self.places = [
             'uninstalled',
             'run_mounted',
-            'repo_key',
-            'repo',
             'installed',
             'config_changed'
         ]
         
         self.groups = {
-            'using_apt_utils': ['run_mounted', 'repo_key', 'repo', 'installed']
+            'using_apt_docker': ['installed', 'config_changed']
         }
 
         self.transitions = {
-            'use_apt_utils': ('uninstalled', 'run_mounted', 'install', 0, self.mount_run),
-            'to_repo_key': ('run_mounted', 'repo_key', 'install', 0, self.to_repo_key),
-            'to_repo': ('repo_key', 'repo', 'install', 0, self.to_repo),
-            'to_installed': ('repo', 'installed', 'install', 0, self.to_installed),
+            'mount_run': ('uninstalled', 'run_mounted', 'install', 0, self.mount_run),
+            'use_apt_docker': ('repo', 'installed', 'install', 0, empty_transition),
             'change_config': ('installed', 'config_changed', 'change_config', 0, self.change_config),
             'restart': ('config_changed', 'installed', 'change_config', 0, self.restart)
         }
 
         self.dependencies = {
             'config': (DepType.DATA_USE, ['change_config']),
-            'apt_utils': (DepType.USE, ['using_apt_utils']),
+            'apt_docker': (DepType.USE, ['using_apt_docker']),
             'docker': (DepType.PROVIDE, ['installed'])
         }
         
@@ -46,26 +42,7 @@ class Docker(Component):
         self.print_color("Mouting /run")
         result = call_ansible_on_host(self.host, self.playbook, "docker-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Mounted /run (code %d) with command: %s" % (result.return_code, result.command))
-        
-    def to_repo_key(self):
-        self.print_color("To repo key")
-        #time.sleep(3)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-1", extra_vars={"enos_action":"deploy"})
-        self.print_color("Added repository key (code %d) with command: %s" % (result.return_code, result.command))
-
-    def to_repo(self):
-        self.print_color("To repo")
-        #time.sleep(3.2)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-2", extra_vars={"enos_action":"deploy"})
-        self.print_color("Added repository (code %d) with command: %s" % (result.return_code, result.command))
-
-    def to_installed(self):
-        self.print_color("Installing")
-        #time.sleep(24)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-3", extra_vars={"enos_action":"deploy"})
-        self.print_color("Installed Docker (code %d) with command: %s" % (result.return_code, result.command))
     
-    #TODO stop cheating
     def change_config(self):
         config = self.read('config')
         self.print_color("Changing config to:\n%s"%config)

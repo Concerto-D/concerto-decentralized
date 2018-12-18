@@ -2,25 +2,6 @@
   command: mount --make-shared /run
   tags: docker-0
 
-- name: Add docker repository key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-  tags: docker-1
-
-- name: Add docker repository
-  apt_repository:
-   repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
-   state: present
-  tags: docker-2
-
-- name: Install docker
-  apt:
-    name: docker-ce
-    state: present
-    update_cache: yes
-  tags: docker-3
-
 #- name: Allow Docker to use an insecure registry
   #template:
     #src: docker.conf.j2

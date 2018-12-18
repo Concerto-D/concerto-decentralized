@@ -25,9 +25,13 @@ class Ceph(Component):
             'running',
             #'rdb_map_pl'
         ]
+        
+        self.groups = {
+            'using_apt_ceph': ['installed', 'configured', 'kernel_module_added', 'rdb_map_added', 'fact_set', 'registry_directory_created', 'running']
+        }
 
         self.transitions = {
-            'install': ('uninstalled', 'installed', 'install', 0, self.install),
+            'install': ('uninstalled', 'installed', 'install', 0, empty_transition),
             'configure_conf': ('installed', 'configured', 'install', 0, self.configure_conf),
             'configure_keyring': ('installed', 'configured', 'install', 0, self.configure_keyring),
             'add_rbd_kernel_module': ('configured', 'kernel_module_added', 'install', 0, self.add_rbd_kernel_module),
@@ -47,21 +51,16 @@ class Ceph(Component):
             'id': (DepType.DATA_USE, ['add_rbd_map', 'set_fact']),
             #'rdb_map': (DepType.DATA_PROVIDE, ['rdb_map_pl']),
             'ceph': (DepType.PROVIDE, ['running']),
-            'apt_python': (DepType.USE, ['install'])
+            'apt_ceph': (DepType.USE, ['using_apt_ceph'])
         }
         
         self.initial_place = 'uninstalled'
-        
-
-    def install(self):
-        #time.sleep(20.6)
-        result = call_ansible_on_host(self.host, self.playbook, "ceph-0", extra_vars={"enos_action":"deploy"})
-        self.print_color("Installed Ceph (code %d) with command: %s" % (result.return_code, result.command))
+    
 
     def configure_conf(self):
         config = self.read('config')
         self.print_color("Using config:\n%s"%config)
-        #time.sleep(1.2)
+        # time.sleep(1.2)
         result = call_ansible_on_host(self.host, self.playbook, "ceph-1", extra_vars={"enos_action":"deploy","ceph_config":config})
         self.print_color("Copied configuration (code %d) with command: %s" % (result.return_code, result.command))
 
