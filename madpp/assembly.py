@@ -104,7 +104,11 @@ class Assembly (object):
         return self.name
     
     def get_debug_info(self) -> str:
-        debug_info = "Active components:\n"
+        debug_info = "Inactive components:\n"
+        for component_name in self.components:
+            if component_name not in self.act_components:
+                debug_info += "- %s: %s\n"%(component_name, ','.join(self.components[component_name].get_active_places()))
+        debug_info += "Active components:\n"
         for component_name in self.act_components:
             debug_info += self.components[component_name].get_debug_info()
         return debug_info

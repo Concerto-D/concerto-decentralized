@@ -848,6 +848,9 @@ class Component (object, metaclass=ABCMeta):
         self.act_idocks.difference_update(docks_to_remove)
         return did_something
     
+    def get_active_places(self):
+        return list([p.get_name() for p in self.act_places])
+    
     def get_debug_info(self) -> str:
         debug_string = "== Component '%s' status ==\n" % self.get_name()
         debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self.act_places]))
