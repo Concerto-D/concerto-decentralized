@@ -112,6 +112,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     workers_marchines = database_machines[1:len(database_machines)]
     registry_machine = env['roles']['registry'][0].address
     madpp_machine = env['roles']['madpp'][0].address
+    ceph_use = env['config']['registry']['ceph']
     ceph_mon_host = env['config']['registry']['ceph_mon_host']
     ceph_keyring_path = env['config']['registry']['ceph_keyring']
     ceph_id = env['config']['registry']['ceph_id']
@@ -133,6 +134,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
         "registry_host": registry_machine,
         "madpp_host": madpp_machine,
         "ceph": {
+            "use": ceph_use,
             "mon_host": ceph_mon_host,
             "keyring_path": ceph_keyring_path,
             "id": ceph_id,

@@ -40,11 +40,12 @@ class GaleraAssembly(Assembly):
             return ass
             
         @staticmethod
-        def build_registry_set(host):
+        def build_registry_set(host, use_ceph : bool):
             ass = GaleraAssembly.ComponentSet._build_common_set(host)
-            ass.apt_utils = AptUtils(host, True)
-            ass.ceph = Ceph(host)
+            ass.apt_utils = AptUtils(host, use_ceph)
             ass.registry = Registry(host)
+            if use_ceph:
+                ass.ceph = Ceph(host)
             return ass
             
         @staticmethod
@@ -76,22 +77,25 @@ class GaleraAssembly(Assembly):
         Assembly.__init__(self)
         
         # Registry
-        self.registry_set = self.ComponentSet.build_registry_set(registry_host)
+        self.registry_set = self.ComponentSet.build_registry_set(registry_host, use_ceph=self.registry_ceph_config['use'])
         self.add_component('registry_apt_utils', self.registry_set.apt_utils)
         self.add_component('registry_pip_libs', self.registry_set.pip_libs)
         self.add_component('registry_docker', self.registry_set.docker)
-        self.add_component('registry_ceph', self.registry_set.ceph)
         self.add_component('registry_registry', self.registry_set.registry)
-        self.connect('registry_apt_utils', 'apt_ceph',
-                     'registry_ceph', 'apt_ceph')
+        if (self.registry_ceph_config['use']):
+            self.add_component('registry_ceph', self.registry_set.ceph)
+            
         self.connect('registry_apt_utils', 'apt_python',
                      'registry_pip_libs', 'apt_python')
         self.connect('registry_apt_utils', 'apt_docker',
                      'registry_docker', 'apt_docker')
         self.connect('registry_pip_libs', 'pip_libs',
                      'registry_registry', 'pip_libs')
-        self.connect('registry_ceph', 'ceph',
-                     'registry_registry', 'ceph')
+        if (self.registry_ceph_config['use']):
+            self.connect('registry_apt_utils', 'apt_ceph',
+                        'registry_ceph', 'apt_ceph')
+            self.connect('registry_ceph', 'ceph',
+                        'registry_registry', 'ceph')
         
         # DB Master
         self.master_set = self.ComponentSet.build_master_set(master_host)
@@ -184,16 +188,17 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_apt_utils', 'install')
             self.change_behavior('registry_pip_libs', 'install')
             self.change_behavior('registry_docker', 'install')
-            self.change_behavior('registry_ceph', 'install')
             self.change_behavior('registry_registry', 'install')
             self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self.change_behavior('registry_docker', 'change_config')
             self.connect('registry_docker','docker',
                          'registry_registry','docker')
-            self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
-            self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
-            self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
-            self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
+            if (self.registry_ceph_config['use']):
+                self.change_behavior('registry_ceph', 'install')
+                self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
+                self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
+                self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
+                self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
         def deploy_master(mariadb_config='', mariadb_command=''):
             self.change_behavior('master_apt_utils', 'install')
             self.change_behavior('master_pip_libs', 'install')
@@ -248,9 +253,10 @@ class GaleraAssembly(Assembly):
     def _deploy_cleanup(self, galera=False):
         def cleanup_registry():
             self._stop_provide_data('registry_docker', 'config')
-            self._stop_provide_data('registry_ceph', 'config')
-            self._stop_provide_data('registry_ceph', 'id')
-            self._stop_provide_data('registry_ceph', 'rdb')
+            if (self.registry_ceph_config['use']):
+                self._stop_provide_data('registry_ceph', 'config')
+                self._stop_provide_data('registry_ceph', 'id')
+                self._stop_provide_data('registry_ceph', 'rdb')
         def cleanup_master():
             self._stop_provide_data('master_docker', 'config')
             self._stop_provide_data('master_mariadb', 'config')
