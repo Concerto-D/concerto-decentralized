@@ -25,7 +25,7 @@ class Docker(Component):
 
         self.transitions = {
             'mount_run': ('uninstalled', 'run_mounted', 'install', 0, self.mount_run),
-            'use_apt_docker': ('repo', 'installed', 'install', 0, empty_transition),
+            'use_apt_docker': ('run_mounted', 'installed', 'install', 0, empty_transition),
             'change_config': ('installed', 'config_changed', 'change_config', 0, self.change_config),
             'restart': ('config_changed', 'installed', 'change_config', 0, self.restart)
         }
