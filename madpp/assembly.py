@@ -103,6 +103,12 @@ class Assembly (object):
     def get_name(self) -> str:
         return self.name
     
+    def get_debug_info(self) -> str:
+        debug_info = "Active components:\n"
+        for component_name in self.act_components:
+            debug_info += self.components[component_name].get_debug_info()
+        return debug_info
+    
     def terminate(self, debug=False):
         if (debug): Printer.st_err_tprint("DEBUG terminate")
         for component_name in self.act_components:
@@ -277,6 +283,13 @@ class Assembly (object):
     
     def _wait(self, component_name : str):
         return self.is_component_idle(component_name)
+        
+    
+    def wait_all(self):
+        self.add_instruction(InternalInstruction.build_wait_all())
+    
+    def _wait_all(self):
+        return len(self.act_components) is 0
 
 
     def synchronize(self):

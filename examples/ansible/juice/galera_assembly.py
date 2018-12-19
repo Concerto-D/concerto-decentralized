@@ -43,7 +43,7 @@ class GaleraAssembly(Assembly):
         def build_registry_set(host, use_ceph : bool):
             ass = GaleraAssembly.ComponentSet._build_common_set(host)
             ass.apt_utils = AptUtils(host, use_ceph)
-            ass.registry = Registry(host)
+            ass.registry = Registry(host, use_ceph)
             if use_ceph:
                 ass.ceph = Ceph(host)
             return ass
@@ -242,7 +242,9 @@ class GaleraAssembly(Assembly):
         deploy_registry()
         Printer.st_err_tprint("DEBUG: deploying master")
         deploy_master()
-        Printer.st_err_tprint("DEBUG: deploying workers")
+        time.sleep(180)
+        Printer.st_err_tprint(self.get_debug_info())
+        #Printer.st_err_tprint("DEBUG: deploying workers")
         #for i in range(len(self.workers_hosts)):
             #if galera:
                 #deploy_worker(i, True)

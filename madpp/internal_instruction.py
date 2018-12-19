@@ -11,6 +11,7 @@ class InternalInstruction:
         DISCONNECT = 3
         CHANGE_BEHAVIOR = 4
         WAIT = 5
+        WAIT_ALL = 6
         
     def __init__(self, type, args):
         self.type = type
@@ -72,6 +73,12 @@ class InternalInstruction:
                 "component_name": component_name
             })
     
+    @staticmethod
+    def build_wait_all():
+        return InternalInstruction(
+            InternalInstruction.Type.WAIT_ALL,
+            {})
+    
     def apply_to(self, assembly) -> bool:
         import time
         if self.type is InternalInstruction.Type.ADD:
@@ -86,6 +93,8 @@ class InternalInstruction:
             return assembly._change_behavior(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
             return assembly._wait(self.args['component_name'])
+        elif self.type is InternalInstruction.Type.WAIT_ALL:
+            return assembly._wait_all()
         else:
             raise Exception("Invalid internal instruction type")
     
