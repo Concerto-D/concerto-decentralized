@@ -114,12 +114,12 @@ class Assembly (object):
         return debug_info
     
     def terminate(self, debug=False):
-        if (debug): Printer.st_err_tprint("DEBUG terminate")
+        if debug:
+            Printer.st_err_tprint("DEBUG terminate:\n%s"%self.get_debug_info())
         for component_name in self.act_components:
             self.wait(component_name)
             if debug:
                 Printer.st_err_tprint("DEBUG terminate: waiting component '%s'"%component_name)
-                Printer.st_err_tprint(self.components[component_name].get_debug_info())
         self.synchronize()
         self.alive = False
         self.semantics_thread.join()
