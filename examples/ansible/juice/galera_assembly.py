@@ -244,7 +244,7 @@ class GaleraAssembly(Assembly):
         deploy_registry()
         Printer.st_err_tprint("DEBUG: deploying master")
         deploy_master()
-        time.sleep(180)
+        time.sleep(120)
         Printer.st_err_tprint(self.get_debug_info())
         #Printer.st_err_tprint("DEBUG: deploying workers")
         #for i in range(len(self.workers_hosts)):
