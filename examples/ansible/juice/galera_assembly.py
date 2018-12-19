@@ -91,6 +91,8 @@ class GaleraAssembly(Assembly):
                      'registry_docker', 'apt_docker')
         self.connect('registry_pip_libs', 'pip_libs',
                      'registry_registry', 'pip_libs')
+        self.connect('registry_docker', 'docker',
+                     'registry_registry', 'docker')
         if (self.registry_ceph_config['use']):
             self.connect('registry_apt_utils', 'apt_ceph',
                         'registry_ceph', 'apt_ceph')
