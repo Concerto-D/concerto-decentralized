@@ -16,25 +16,31 @@
     - ceph
     - ceph-common
   tags: aptutils-ceph
-
-- name: Add docker repository key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+  
+  
+- name: Installing docker
+  shell: (curl -sSL https://get.docker.com/ | sh)
   tags: aptutils-docker
+  
 
-- name: Add docker repository
-  apt_repository:
-   repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
-   state: present
-  tags: aptutils-docker
+#- name: Add docker repository key
+  #apt_key:
+    #url: https://download.docker.com/linux/ubuntu/gpg
+    #state: present
+  #tags: aptutils-docker
 
-- name: Install docker
-  apt:
-    name: docker-ce
-    state: present
-    update_cache: yes
-  tags: aptutils-docker
+#- name: Add docker repository
+  #apt_repository:
+   #repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+   #state: present
+  #tags: aptutils-docker
+
+#- name: Install docker
+  #apt:
+    #name: docker-ce
+    #state: present
+    #update_cache: yes
+  #tags: aptutils-docker
 
 - name: hack to resolve Problem with MergeList Issue
   shell: 'find /var/lib/apt/lists -maxdepth 1 -type f -exec rm -v {} \;'
