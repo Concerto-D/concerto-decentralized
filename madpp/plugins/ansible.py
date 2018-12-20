@@ -26,7 +26,7 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root"
     shutil.copy("ansible.cfg",directory)
     if extra_vars is None:
         extra_vars = {}
-    with open(directory+"/extra_vars.json") as extra_vars_file:
+    with open(directory+"/extra_vars.json", "w") as extra_vars_file:
         dump(extra_vars, extra_vars_file)
     #extra_vars_string = " --extra-vars \"%s\"" % ' '.join(["%s=%s"%(key, str(value)) for key,value in extra_vars.items()])
     extra_vars_string = " --extra-vars \"@extra_vars.json\""
