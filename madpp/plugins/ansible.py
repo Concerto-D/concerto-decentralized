@@ -15,6 +15,7 @@ class AnsibleCallResult:
         self.stderr = stderr
 
 def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root", capture_output=False, debug_printing=False) -> AnsibleCallResult:
+    from json import dump, dumps
     global _ansible_call_lock
     global _ansible_call_id
     with _ansible_call_lock:
@@ -24,14 +25,16 @@ def call_ansible_on_host(host, playbook, tag="all", extra_vars=None, user="root"
         os.makedirs(directory)
     shutil.copy("ansible.cfg",directory)
     if extra_vars is None:
-        extra_vars_string = ""
-    else:
-        extra_vars_string = " --extra-vars \"%s\"" % ' '.join(["%s=%s"%(key, str(value)) for key,value in extra_vars.items()])
+        extra_vars = {}
+    with open(directory+"/extra_vars.json") as extra_vars_file:
+        dump(extra_vars, extra_vars_file)
+    #extra_vars_string = " --extra-vars \"%s\"" % ' '.join(["%s=%s"%(key, str(value)) for key,value in extra_vars.items()])
+    extra_vars_string = " --extra-vars \"@extra_vars.json\""
     if playbook[0] != '/':
         playbook = "../../" + playbook
     command = "cd %s;ansible-playbook -u %s -i %s, %s --tags \"%s\"%s" % (directory, user, host, playbook, tag, extra_vars_string)
     if debug_printing:
-        sys.stderr.write("Executing command: %s\n"%command)
+        sys.stderr.write("Executing command: %s (extra vars: %s)\n"%command, dumps(extra_vars))
         sys.stderr.flush()
     if sys.version_info >= (3, 7):
         completed_process = run(command, shell=True, check=False, capture_output=capture_output)

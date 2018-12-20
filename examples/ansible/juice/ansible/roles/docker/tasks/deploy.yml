@@ -1,5 +1,7 @@
 - name: Mount /run
   command: mount --make-shared /run
+  args:
+    warn: false
   tags: docker-0
 
 #- name: Allow Docker to use an insecure registry
