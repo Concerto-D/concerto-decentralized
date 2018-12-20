@@ -44,7 +44,7 @@ class Docker(Component):
         self.print_color("Mounted /run (code %d) with command: %s" % (result.return_code, result.command))
     
     def change_config(self):
-        config = self.read('config').replace("\n","\\n")
+        config = self.read('config')
         self.print_color("Changing config to:\n%s"%config)
         #time.sleep(3)
         result = call_ansible_on_host(self.host, self.playbook, "docker-4", extra_vars={
