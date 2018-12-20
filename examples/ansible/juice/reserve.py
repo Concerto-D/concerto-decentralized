@@ -175,7 +175,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr'],
+        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl'],
         local_location='.'
     ).run()
     
