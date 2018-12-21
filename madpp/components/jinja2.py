@@ -6,12 +6,6 @@ from madpp.component import Component
 from madpp.dependency import DepType
 
 
-def print_html_doc():
-    # Create the jinja2 environment.
-    # Notice the use of trim_blocks, which greatly helps control whitespace.
-    print ()
-
-
 class Jinja2(Component):
     
     def __init__(self, template_text, var_parameters_names, const_parameters_values={}):
@@ -42,7 +36,6 @@ class Jinja2(Component):
             if p not in self.const_parameters_values:
                 self.dependencies[p] = (DepType.DATA_USE, ['generate'])
         
-        
         self.initial_place = 'init'
     
     def generate(self):
@@ -52,3 +45,22 @@ class Jinja2(Component):
         for p in self.const_parameters_values:
             parameters[p] = self.const_parameters_values[p]
         self.write('jinja2_result',self.template.render(parameters))
+
+
+class Jinja2Static(Component):
+    
+    def __init__(self, template_text, parameters={}):
+        Component.__init__(self)
+        self.template = Template(template_text)
+        self.write('jinja2_result',self.template.render(parameters))
+
+    def create(self):
+        self.places = [
+            'providing'
+        ]
+
+        self.dependencies = {
+            'jinja2_result': (DepType.DATA_PROVIDE, ['providing'])
+        }
+        
+        self.initial_place = 'providing'

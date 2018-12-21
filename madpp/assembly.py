@@ -168,6 +168,7 @@ class Assembly (object):
         comp.set_gantt_chart(self.gantt)
         self.components[name]=comp
         self.component_connections[name] = set()
+        self.act_components.add(name) # _init
         return True
         
     
@@ -273,13 +274,10 @@ class Assembly (object):
             
     def _change_behavior(self, component_name : str, behavior : str):
         component = self.get_component(component_name)
-        if component_name in self.act_components:
-            component.queue_behavior(behavior)
-            return True
-        else:
-            component.set_behavior(behavior)
+        component.queue_behavior(behavior)
+        if component_name not in self.act_components:
             self.act_components.add(component_name)
-            return True
+        return True
         
     
     def wait(self, component_name : str):

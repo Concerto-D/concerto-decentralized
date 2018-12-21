@@ -5,7 +5,7 @@ import time, datetime
 from madpp.all import *
 from madpp.utility import Printer
 from madpp.components.data_provider import DataProvider
-from madpp.components.jinja2 import Jinja2
+from madpp.components.jinja2 import Jinja2, Jinja2Static
 from madpp.gantt_chart import GanttChart
 
 from components.apt_utils import AptUtils
@@ -143,7 +143,6 @@ class GaleraAssembly(Assembly):
         self.add_component(provider_name, dp)
         self.connect(provider_name, 'data',
                      component_name, input_port)
-        self.change_behavior(provider_name, 'provide')
         
     def _provide_data(self, data, component_name, input_port):
         self._provide_data_custom("%s_%s"%(component_name, input_port), data, component_name, input_port)
@@ -174,6 +173,17 @@ class GaleraAssembly(Assembly):
         self.connect(provider_name, 'jinja2_result',
                      component_name, input_port)
         self.change_behavior(provider_name, 'generate')
+    
+    def _provide_jinja2_static(self, template_file_location, parameters, component_name, input_port):
+        with open(template_file_location, 'r') as template_file:
+            template_text = template_file.read()
+        j2 = Jinja2Static(template_text, parameters)
+        j2.force_hide_from_gantt_chart()
+        j2.force_vebosity(-1)
+        provider_name = "%s_%s"%(component_name, input_port)
+        self.add_component(provider_name, j2)
+        self.connect(provider_name, 'jinja2_result',
+                     component_name, input_port)
         
     def _stop_provide_jinja2(self, component_name, input_port):
         provider_name = "%s_%s"%(component_name, input_port)
@@ -189,13 +199,13 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_pip_libs', 'install')
             self.change_behavior('registry_docker', 'install')
             self.change_behavior('registry_registry', 'install')
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self.change_behavior('registry_docker', 'change_config')
             self.connect('registry_docker','docker',
                          'registry_registry','docker')
             if (self.registry_ceph_config['use']):
                 self.change_behavior('registry_ceph', 'install')
-                self._provide_jinja2('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
+                self._provide_jinja2_static('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
                 self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
                 self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
                 self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
@@ -207,7 +217,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_sysbench', 'install')
             self.change_behavior('master_sysbench_master', 'install')
             #dummy data
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
             self.change_behavior('master_docker', 'change_config')
             self.connect('master_docker','docker',
                          'master_mariadb','docker')
@@ -226,7 +236,7 @@ class GaleraAssembly(Assembly):
             if deploy_mariadb:
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
-            self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
             self.change_behavior(prefix+'_docker', 'change_config')
             self.connect(prefix+'_docker','docker',
                          prefix+'_mariadb','docker')

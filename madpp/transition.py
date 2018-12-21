@@ -24,31 +24,20 @@ class Transition (object):
     BUILD TRANSITION
     """
 
-    def __init__(self, name, src, dst, bhv, idset, func, args, places):
+    def __init__(self, name, src, dst, bhv, idset, func, args):
         self.name = name
-        self.src_place = src
-        self.dst_place = dst
+        self.src_place = None
+        if src is not None:
+            self.src_place = src.get_name()
+        self.dst_place = dst.get_name()
         self.behavior = bhv
         self.dst_idset = idset
         self.code = func
         self.args = args
-        self.bind_docks(places)
-
-    def bind_docks(self, places):
-        """This method is called from the Component class to create
-        docks into places associated to the transition. Once created
-        these docks are bound to the transition.
-
-        :param places: the dictionary of all places declared for the component
-        """
-
-        for key in places:
-            # create output dock in the src place and bind it
-            if key == self.src_place:
-                self.src_dock = places[key].create_output_dock(self)
-            # create input dock in the dst place and bind it
-            if key == self.dst_place:
-                self.dst_dock = places[key].create_input_dock(self)
+        self.src_dock = None
+        if src is not None:
+            self.src_dock = src.create_output_dock(self)
+        self.dst_dock = dst.create_input_dock(self)
 
     def set_name(self, name):
         """

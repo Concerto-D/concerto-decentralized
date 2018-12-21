@@ -12,13 +12,13 @@ from examples.utils import *
 class ServerClient(Assembly):
     def __init__(self):
         Assembly.__init__(self)
+    
+    def deploy(self):
+        self.print("### DEPLOYING ####")
         self.client = Client()
         self.server = Server()
         self.add_component('client', self.client)
         self.add_component('server', self.server)
-    
-    def deploy(self):
-        self.print("### DEPLOYING ####")
         self.connect('client', 'server_ip',
                     'server', 'ip')
         self.connect('client', 'service',
@@ -74,7 +74,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
 
 if __name__ == '__main__':
     time_test(
-        verbosity = -1,
+        verbosity = 2,
         printing = False,
         print_time = True
     )

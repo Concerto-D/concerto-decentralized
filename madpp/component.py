@@ -142,7 +142,7 @@ class Component (object, metaclass=ABCMeta):
         self.act_transitions : Set[Transition] = set()
         self.act_odocks : Set[Dock] = set()
         self.act_idocks : Set[Dock] = set()
-        self.act_behavior : str = None
+        self.act_behavior : str = "_init"
         self.queued_behaviors : Queue = Queue()
         self.visited_places : List[Place] = set()
         
@@ -204,11 +204,11 @@ class Component (object, metaclass=ABCMeta):
         :param initial: whether the place is the initial place of the component (default: False)
         """
         if name in self.st_places:
-            raise Exception("Trying to add '%s' as a place while it is already a place")
+            raise Exception("Trying to add '%s' as a place while it is already a place"%name)
         elif name in self.st_transitions:
-            raise Exception("Trying to add '%s' as a place while it is already a transition")
+            raise Exception("Trying to add '%s' as a place while it is already a transition"%name)
         elif name in self.st_groups:
-            raise Exception("Trying to add '%s' as a place while it is already a group")
+            raise Exception("Trying to add '%s' as a place while it is already a group"%name)
         self.st_places[name] = Place(name)
         self.place_dependencies[name] = []
         self.place_groups[name] = []
@@ -223,11 +223,11 @@ class Component (object, metaclass=ABCMeta):
     
     def add_group(self, name : str, places : List[str]):
         if name in self.st_places:
-            raise Exception("Trying to add '%s' as a group while it is already a place")
+            raise Exception("Trying to add '%s' as a group while it is already a place"%name)
         elif name in self.st_transitions:
-            raise Exception("Trying to add '%s' as a group while it is already a transition")
+            raise Exception("Trying to add '%s' as a group while it is already a transition"%name)
         elif name in self.st_groups:
-            raise Exception("Trying to add '%s' as a group while it is already a group")
+            raise Exception("Trying to add '%s' as a group while it is already a group"%name)
         
         for place_name in places:
             if place_name not in self.st_places:
@@ -259,8 +259,19 @@ class Component (object, metaclass=ABCMeta):
             else:
                 self.add_transition(key, transitions[key][0], transitions[key][
                     1], transitions[key][2], transitions[key][3], transitions[key][4])
+        
+    def _force_add_transition(self, name : str, src_name : str, dst_name : str, bhv : str, idset : int, func, args=()):
+        src = None
+        if src_name is not None:
+            src = self.st_places[src_name]
+        self.st_transitions[name] = Transition(name, src, self.st_places[dst_name], bhv, idset, func, args)
+        self.trans_dependencies[name] = []
+        self.st_behaviors.add(bhv)
+        for group in self.st_groups:
+            if self.st_groups[group].contains_place(src_name) and self.st_groups[group].contains_place(dst_name):
+                self.st_groups[group].add_transition(name)
 
-    def add_transition(self, name : str, src : str, dst : str, bhv : str, idset : int, func, args=()):
+    def add_transition(self, name : str, src_name : str, dst_name : str, bhv : str, idset : int, func, args=()):
         """
         This method offers the possibility to add a single transition to an
         already existing dictionary of transitions.
@@ -273,18 +284,21 @@ class Component (object, metaclass=ABCMeta):
         :param args: optional tuple of arguments to give to the functor
         """
         if name in self.st_places:
-            raise Exception("Trying to add '%s' as a transition while it is already a place")
-        elif name in self.st_transitions:
-            raise Exception("Trying to add '%s' as a transition while it is already a transition")
-        elif name in self.st_groups:
-            raise Exception("Trying to add '%s' as a transition while it is already a group")
+            raise Exception("Trying to add '%s' as a transition while it is already a place"%name)
+        if name in self.st_transitions:
+            raise Exception("Trying to add '%s' as a transition while it is already a transition"%name)
+        if name in self.st_groups:
+            raise Exception("Trying to add '%s' as a transition while it is already a group"%name)
+        if name is "_init":
+            raise Exception("Cannot name a transition '_init' (used internally)")
+        if bhv is "_init":
+            raise Exception("Cannot name a behavior '_init' (used internally)")
+        if src_name not in self.st_places:
+            raise Exception("Trying to add transition '%s' starting from unexisting place '%s'"%(name, src))
+        if dst_name not in self.st_places:
+            raise Exception("Trying to add transition '%s' going to unexisting place '%s'"%(name, dst))
         
-        self.st_transitions[name] = Transition(name, src, dst, bhv, idset, func, args, self.st_places)
-        self.trans_dependencies[name] = []
-        self.st_behaviors.add(bhv)
-        for group in self.st_groups:
-            if self.st_groups[group].contains_place(src) and self.st_groups[group].contains_place(dst):
-                self.st_groups[group].add_transition(name)
+        self._force_add_transition(name,src_name,dst_name,bhv,idset,func,args)
     
 
     def add_dependencies(self, dep : Dict[str,Tuple[DepType, List[str]]]):
@@ -576,13 +590,15 @@ class Component (object, metaclass=ABCMeta):
     
     
     def init(self):
+        from madpp.utility import empty_transition
         """
         This method initializes the component and returns the set of active places
         """
         if self.initialized:
             raise Exception("Trying to initialize component '%s' a second time"%self.get_name())
         
-        self.act_places.add(self.st_places[self.initial_place])
+        self._force_add_transition("_init",None,self.initial_place,"_init",0,empty_transition)
+        self.act_transitions.add(self.st_transitions["_init"])
         
         self.initialized = True
 
@@ -752,14 +768,15 @@ class Component (object, metaclass=ABCMeta):
 
         # check if some of these running transitions are finished
         for trans in self.act_transitions:
-            if self.gantt is None:
-                gantt_tuple = None
-            else:
-                gantt_tuple = (self.gantt,(self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
-            joined = trans.join_thread(gantt_tuple, self.dryrun)
-            # get the new set of activated input docks
-            if not joined:
-                continue
+            if trans.get_name() is not "_init":
+                if self.gantt is None:
+                    gantt_tuple = None
+                else:
+                    gantt_tuple = (self.gantt,(self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
+                joined = trans.join_thread(gantt_tuple, self.dryrun)
+                # get the new set of activated input docks
+                if not joined:
+                    continue
             
             for dep in self.trans_dependencies[trans.get_name()]:
                 dep.stop_using()

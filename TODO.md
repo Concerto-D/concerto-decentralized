@@ -7,15 +7,13 @@
 ** Vérifications
 
 - Vérifier que le groupes se comportent comme prévu
+- Vérifier que la transition _init a résolu les problèmes de ports sur l'état initial et de groupes contenant l'état initial
 
 ** Fonctionalités
 
 - Discuter de la sémantique du composant : faire les quatre étapes d'un coup ou une seule ? Modifié actuallement aux quatre étapes d'un coup en commençant par idocks to place pour ne pas fournir un provide si l'état n'est pas stable
 - S'assurer que la sémantique "on ne peut pas quitter une place deux fois dans le même comportement" correspond à ce qui est attendu (objectif : éviter les boucles)
 - Vérifier que les noms de composants / transitions / groupes / places / comportements ne contiennent pas ',' et ne commencent pas par '_' (pour évolutions futures)
-- Clarifier le cas où la place initiale est dans un groupe (pour l'instant : interdit)
-- Gérer les ports de la place initiale (suggestion : mettre un token dans un dock input au lieu de la place directement)
-- Puis créer un meilleure composant DataProvider
 - Gérer dépendance sur tout le composant
 - Gérer les ports optionnels
 - Plusieurs comportements pour les transitions
@@ -28,3 +26,7 @@
 ** Code
 
 - Documentation
+
+** Modèle
+
+- Conflits
