@@ -103,7 +103,7 @@ def allocate(conf, provider='g5k', force_deployment=False):
 
 def get_ip(g5k_address):
     from subprocess import run, PIPE
-    ip = run("dig +short %s"%g5k_address, stdout=PIPE).stdout.decode('utf-8').strip(' \r\n')
+    ip = run("dig +short %s"%g5k_address, shell=True, stdout=PIPE).stdout.decode('utf-8').strip(' \r\n')
     
     return ip
 
