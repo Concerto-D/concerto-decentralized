@@ -75,7 +75,7 @@
       MYSQL_ROOT_PASSWORD=my-secret-pw
     command: >
       --wsrep-new-cluster
-      --wsrep_node_address="{{ hostvars[inventory_hostname]['ansible_' + database_network]['ipv4']['address'] }}"
+      --wsrep_node_address="{{ db_host }}"
   tags: mariadb-4-first
 
 - name: Start MariaDB-Galera other containers
@@ -94,8 +94,7 @@
     volumes:
       - /database/mysql.conf.d:/etc/mysql/conf.d
       - /database/data:/var/lib/mysql
-    command: --wsrep_node_address="{{ hostvars[inventory_hostname]['ansible_' + database_network]['ipv4']['address'] }}"
-  when: inventory_hostname != dbmaster_node
+    command: --wsrep_node_address="{{ db_host }}"
   tags: mariadb-4-other
 
 - name: Waiting for MariaDB to be ready

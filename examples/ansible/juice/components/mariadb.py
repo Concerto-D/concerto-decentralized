@@ -65,7 +65,7 @@ class MariaDB(Component):
         self.print_color("Created directories (code %d) with command: %s" % (result.return_code, result.command))
         
     def send_config(self):
-        self.print_color("Config 2")
+        self.print_color("Seonding config")
         #time.sleep(1.3)
         config = self.read("config")
         if config is "":
@@ -73,7 +73,7 @@ class MariaDB(Component):
         else:
             self.print_color("Changing config to:\n%s"%config)
             result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-2-galera", extra_vars={"enos_action":"deploy","db":"mariadb","mariadb_config": config})
-            self.print_color("Created directories (code %d) with command: %s" % (result.return_code, result.command))
+            self.print_color("Sent config (code %d) with command: %s" % (result.return_code, result.command))
         
     def pull(self):
         self.print_color("Pulling image")
@@ -87,7 +87,7 @@ class MariaDB(Component):
     def start(self):
         self.print_color("Starting container")
         #time.sleep(1.4)
-        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-only", extra_vars={"enos_action":"deploy","db":"mariadb"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-only", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
         self.print_color("Started container (code %d) with command: %s" % (result.return_code, result.command))
 
     def go_ready(self):

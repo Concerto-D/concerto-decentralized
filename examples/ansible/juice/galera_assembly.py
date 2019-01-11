@@ -209,7 +209,7 @@ class GaleraAssembly(Assembly):
                 self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
                 self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
                 self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
-        def deploy_master(mariadb_config=''):
+        def deploy_master(galera=False):
             self.change_behavior('master_apt_utils', 'install')
             self.change_behavior('master_pip_libs', 'install')
             self.change_behavior('master_docker', 'install')
@@ -220,13 +220,16 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_docker', 'change_config')
             self.connect('master_docker','docker',
                          'master_mariadb','docker')
-            self._provide_data(mariadb_config, 'master_mariadb', 'config')
-        def deploy_worker(i, deploy_mariadb=False, mariadb_config=''):
+            if galera:
+                self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
+            else:
+                self._provide_data('', 'master_mariadb', 'config')
+        def deploy_worker(i, deploy_galera=False):
             prefix = 'worker%d'%i
             self.change_behavior(prefix+'_apt_utils', 'install')
             self.change_behavior(prefix+'_pip_libs', 'install')
             self.change_behavior(prefix+'_docker', 'install')
-            if deploy_mariadb:
+            if deploy_galera:
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
             self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
@@ -234,19 +237,18 @@ class GaleraAssembly(Assembly):
             self.connect(prefix+'_docker','docker',
                          prefix+'_mariadb','docker')
             #dummy data
-            if deploy_mariadb:
-                self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
+            if deploy_galera:
+                self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, prefix+'_mariadb', 'config')
             
         
         self.print("### DEPLOYING ####")
         Printer.st_err_tprint("DEBUG: deploying registry")
         deploy_registry()
         Printer.st_err_tprint("DEBUG: deploying master")
-        deploy_master()
+        deploy_master(galera=galera)
         Printer.st_err_tprint("DEBUG: deploying workers")
         for i in range(len(self.workers_hosts)):
-            deploy_worker(i, deploy_mariadb=galera)
-        self.wait_all()
+            deploy_worker(i, deploy_galera=galera)
             
     
     
@@ -279,14 +281,11 @@ class GaleraAssembly(Assembly):
         
     def deploy_mariadb(self):
         self._deploy(False)
-        #DEBUG
-        Printer.st_err_tprint("Deploy finished, sleeping")
         time.sleep(120)
-        Printer.st_err_tprint("Sleeping finished, terminating")
-        self.terminate(debug=True)
-        #Printer.st_tprint(self.master_set.mariadb.get_debug_info())
-        #self.wait('master_sysbench_master')
-        #self.synchronize()
+        Printer.st_err_tprint("After 120 seconds:\n" + self.master_set.mariadb.get_debug_info())
+        self.wait_all()
+        self.synchronize()
+        Printer.st_err_tprint("Deploy MadiaDB finished")
         
     def deploy_mariadb_cleanup(self):
         self._deploy_cleanup(False)
@@ -294,8 +293,11 @@ class GaleraAssembly(Assembly):
         
     def deploy_galera(self):
         self._deploy(True)
-        self.wait('master_sysbench_master')
+        time.sleep(120)
+        Printer.st_err_tprint("After 120 seconds:\n" + self.master_set.mariadb.get_debug_info())
+        self.wait_all()
         self.synchronize()
+        Printer.st_err_tprint("Deploy Galera finished")
         
     def deploy_galera_cleanup(self):
         self._deploy_cleanup(True)
@@ -336,7 +338,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gass.set_use_gantt_chart(True)
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
-    gass.deploy_mariadb()
+    gass.deploy_galera()
     deploy_end_time : float = time.perf_counter()
     #gass.deploy_mariadb_cleanup()
     
