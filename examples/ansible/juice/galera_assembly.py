@@ -284,7 +284,7 @@ class GaleraAssembly(Assembly):
         time.sleep(120)
         Printer.st_err_tprint("After 120 seconds:\n" + self.master_set.mariadb.get_debug_info())
         self.wait_all()
-        self.synchronize()
+        self.synchronize(debug=True)
         Printer.st_err_tprint("Deploy MadiaDB finished")
         
     def deploy_mariadb_cleanup(self):
@@ -296,7 +296,7 @@ class GaleraAssembly(Assembly):
         time.sleep(120)
         Printer.st_err_tprint("After 120 seconds:\n" + self.master_set.mariadb.get_debug_info())
         self.wait_all()
-        self.synchronize()
+        self.synchronize(debug=True)
         Printer.st_err_tprint("Deploy Galera finished")
         
     def deploy_galera_cleanup(self):

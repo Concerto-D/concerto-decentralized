@@ -294,7 +294,10 @@ class Assembly (object):
         return len(self.act_components) is 0
 
 
-    def synchronize(self):
+    def synchronize(self, debug=False):
+        if debug:
+            Printer.st_err_tprint("Synchronizing. Unfinished tasks: %s", str(
+        self.instructions_queue.unfinished_tasks))
         self.instructions_queue.join()
     
     
