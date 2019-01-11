@@ -14,7 +14,7 @@ class InternalInstruction:
         WAIT_ALL = 6
         
     def __str__(self):
-        return "{type: %d, arguments: %s}"%(self.type, str(self.args))
+        return "{type: %s, arguments: %s}"%(self.type, str(self.args))
         
     def __init__(self, type, args):
         self.type = type
