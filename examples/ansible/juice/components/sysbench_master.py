@@ -35,28 +35,21 @@ class SysbenchMaster(Component):
 
         self.dependencies = {
             'mysql': (DepType.USE, ['using_mysql']),
-            'my_ip': (DepType.DATA_USE, ['to_user','to_database']),
-            'user_credentials': (DepType.DATA_USE, ['to_user']),
-            'db_credentials': (DepType.DATA_USE, ['to_user']),
             'sysbench_db': (DepType.PROVIDE, ['database'])
         }
         
         self.initial_place = 'uninstalled'
         
     def to_user(self):
-        my_ip = self.read('my_ip')
-        user_credentials = self.read('user_credentials')
-        db_credentials = self.read('db_credentials')
-        self.print_color("Going to user with ip \'%s\', user credentials \'%s\' and DB credentials \'%s\'"%(my_ip, user_credentials, db_credentials))
+        self.print_color("Going to user with ip \'%s\'"%(self.host["ip"]))
         #time.sleep(0.9)
-        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-0", extra_vars={"enos_action": "deploy", "hostname": self.host})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "sysbenchmaster-0", extra_vars={"enos_action": "deploy", "hostname": self.host["ip"]})
         self.print_color("Create MariaDB sbtest user (code %d) with command: %s" % (result.return_code, result.command))
 
     def to_database(self):
-        my_ip = self.read('my_ip')
-        self.print_color("Going to database with ip \'%s\'"%my_ip)
+        self.print_color("Going to database with ip \'%s\'"%self.host["ip"])
         #time.sleep(0.9)
-        result = call_ansible_on_host(self.host, self.playbook, "sysbenchmaster-1", extra_vars={"enos_action": "deploy", "hostname": self.host})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "sysbenchmaster-1", extra_vars={"enos_action": "deploy", "hostname": self.host["ip"]})
         self.print_color("Created MariaDB sbtest database (code %d) with command: %s" % (result.return_code, result.command))
 
     def suspend(self):

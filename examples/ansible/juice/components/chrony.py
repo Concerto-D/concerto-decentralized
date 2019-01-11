@@ -35,17 +35,17 @@ class Chrony(Component):
 
     def install(self):
         #time.sleep(4.5)
-        result = call_ansible_on_host(self.host, self.playbook, "chrony-0", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "chrony-0", extra_vars={"enos_action":"deploy","monitor":"false"})
         self.print_color("Installed Chrony (code %d) with command: %s" % (result.return_code, result.command))
 
     def change_config(self):
         self.print_color("Changing config to:\n%s"%self.read('config'))
         #time.sleep(2)
-        result = call_ansible_on_host(self.host, self.playbook, "chrony-1", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "chrony-1", extra_vars={"enos_action":"deploy","monitor":"false"})
         self.print_color("Changed config (code %d) with command: %s" % (result.return_code, result.command))
 
     def restart(self):
         #time.sleep(2) !!
-        result = call_ansible_on_host(self.host, self.playbook, "chrony-2", extra_vars={"enos_action":"deploy","monitor":"false"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "chrony-2", extra_vars={"enos_action":"deploy","monitor":"false"})
         self.print_color("Restarted (code %d) with command: %s" % (result.return_code, result.command))
 

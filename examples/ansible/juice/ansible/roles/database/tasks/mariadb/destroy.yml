@@ -4,6 +4,7 @@
     name: "mariadb-{{ inventory_hostname_short }}"
     state: absent
     force_kill: yes
+  tags: mariadb-d0
 
 - name: Unmount /database-mariadb
   mount:
@@ -11,3 +12,4 @@
     src: tmpfs
     fstype: tmpfs
     state: absent
+  tags: mariadb-d1

@@ -31,6 +31,6 @@ class Sysbench(Component):
 
     def install(self):
         #time.sleep(0.7)
-        result = call_ansible_on_host(self.host, self.playbook, "sysbench-0", extra_vars={"enos_action": "deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "sysbench-0", extra_vars={"enos_action": "deploy"})
         self.print_color("Sysbench directory created (code %d) with command: %s" % (result.return_code, result.command))
 

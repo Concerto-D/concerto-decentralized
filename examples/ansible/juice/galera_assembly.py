@@ -77,7 +77,7 @@ class GaleraAssembly(Assembly):
         Assembly.__init__(self)
         
         # Registry
-        self.registry_set = self.ComponentSet.build_registry_set(registry_host, use_ceph=self.registry_ceph_config['use'])
+        self.registry_set = self.ComponentSet.build_registry_set(self.registry_host, use_ceph=self.registry_ceph_config['use'])
         self.add_component('registry_apt_utils', self.registry_set.apt_utils)
         self.add_component('registry_pip_libs', self.registry_set.pip_libs)
         self.add_component('registry_docker', self.registry_set.docker)
@@ -98,7 +98,7 @@ class GaleraAssembly(Assembly):
                         'registry_registry', 'ceph')
         
         # DB Master
-        self.master_set = self.ComponentSet.build_master_set(master_host)
+        self.master_set = self.ComponentSet.build_master_set(self.master_host)
         self.add_component('master_apt_utils', self.master_set.apt_utils)
         self.add_component('master_pip_libs', self.master_set.pip_libs)
         self.add_component('master_docker', self.master_set.docker)
@@ -199,7 +199,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('registry_pip_libs', 'install')
             self.change_behavior('registry_docker', 'install')
             self.change_behavior('registry_registry', 'install')
-            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             self.change_behavior('registry_docker', 'change_config')
             self.connect('registry_docker','docker',
                          'registry_registry','docker')
@@ -209,26 +209,19 @@ class GaleraAssembly(Assembly):
                 self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
                 self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
                 self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
-        def deploy_master(mariadb_config='', mariadb_command=''):
+        def deploy_master(mariadb_config=''):
             self.change_behavior('master_apt_utils', 'install')
             self.change_behavior('master_pip_libs', 'install')
             self.change_behavior('master_docker', 'install')
             self.change_behavior('master_mariadb', 'install')
             self.change_behavior('master_sysbench', 'install')
             self.change_behavior('master_sysbench_master', 'install')
-            #dummy data
-            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
             self.change_behavior('master_docker', 'change_config')
             self.connect('master_docker','docker',
                          'master_mariadb','docker')
             self._provide_data(mariadb_config, 'master_mariadb', 'config')
-            self._provide_data(mariadb_command, 'master_mariadb', 'command')
-            #dummy data
-            self._provide_data('', 'master_mariadb', 'root_pw')
-            self._provide_data('', 'master_sysbench_master', 'db_credentials')
-            self._provide_data('', 'master_sysbench_master', 'user_credentials')
-            self._provide_data('', 'master_sysbench_master', 'my_ip')
-        def deploy_worker(i, deploy_mariadb=False, mariadb_config='', mariadb_command=''):
+        def deploy_worker(i, deploy_mariadb=False, mariadb_config=''):
             prefix = 'worker%d'%i
             self.change_behavior(prefix+'_apt_utils', 'install')
             self.change_behavior(prefix+'_pip_libs', 'install')
@@ -236,15 +229,13 @@ class GaleraAssembly(Assembly):
             if deploy_mariadb:
                 self.change_behavior(prefix+'_mariadb', 'install')
             self.change_behavior(prefix+'_sysbench', 'install')
-            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host, 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
+            self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
             self.change_behavior(prefix+'_docker', 'change_config')
             self.connect(prefix+'_docker','docker',
                          prefix+'_mariadb','docker')
             #dummy data
             if deploy_mariadb:
                 self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
-                self._provide_data(mariadb_command, prefix+'_mariadb', 'command')
-                self._provide_data('', prefix+'_mariadb', 'root_pw')
             
         
         self.print("### DEPLOYING ####")
@@ -269,18 +260,12 @@ class GaleraAssembly(Assembly):
         def cleanup_master():
             self._stop_provide_data('master_docker', 'config')
             self._stop_provide_data('master_mariadb', 'config')
-            self._stop_provide_data('master_mariadb', 'command')
-            self._stop_provide_data('master_mariadb', 'root_pw')
-            self._stop_provide_data('master_sysbench_master', 'db_credentials')
-            self._stop_provide_data('master_sysbench_master', 'user_credentials')
             self._stop_provide_data('master_sysbench_master', 'my_ip')
         def cleanup_worker(i, mariadb_deployed=False):
             prefix = 'worker%d'%i
             self._stop_provide_data(prefix+'_docker', 'config')
             if mariadb_deployed:
                 self._stop_provide_data(prefix+'_mariadb', 'config')
-                self._stop_provide_data(prefix+'_mariadb', 'command')
-                self._stop_provide_data(prefix+'_mariadb', 'root_pw')
                 
     
         cleanup_registry()
@@ -317,22 +302,18 @@ class GaleraAssembly(Assembly):
         self.synchronize()
         
     def mariadb_to_galera(self):
-        def reconf_master(mariadb_config='', mariadb_command=''):
+        def reconf_master(mariadb_config=''):
             self.change_behavior('master_sysbench_master', 'suspend')
             self.change_behavior('master_mariadb', 'uninstall')
             self.change_behavior('master_mariadb', 'install')
             self.change_behavior('master_sysbench_master', 'install')
             #dummy data
             #self._provide_data(mariadb_config, 'master_mariadb', 'config')
-            #self._provide_data(mariadb_command, 'master_mariadb', 'command')
-            #self._provide_data('', 'master_mariadb', 'root_pw')
-        def reconf_worker(i, mariadb_config='', mariadb_command=''):
+        def reconf_worker(i, mariadb_config=''):
             prefix = 'worker%d'%i
             self.change_behavior(prefix+'_mariadb', 'install')
             #dummy data
             self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
-            self._provide_data(mariadb_command, prefix+'_mariadb', 'command')
-            self._provide_data('', prefix+'_mariadb', 'root_pw')
             
         
         self.print("## RECONFIGURING ##")

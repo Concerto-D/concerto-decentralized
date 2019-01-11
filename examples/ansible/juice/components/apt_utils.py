@@ -53,24 +53,24 @@ class AptUtils(Component):
 
     def install_utils(self):
         #time.sleep(12.5)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "aptutils-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed apt_utils (code %d) with command: %s" % (result.return_code, result.command))
         
 
     def install_ceph(self):
         #time.sleep(20.6)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-ceph", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "aptutils-ceph", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed ceph (code %d) with command: %s" % (result.return_code, result.command))
         
 
     def install_python(self):
         #time.sleep(20.6)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-python", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "aptutils-python", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed python (code %d) with command: %s" % (result.return_code, result.command))
         
 
     def install_docker(self):
         #time.sleep(20.6)
-        result = call_ansible_on_host(self.host, self.playbook, "aptutils-docker", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "aptutils-docker", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed docker (code %d) with command: %s" % (result.return_code, result.command))
 

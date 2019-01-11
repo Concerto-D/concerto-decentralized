@@ -38,6 +38,6 @@ class PipLibs(Component):
 
     def install(self):
         #time.sleep(24)
-        result = call_ansible_on_host(self.host, self.playbook, "piplibs-0", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "piplibs-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Installed pip libraries (code %d) with command: %s" % (result.return_code, result.command))
 

@@ -40,14 +40,14 @@ class Docker(Component):
         
     def mount_run(self):
         self.print_color("Mouting /run")
-        result = call_ansible_on_host(self.host, self.playbook, "docker-0", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "docker-0", extra_vars={"enos_action":"deploy"})
         self.print_color("Mounted /run (code %d) with command: %s" % (result.return_code, result.command))
     
     def change_config(self):
         config = self.read('config')
         self.print_color("Changing config to:\n%s"%config)
         #time.sleep(3)
-        result = call_ansible_on_host(self.host, self.playbook, "docker-4", extra_vars={
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "docker-4", extra_vars={
             "enos_action":"deploy",
             "docker_config":config,
         })
@@ -56,6 +56,6 @@ class Docker(Component):
     def restart(self):
         self.print_color("Restarting")
         #time.sleep(3) /+/
-        result = call_ansible_on_host(self.host, self.playbook, "docker-5", extra_vars={"enos_action":"deploy"})
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "docker-5", extra_vars={"enos_action":"deploy"})
         self.print_color("Restarted (code %d) with command: %s" % (result.return_code, result.command))
 
