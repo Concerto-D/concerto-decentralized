@@ -296,8 +296,8 @@ class Assembly (object):
 
     def synchronize(self, debug=False):
         if debug:
-            Printer.st_err_tprint("Synchronizing. Unfinished tasks: %s"%str(
-        self.instructions_queue.unfinished_tasks))
+            Printer.st_err_tprint("Synchronizing. %d unfinished tasks: %s, %s"%(
+        self.instructions_queue.unfinished_tasks, self.current_instruction, list(self.instructions_queue.queue)))
         self.instructions_queue.join()
     
     
