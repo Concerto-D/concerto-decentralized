@@ -870,6 +870,8 @@ class Component (object, metaclass=ABCMeta):
     
     def get_debug_info(self) -> str:
         debug_string = "== Component '%s' status ==\n" % self.get_name()
+        # TODO: remove access to internal variable queue of queued_behaviors, not in API
+        debug_string += ("  active behaviors: %s + %s" % (self.act_behavior, self.queued_behaviors.queue))
         debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self.act_places]))
         debug_string += ("  active transitions: %s\n" % ','.join([t.get_name() for t in self.act_transitions]))
         debug_string += ("  active odocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_odocks]))
