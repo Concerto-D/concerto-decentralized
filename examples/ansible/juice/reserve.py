@@ -101,17 +101,27 @@ def allocate(conf, provider='g5k', force_deployment=False):
 #}
 
 
+def get_ip(g5k_address):
+    from subprocess import run, PIPE
+    ip = run("dig +short %s"%g5k_address, stdout=PIPE).stdout.decode('utf-8').strip(' \r\n')
+    
+    return ip
+
+def get_host_dict(g5k_address):
+    return {"address": g5k_address, "ip": get_ip(g5k_address)}
+
+
 def deploy(conf, provider='g5k', force_deployment=False):
     from execo.action import Put, Get, Remote
     from execo.host import Host
     from json import dump
     
     env = allocate(conf, provider, force_deployment)
-    database_machines = [host.address for host in env['roles']['database']]
+    database_machines = [get_host_dict(host.address) for host in env['roles']['database']]
     master_machine = database_machines[0]
     workers_marchines = database_machines[1:len(database_machines)]
-    registry_machine = env['roles']['registry'][0].address
-    madpp_machine = env['roles']['madpp'][0].address
+    registry_machine = get_host_dict(env['roles']['registry'][0].address)
+    madpp_machine = get_host_dict(env['roles']['madpp'][0].address)
     ceph_use = env['config']['registry']['ceph']
     ceph_mon_host = env['config']['registry']['ceph_mon_host']
     ceph_keyring_path = env['config']['registry']['ceph_keyring']
