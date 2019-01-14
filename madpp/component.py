@@ -638,17 +638,24 @@ class Component (object, metaclass=ABCMeta):
         #TODO: Remove (debug)
         if self.is_debugging():
             Printer.st_err_tprint("DEBUG, semantics run in master_docker when place is installed")
-            self.DEBUG_printed = True
         
         #TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a provide is not stable it doesn't get activated)
         if self.act_idocks:
             self._idocks_to_place()
         if self.act_places:
+            #TODO: Remove (debug)
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, calling place_to_odocks")
             self._place_to_odocks()
         if self.act_odocks:
             self._start_transition()
         if self.act_transitions:
             self._end_transition()
+        
+        #TODO: Remove (debug)
+        if self.is_debugging():
+            Printer.st_err_tprint("DEBUG, end")
+            self.DEBUG_printed = True
         
         # Checks if the component is IDLE
         idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
@@ -732,6 +739,9 @@ class Component (object, metaclass=ABCMeta):
             self.visited_places.add(place)
         
         self.act_places.difference_update(places_to_remove)
+        if self.is_debugging():
+            Printer.st_err_tprint("DEBUG, place_to_odocks did something: %s"%str(did_something))
+            self.DEBUG_printed = True
         
         return did_something
 
