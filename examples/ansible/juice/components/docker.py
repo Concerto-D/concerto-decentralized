@@ -21,7 +21,7 @@ class Docker(Component):
         ]
         
         self.groups = {
-            'using_apt_docker': ['config_set', 'installed', 'config_changed']
+            'using_apt_docker': ['ready_to_config', 'installed', 'config_changed']
         }
 
         self.transitions = {
