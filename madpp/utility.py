@@ -44,17 +44,20 @@ class Printer():
     def __init__(self, show : bool = True):
         self._show = show
     
-    def tprint(self, message : str):
+    def tprint(self, message : str, flush : bool = False):
         if self._show:
-            self.st_tprint(message)
+            self.st_tprint(message, flush)
     
-    def err_tprint(self, message : str):
+    def err_tprint(self, message : str, flush : bool = True):
         if self._show:
-            self.st_err_tprint(message)
+            self.st_err_tprint(message, flush)
     
-    def print(self, message : str):
+    def print(self, message : str, flush : bool = False):
+        from sys import stdout
         if self._show:
             print(message)
+            if flush:
+                stdout.flush()
             
     
     @staticmethod
@@ -67,13 +70,19 @@ class Printer():
         return "[%s:%s:%s:%s] %s" % (hour,minute,second,ms, message)
         
     @staticmethod
-    def st_tprint(message : str):
+    def st_tprint(message : str, flush : bool = False):
+        from sys import stdout
         print(Printer._format_tprint(message))
+        if flush:
+            stdout.flush()
+        
     
     @staticmethod
-    def st_err_tprint(message : str):
+    def st_err_tprint(message : str, flush : bool = True):
         from sys import stderr
         print(Printer._format_tprint(message), file=stderr)
+        if flush:
+            stderr.flush()
 
 
 def remove_if(l : List[Any], remove_cond : Callable[[Any], bool]):
