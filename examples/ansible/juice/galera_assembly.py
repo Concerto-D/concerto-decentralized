@@ -12,6 +12,7 @@ from components.apt_utils import AptUtils
 from components.ceph import Ceph
 from components.docker import Docker
 from components.mariadb import MariaDB
+from components.mariadb_worker import MariaDBWorker
 from components.pip_libs import PipLibs
 from components.registry import Registry
 from components.sysbench import Sysbench
@@ -52,19 +53,20 @@ class GaleraAssembly(Assembly):
         def _build_db_set(host):
             ass = GaleraAssembly.ComponentSet._build_common_set(host)
             ass.apt_utils = AptUtils(host, False)
-            ass.mariadb = MariaDB(host)
             ass.sysbench = Sysbench(host)
             return ass
             
         @staticmethod
         def build_master_set(host):
             ass = GaleraAssembly.ComponentSet._build_db_set(host)
+            ass.mariadb = MariaDB(host)
             ass.sysbench_master = SysbenchMaster(host)
             return ass
             
         @staticmethod
         def build_worker_set(host):
             ass = GaleraAssembly.ComponentSet._build_db_set(host)
+            ass.mariadb = MariaDBWorker(host)
             return ass
     
     def __init__(self, master_host, workers_hosts, registry_host, registry_ceph_config):
@@ -141,6 +143,8 @@ class GaleraAssembly(Assembly):
                          prefix+'_mariadb','docker')
             self.connect('registry_registry', 'registry',
                          prefix+'_mariadb', 'registry')
+            self.connect('master_mariadb', 'mariadb',
+                         prefix+'_mariadb', 'master_mariadb')
     
     def _provide_data_custom(self, provider_name, data, component_name, input_port):
         dp = DataProvider(data)
