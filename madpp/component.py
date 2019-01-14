@@ -601,20 +601,6 @@ class Component (object, metaclass=ABCMeta):
         self.act_transitions.add(self.st_transitions["_init"])
         
         self.initialized = True
-
-    #TODO remove
-    DEBUG_printed = False
-    def is_debugging(self):
-        to_return = False
-        if (not self.DEBUG_printed) \
-        and self.get_name() is 'master_docker' \
-        and self.get_active_behavior() is 'change_config' \
-        and len(self.act_places) is 1:
-            elt = self.act_places.pop()
-            if elt.get_name() is 'installed':
-                to_return = True
-            self.act_places.add(elt)
-        return to_return
     
     def semantics(self) -> bool:
         """
@@ -636,27 +622,15 @@ class Component (object, metaclass=ABCMeta):
         #if (not done) and self.act_idocks:
             #done = self._idocks_to_place()
         
-        #TODO: Remove (debug)
-        if self.is_debugging():
-            Printer.st_err_tprint("DEBUG, semantics run in master_docker when place is installed")
-        
         #TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a provide is not stable it doesn't get activated)
         if self.act_idocks:
             self._idocks_to_place()
         if self.act_places:
-            #TODO: Remove (debug)
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, calling place_to_odocks")
             self._place_to_odocks()
         if self.act_odocks:
             self._start_transition()
         if self.act_transitions:
             self._end_transition()
-        
-        #TODO: Remove (debug)
-        if self.is_debugging():
-            Printer.st_err_tprint("DEBUG, end")
-            self.DEBUG_printed = True
         
         # Checks if the component is IDLE
         idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
@@ -688,18 +662,11 @@ class Component (object, metaclass=ABCMeta):
         places_to_remove : Set[Place] = set()
 
         for place in self.act_places:
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, place_to_odocks place: %s"%str(place))
             if place in self.visited_places:
                 continue
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, place_to_odocks place not visitted")
             odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) is 0:
                 continue
-            
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, place_to_odocks len odocks not 0")
             
             can_leave : bool = True
             # Checking place dependencies
@@ -710,8 +677,6 @@ class Component (object, metaclass=ABCMeta):
                         break
             if not can_leave:
                 continue
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, place_to_odocks 1")
             
             # Checking group dependencies if in a group
             deactivating_groups_operation : Dict[Group,Group.Operation] = {}
@@ -727,8 +692,6 @@ class Component (object, metaclass=ABCMeta):
                     deactivating_groups_operation[group] = group_operation
             if not can_leave:
                 continue
-            if self.is_debugging():
-                Printer.st_err_tprint("DEBUG, place_to_odocks 2")
             
             did_something = True
             if self.get_verbosity() >= 1:
@@ -751,9 +714,6 @@ class Component (object, metaclass=ABCMeta):
             self.visited_places.add(place)
         
         self.act_places.difference_update(places_to_remove)
-        if self.is_debugging():
-            Printer.st_err_tprint("DEBUG, place_to_odocks did something: %s"%str(did_something))
-            self.DEBUG_printed = True
         
         return did_something
 
