@@ -608,6 +608,7 @@ class Component (object, metaclass=ABCMeta):
         to_return = False
         if (not self.DEBUG_printed) \
         and self.get_name() is 'master_docker' \
+        and self.get_active_behavior() is 'change_config' \
         and len(self.act_places) is 1:
             elt = self.act_places.pop()
             if elt.get_name() is 'installed':
