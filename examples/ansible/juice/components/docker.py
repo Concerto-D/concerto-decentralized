@@ -15,7 +15,7 @@ class Docker(Component):
         self.places = [
             'uninstalled',
             'run_mounted',
-            'ready_to_config'
+            'ready_to_config',
             'installed',
             'config_changed'
         ]
