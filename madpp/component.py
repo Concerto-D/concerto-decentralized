@@ -688,11 +688,18 @@ class Component (object, metaclass=ABCMeta):
         places_to_remove : Set[Place] = set()
 
         for place in self.act_places:
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, place_to_odocks place: %s"%str(place))
             if place in self.visited_places:
                 continue
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, place_to_odocks place not visitted")
             odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) is 0:
                 continue
+            
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, place_to_odocks len odocks not 0")
             
             can_leave : bool = True
             # Checking place dependencies
@@ -703,6 +710,8 @@ class Component (object, metaclass=ABCMeta):
                         break
             if not can_leave:
                 continue
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, place_to_odocks 1")
             
             # Checking group dependencies if in a group
             deactivating_groups_operation : Dict[Group,Group.Operation] = {}
@@ -718,6 +727,8 @@ class Component (object, metaclass=ABCMeta):
                     deactivating_groups_operation[group] = group_operation
             if not can_leave:
                 continue
+            if self.is_debugging():
+                Printer.st_err_tprint("DEBUG, place_to_odocks 2")
             
             did_something = True
             if self.get_verbosity() >= 1:
