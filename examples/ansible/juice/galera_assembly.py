@@ -282,8 +282,8 @@ class GaleraAssembly(Assembly):
         
     def deploy_mariadb(self):
         self._deploy(False)
-        time.sleep(120)
-        Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
+        #time.sleep(120)
+        #Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
         self.wait_all()
         self.synchronize(debug=True)
         Printer.st_err_tprint("Deploy MadiaDB finished")
@@ -294,8 +294,8 @@ class GaleraAssembly(Assembly):
         
     def deploy_galera(self):
         self._deploy(True)
-        time.sleep(120)
-        Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
+        #time.sleep(120)
+        #Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
         self.wait_all()
         self.synchronize(debug=True)
         Printer.st_err_tprint("Deploy Galera finished")
