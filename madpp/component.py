@@ -603,6 +603,8 @@ class Component (object, metaclass=ABCMeta):
         self.initialized = True
 
 
+    DEBUG_printed = False # TODO remove
+    
     def semantics(self) -> bool:
         """
         This method apply the operational semantics at the component level.
@@ -622,6 +624,16 @@ class Component (object, metaclass=ABCMeta):
             #done = self._end_transition()
         #if (not done) and self.act_idocks:
             #done = self._idocks_to_place()
+        
+        #TODO: Remove (debug)
+        if (not self.DEBUG_printed) \
+        and self.get_name() is 'master_docker' \
+        and len(self.act_places) is 1:
+            elt = self.act_places.pop()
+            if elt.get_name() is 'installed':
+                Printer.st_err_tprint("DEBUG, semantics run in master_docker when place is installed")
+                self.DEBUG_printed = True
+            self.act_places.add(elt)
         
         #TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a provide is not stable it doesn't get activated)
         if self.act_idocks:
