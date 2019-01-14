@@ -602,8 +602,18 @@ class Component (object, metaclass=ABCMeta):
         
         self.initialized = True
 
-
-    DEBUG_printed = False # TODO remove
+    #TODO remove
+    DEBUG_printed = False
+    def is_debugging(self):
+        to_return = False
+        if (not self.DEBUG_printed) \
+        and self.get_name() is 'master_docker' \
+        and len(self.act_places) is 1:
+            elt = self.act_places.pop()
+            if elt.get_name() is 'installed':
+                to_return = True
+            self.act_places.add(elt)
+        return to_return
     
     def semantics(self) -> bool:
         """
@@ -626,14 +636,9 @@ class Component (object, metaclass=ABCMeta):
             #done = self._idocks_to_place()
         
         #TODO: Remove (debug)
-        if (not self.DEBUG_printed) \
-        and self.get_name() is 'master_docker' \
-        and len(self.act_places) is 1:
-            elt = self.act_places.pop()
-            if elt.get_name() is 'installed':
-                Printer.st_err_tprint("DEBUG, semantics run in master_docker when place is installed")
-                self.DEBUG_printed = True
-            self.act_places.add(elt)
+        if self.is_debugging():
+            Printer.st_err_tprint("DEBUG, semantics run in master_docker when place is installed")
+            self.DEBUG_printed = True
         
         #TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a provide is not stable it doesn't get activated)
         if self.act_idocks:
@@ -883,7 +888,7 @@ class Component (object, metaclass=ABCMeta):
     def get_debug_info(self) -> str:
         debug_string = "== Component '%s' status ==\n" % self.get_name()
         # TODO: remove access to internal variable queue of queued_behaviors, not in API
-        debug_string += ("  active behaviors: %s + %s" % (self.act_behavior, self.queued_behaviors.queue))
+        debug_string += ("  active behaviors: %s + %s\n" % (self.act_behavior, self.queued_behaviors.queue))
         debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self.act_places]))
         debug_string += ("  active transitions: %s\n" % ','.join([t.get_name() for t in self.act_transitions]))
         debug_string += ("  active odocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_odocks]))
