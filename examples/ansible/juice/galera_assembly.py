@@ -377,7 +377,7 @@ if __name__ == '__main__':
     registry_ceph_config = config['ceph']
     time_test(
         master_host, workers_hosts, registry_host, registry_ceph_config,
-        verbosity = 2,
+        verbosity = 1,
         printing = True,
         print_time = True
     )
