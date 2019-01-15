@@ -88,7 +88,10 @@ class MariaDBWorker(Component):
     def start(self):
         self.print_color("Starting container")
         #time.sleep(1.4)
-        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-other", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
+        if self.galera:
+            result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-other", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
+        else:
+            result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-only", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
         self.print_color("Started container (code %d) with command: %s" % (result.return_code, result.command))
 
     def go_ready(self):

@@ -78,6 +78,17 @@
       --wsrep_node_address="{{ db_host }}"
   tags: mariadb-4-first
 
+# The mariadb Docker image, by default, initializes a new database.
+# But we don't want it to do so, since this is an active/active
+# replication and database has been initialized during the previous
+# task. To prevent the initialization, we `touch` the /var/lib/mysql
+# directory.
+- name: Create the /database/data/mysql directory to prevent MariaDB init
+  file:
+    path: /database/data/mysql
+    state: directory
+  tags: mariadb-4-other
+
 - name: Start MariaDB-Galera other containers
   docker_container:
     name: "mariadb-{{ inventory_hostname_short }}"
