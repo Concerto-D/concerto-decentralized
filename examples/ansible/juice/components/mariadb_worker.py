@@ -11,6 +11,7 @@ class MariaDBWorker(Component):
         self.host = host
         self.playbook = "ansible/mariadb.yml"
         self.pulled = False
+        self.galera = False
         Component.__init__(self)
 
     def create(self):
@@ -72,6 +73,7 @@ class MariaDBWorker(Component):
         if config is "":
             self.print_color("Empty config, skipping send_config")
         else:
+            self.galera = True
             self.print_color("Changing config to:\n%s"%config)
             result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-2-galera", extra_vars={"enos_action":"deploy","db":"mariadb","mariadb_config": config})
             self.print_color("Sent config (code %d) with command: %s" % (result.return_code, result.command))
