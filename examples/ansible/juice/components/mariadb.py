@@ -11,6 +11,7 @@ class MariaDB(Component):
         self.host = host
         self.playbook = "ansible/mariadb.yml"
         self.pulled = False
+        self.galera = False
         Component.__init__(self)
 
     def create(self):
@@ -71,6 +72,7 @@ class MariaDB(Component):
         if config is "":
             self.print_color("Empty config, skipping send_config")
         else:
+            self.galera = True
             self.print_color("Changing config to:\n%s"%config)
             result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-2-galera", extra_vars={"enos_action":"deploy","db":"mariadb","mariadb_config": config})
             self.print_color("Sent config (code %d) with command: %s" % (result.return_code, result.command))
@@ -87,7 +89,10 @@ class MariaDB(Component):
     def start(self):
         self.print_color("Starting container")
         #time.sleep(1.4)
-        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-only", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
+        if self.galera:
+            result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-first", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
+        else:
+            result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-4-only", extra_vars={"enos_action":"deploy","db":"mariadb", "db_host":self.host["ip"]})
         self.print_color("Started container (code %d) with command: %s" % (result.return_code, result.command))
 
     def go_ready(self):
