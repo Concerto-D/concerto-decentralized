@@ -258,12 +258,12 @@ class GaleraAssembly(Assembly):
             self._stop_provide_data('registry_docker', 'config')
             if (self.registry_ceph_config['use']):
                 self._stop_provide_data('registry_ceph', 'config')
+                self._stop_provide_data('registry_ceph', 'keyring_path')
                 self._stop_provide_data('registry_ceph', 'id')
                 self._stop_provide_data('registry_ceph', 'rdb')
         def cleanup_master():
             self._stop_provide_data('master_docker', 'config')
             self._stop_provide_data('master_mariadb', 'config')
-            self._stop_provide_data('master_sysbench_master', 'my_ip')
         def cleanup_worker(i, mariadb_deployed=False):
             prefix = 'worker%d'%i
             self._stop_provide_data(prefix+'_docker', 'config')
@@ -290,7 +290,7 @@ class GaleraAssembly(Assembly):
         
     def deploy_mariadb_cleanup(self):
         self._deploy_cleanup(False)
-        self.synchronize()
+        self.synchronize(debug=True)
         
     def deploy_galera(self):
         self._deploy(True)
@@ -302,7 +302,7 @@ class GaleraAssembly(Assembly):
         
     def deploy_galera_cleanup(self):
         self._deploy_cleanup(True)
-        self.synchronize()
+        self.synchronize(debug=True)
         
     def mariadb_to_galera(self):
         def reconf_master(mariadb_config=''):
@@ -341,6 +341,8 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: deploying the assembly")
     gass.deploy_galera()
     deploy_end_time : float = time.perf_counter()
+    if printing: Printer.st_tprint("Main: cleaning up the assembly")
+    gass.deploy_galera_cleanup()
     #gass.deploy_mariadb_cleanup()
     
     if printing: Printer.st_tprint("Main: waiting before reconfiguration")

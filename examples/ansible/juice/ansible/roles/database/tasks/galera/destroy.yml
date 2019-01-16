@@ -5,7 +5,7 @@
     state: absent
     force_kill: yes
 
-- name: Unmount /database-galera
+- name: Unmount /database
   mount:
     path: /database-galera
     src: tmpfs

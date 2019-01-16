@@ -107,10 +107,16 @@ class MariaDBWorker(Component):
         time.sleep(1) # TODO: check
 
     def stop(self):
-        time.sleep(1.4)
+        self.print_color("Stopping mariadb")
+        #time.sleep(1.4)
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-d0", extra_vars={"enos_action":"destroy","db":"mariadb"})
+        self.print_color("Stopped container (code %d) with command: %s" % (result.return_code, result.command))
 
     def uninstall(self):
-        time.sleep(1.6)
+        self.print_color("Uninstall mariadb")
+        #time.sleep(1.6)
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-d1", extra_vars={"enos_action":"destroy","db":"mariadb"})
+        self.print_color("Unmounted /database (code %d) with command: %s" % (result.return_code, result.command))
 
     def clear_image(self):
         time.sleep(1) # TODO: check
