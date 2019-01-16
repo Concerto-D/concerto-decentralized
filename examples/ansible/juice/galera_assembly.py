@@ -308,16 +308,13 @@ class GaleraAssembly(Assembly):
         def reconf_master(mariadb_config=''):
             self.change_behavior('master_sysbench_master', 'suspend')
             self.change_behavior('master_mariadb', 'uninstall')
+            self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
             self.change_behavior('master_mariadb', 'install')
             self.change_behavior('master_sysbench_master', 'install')
-            #dummy data
-            #self._provide_data(mariadb_config, 'master_mariadb', 'config')
         def reconf_worker(i, mariadb_config=''):
             prefix = 'worker%d'%i
+            self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, prefix+'_mariadb', 'config')
             self.change_behavior(prefix+'_mariadb', 'install')
-            #dummy data
-            self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
-            
         
         self.print("## RECONFIGURING ##")
         for i in range(len(self.workers_hosts)):
@@ -327,6 +324,18 @@ class GaleraAssembly(Assembly):
             prefix = 'worker%d'%i
             self.wait(prefix+'_mariadb')
         self.synchronize()
+
+    def mariadb_to_galera_cleanup(self):
+        def cleanup_master():
+            self._stop_provide_data('master_mariadb', 'config')
+        def cleanup_worker(i):
+            prefix = 'worker%d'%i
+            self._stop_provide_data(prefix+'_mariadb', 'config')
+                
+        cleanup_master()
+        for i in range(len(self.workers_hosts)):
+            cleanup_worker(i)
+        self.synchronize(debug=True)
         
 
 def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
@@ -339,19 +348,20 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gass.set_use_gantt_chart(True)
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
-    gass.deploy_galera()
+    gass.deploy_mariadb()
     deploy_end_time : float = time.perf_counter()
     if printing: Printer.st_tprint("Main: cleaning up the assembly")
     gass.deploy_galera_cleanup()
-    #gass.deploy_mariadb_cleanup()
     
     if printing: Printer.st_tprint("Main: waiting before reconfiguration")
     time.sleep(5)
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
     reconf_start_time : float = time.perf_counter()
-    #gass.mariadb_to_galera()
+    gass.mariadb_to_galera()
     reconf_end_time : float = time.perf_counter()
+    if printing: Printer.st_tprint("Main: cleaning up the assembly")
+    gass.mariadb_to_galera_cleanup()
     
     total_deploy_time = deploy_end_time - deploy_start_time
     total_reconf_time = reconf_end_time - reconf_start_time

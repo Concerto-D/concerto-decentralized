@@ -297,8 +297,8 @@ class Assembly (object):
     def synchronize(self, debug=False):
         if debug:
             #TODO Remove access to internal queue of instructions_queue (not part of API)
-            Printer.st_err_tprint("Synchronizing. %d unfinished tasks: %s, %s"%(
-        self.instructions_queue.unfinished_tasks, str(self.current_instruction), [str(ins) for ins in self.instructions_queue.queue]))
+            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n%s (in progress)\n%s"%(
+        self.instructions_queue.unfinished_tasks, str(self.current_instruction), ["- %s\n"%str(ins) for ins in self.instructions_queue.queue]))
         self.instructions_queue.join()
     
     
