@@ -266,7 +266,6 @@ class Assembly (object):
             del self.connections[(provide_dep, use_dep)]
             return True
         else:
-            Printer.st_err_tprint("Can't disconnect %s.%s and %s.%s!\n"%(comp1_name, dep1_name, comp2_name, dep2_name)) # TODO REMOVE
             return False
         
     

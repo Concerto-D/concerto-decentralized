@@ -346,7 +346,6 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.perf_counter()
     gass = GaleraAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
-    gass.set_dryrun(True) #TODO remove
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
     gass.set_use_gantt_chart(True)
