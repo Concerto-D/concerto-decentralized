@@ -18,7 +18,7 @@ class Connection(object):
         self.use_dep.connect(self)
     
     def can_remove(self) -> bool:
-        return not self.is_active()
+        return not self.is_locked()
     
     def disconnect(self):
         self.provide_dep.disconnect(self)

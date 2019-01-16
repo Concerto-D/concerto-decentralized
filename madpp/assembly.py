@@ -266,6 +266,7 @@ class Assembly (object):
             del self.connections[(provide_dep, use_dep)]
             return True
         else:
+            Printer.st_err_tprint("Can't disconnect %s.%s and %s.%s!\n"%(comp1_name, dep1_name, comp2_name, dep2_name)) # TODO REMOVE
             return False
         
     
@@ -297,8 +298,8 @@ class Assembly (object):
     def synchronize(self, debug=False):
         if debug:
             #TODO Remove access to internal queue of instructions_queue (not part of API)
-            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n%s (in progress)\n%s"%(
-        self.instructions_queue.unfinished_tasks, str(self.current_instruction), ["- %s\n"%str(ins) for ins in self.instructions_queue.queue]))
+            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n"%(
+        self.instructions_queue.unfinished_tasks, str(self.current_instruction), "\n".join(["- %s"%str(ins) for ins in self.instructions_queue.queue])))
         self.instructions_queue.join()
     
     
