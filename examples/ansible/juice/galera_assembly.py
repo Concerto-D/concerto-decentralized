@@ -255,20 +255,23 @@ class GaleraAssembly(Assembly):
     
     def _deploy_cleanup(self, galera=False):
         def cleanup_registry():
-            self._stop_provide_data('registry_docker', 'config')
+            self._stop_provide_jinja2('registry_docker', 'config')
             if (self.registry_ceph_config['use']):
-                self._stop_provide_data('registry_ceph', 'config')
+                self._stop_provide_jinja2('registry_ceph', 'config')
                 self._stop_provide_data('registry_ceph', 'keyring_path')
                 self._stop_provide_data('registry_ceph', 'id')
                 self._stop_provide_data('registry_ceph', 'rdb')
         def cleanup_master():
-            self._stop_provide_data('master_docker', 'config')
-            self._stop_provide_data('master_mariadb', 'config')
+            self._stop_provide_jinja2('master_docker', 'config')
+            if galera:
+                self._stop_provide_jinja2('master_mariadb', 'config')
+            else:
+                self._stop_provide_data('master_mariadb', 'config')
         def cleanup_worker(i, mariadb_deployed=False):
             prefix = 'worker%d'%i
-            self._stop_provide_data(prefix+'_docker', 'config')
+            self._stop_provide_jinja2(prefix+'_docker', 'config')
             if mariadb_deployed:
-                self._stop_provide_data(prefix+'_mariadb', 'config')
+                self._stop_provide_jinja2(prefix+'_mariadb', 'config')
                 
     
         cleanup_registry()
@@ -327,10 +330,10 @@ class GaleraAssembly(Assembly):
 
     def mariadb_to_galera_cleanup(self):
         def cleanup_master():
-            self._stop_provide_data('master_mariadb', 'config')
+            self._stop_provide_jinja2('master_mariadb', 'config')
         def cleanup_worker(i):
             prefix = 'worker%d'%i
-            self._stop_provide_data(prefix+'_mariadb', 'config')
+            self._stop_provide_jinja2(prefix+'_mariadb', 'config')
                 
         cleanup_master()
         for i in range(len(self.workers_hosts)):
@@ -343,6 +346,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.perf_counter()
     gass = GaleraAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
+    gass.set_dryrun(True) #TODO remove
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
     gass.set_use_gantt_chart(True)
@@ -351,7 +355,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gass.deploy_mariadb()
     deploy_end_time : float = time.perf_counter()
     if printing: Printer.st_tprint("Main: cleaning up the assembly")
-    gass.deploy_galera_cleanup()
+    gass.deploy_mariadb_cleanup()
     
     if printing: Printer.st_tprint("Main: waiting before reconfiguration")
     time.sleep(5)
