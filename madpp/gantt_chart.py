@@ -98,16 +98,13 @@ class GanttChart():
                 end_time = time-min_time
                 component_activities.append((component, behavior, start_time, end_time, transition))
                 del temp_dict[(component,behavior,transition)]
-            
-            #TODO: Remove debug
-            print("Before:\n%s\n"%("\n".join(["- (%s, %s, %d, %d, %s)"%(component, behavior, start_time, end_time, transition) for (component, behavior, start_time, end_time, transition) in component_activities])))
-            component_activities.sort()
-            print("After:\n%s\n"%("\n".join(["- (%s, %s, %d, %d, %s)"%(component, behavior, start_time, end_time, transition) for (component, behavior, start_time, end_time, transition) in component_activities])))
-            
-            for (component, behavior, start_time, end_time, transition) in component_activities:
-                name = "%s.%s.%s"%(component,behavior,transition)
-                name = name.replace("_","\\\\\\_")
-                tuple_list.append((name,start_time,end_time))
+        
+        component_activities.sort()
+        
+        for (component, behavior, start_time, end_time, transition) in component_activities:
+            name = "%s.%s.%s"%(component,behavior,transition)
+            name = name.replace("_","\\\\\\_")
+            tuple_list.append((name,start_time,end_time))
         
         gnuplot_file_from_list(tuple_list, file_name, title)
         
