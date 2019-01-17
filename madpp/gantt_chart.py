@@ -96,7 +96,7 @@ class GanttChart():
                     raise Exception("GanttChart: error during export to gnuplot: action finished before being started")
                 start_time = temp_dict[(component,behavior,transition)]
                 end_time = time-min_time
-                component_activities.append(component, behavior, start_time, end_time, transition)
+                component_activities.append((component, behavior, start_time, end_time, transition))
                 del temp_dict[(component,behavior,transition)]
                 
             component_activities.sort()
