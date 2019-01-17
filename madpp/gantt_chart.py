@@ -100,9 +100,9 @@ class GanttChart():
                 del temp_dict[(component,behavior,transition)]
             
             #TODO: Remove debug
-            print("Before:\n%s\n"%("\n".join(["- %s"%e for e in component_activities])))
+            print("Before:\n%s\n"%("\n".join(["- (%s, %s, %d, %d, %s)"%(component, behavior, start_time, end_time, transition) for (component, behavior, start_time, end_time, transition) in component_activities])))
             component_activities.sort()
-            print("After:\n%s\n"%("\n".join(["- %s"%e for e in component_activities])))
+            print("After:\n%s\n"%("\n".join(["- (%s, %s, %d, %d, %s)"%(component, behavior, start_time, end_time, transition) for (component, behavior, start_time, end_time, transition) in component_activities])))
             
             for (component, behavior, start_time, end_time, transition) in component_activities:
                 name = "%s.%s.%s"%(component,behavior,transition)
