@@ -48,6 +48,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     sca = ServerClient()
+    sca.set_use_gantt_chart(True)
     sca.set_verbosity(verbosity)
     sca.set_print_time(print_time)
     
@@ -68,6 +69,8 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     if printing: Printer.st_tprint("Total time in seconds: %f"%total_time)
     
     sca.terminate()
+    gc : GanttChart = sca.get_gantt_chart()
+    gc.export_gnuplot("results.gpl")
     return total_time
     
         
