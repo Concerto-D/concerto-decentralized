@@ -36,7 +36,7 @@
 
 - name: Start the MariaDB container
   docker_container:
-    name: "mariadb-{{ inventory_hostname_short }}"
+    name: "mariadb-container"
     image: "mariadb"
     detach: True
     exposed_ports:
@@ -56,7 +56,7 @@
 
 - name: Start the MariaDB-Galera first container
   docker_container:
-    name: "mariadb-{{ inventory_hostname_short }}"
+    name: "mariadb-container"
     image: "mariadb"
     detach: True
     exposed_ports:
@@ -91,7 +91,7 @@
 
 - name: Start MariaDB-Galera other containers
   docker_container:
-    name: "mariadb-{{ inventory_hostname_short }}"
+    name: "mariadb-container"
     image: "mariadb"
     detach: True
     exposed_ports:

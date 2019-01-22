@@ -22,11 +22,14 @@ class MariaDB(Component):
             'directories_created',
             'configured_pulled',
             'started',
-            'ready'
+            'ready',
+            'running',
+            'backuped',
+            'stopped'
         ]
         
         self.groups = {
-            'using_docker': ['ready_to_pull','configured_pulled','started','ready']
+            'using_docker': ['ready_to_pull','configured_pulled','started','ready', 'running', 'backuped', 'stopped']
         }
 
         self.transitions = {
@@ -37,13 +40,14 @@ class MariaDB(Component):
             'pull': ('ready_to_pull', 'configured_pulled', 'install', 0, self.pull),
             'start': ('configured_pulled', 'started', 'install', 0, self.start),
             'go_ready': ('started', 'ready', 'install', 0, self.go_ready),
+            'run': ('ready', 'running', 'run', 0, empty_transition),
+            'restore_run': ('ready', 'running', 'restore_run', 0, self.restore_backup),
             
-            'change_config': ('ready', 'ready', 'change_config', 0, self.change_config),
-            
-            'stop': ('ready', 'mounted', 'stop', 0, self.stop),
-            
-            'stop_uninstall': ('ready', 'mounted', 'uninstall', 0, self.stop),
-            'uninstall': ('mounted', 'uninstalled', 'uninstall', 0, self.uninstall)
+            'uninstallb_backup': ('running', 'backuped', 'uninstall_backup', 0, self.backup),
+            'uninstallb_stop': ('backuped', 'stopped', 'uninstall_backup', 0, self.stop),
+            'uninstallb': ('stopped', 'uninstalled', 'uninstall_backup', 0, self.uninstall),
+            'uninstall_stop': ('running', 'stopped', 'uninstall', 0, self.stop),
+            'uninstall': ('stopped', 'uninstalled', 'uninstall', 0, self.uninstall)
         }
 
         self.dependencies = {
@@ -51,7 +55,7 @@ class MariaDB(Component):
             'pip_libs': (DepType.USE, ['using_docker']),
             'docker': (DepType.USE, ['using_docker']),
             'registry': (DepType.USE, ['pull']),
-            'mariadb': (DepType.PROVIDE, ['ready'])
+            'mariadb': (DepType.PROVIDE, ['running'])
         }
         
         self.initial_place = 'uninstalled'
@@ -99,14 +103,20 @@ class MariaDB(Component):
         self.print_color("Started container (code %d) with command: %s" % (result.return_code, result.command))
 
     def go_ready(self):
-        self.print_color("going ready")
+        self.print_color("Going ready")
         #time.sleep(5.8)
         result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-5", extra_vars={"enos_action":"deploy", "db":"mariadb", "db_host":self.host["ip"]})
         self.print_color("Database ready (code %d) with command: %s" % (result.return_code, result.command))
+        
+    def restore_backup(self):
+        self.print_color("Restoring backup")
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-restore", extra_vars={"enos_action":"backup", "db":"mariadb", "db_host":self.host["ip"]})
+        self.print_color("Database restored (code %d) with command: %s" % (result.return_code, result.command))
 
-    def change_config(self):
-        self.print_color("Changing config")
-        time.sleep(1) # TODO: check
+    def backup(self):
+        self.print_color("Creating backup")
+        result = call_ansible_on_host(self.host["ip"], self.playbook, "mariadb-backup", extra_vars={"enos_action":"backup", "db":"mariadb", "db_host":self.host["ip"]})
+        self.print_color("Database backuped (code %d) with command: %s" % (result.return_code, result.command))
 
     def stop(self):
         self.print_color("Stopping mariadb")

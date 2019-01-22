@@ -221,6 +221,7 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_pip_libs', 'install')
             self.change_behavior('master_docker', 'install')
             self.change_behavior('master_mariadb', 'install')
+            self.change_behavior('master_mariadb', 'run')
             self.change_behavior('master_sysbench', 'install')
             self.change_behavior('master_sysbench_master', 'install')
             self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
@@ -310,9 +311,10 @@ class GaleraAssembly(Assembly):
     def mariadb_to_galera(self):
         def reconf_master(mariadb_config=''):
             self.change_behavior('master_sysbench_master', 'suspend')
-            self.change_behavior('master_mariadb', 'uninstall')
+            self.change_behavior('master_mariadb', 'uninstall_backup')
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
             self.change_behavior('master_mariadb', 'install')
+            self.change_behavior('master_mariadb', 'restore_run')
             self.change_behavior('master_sysbench_master', 'install')
         def reconf_worker(i, mariadb_config=''):
             prefix = 'worker%d'%i
@@ -356,8 +358,9 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: cleaning up the assembly")
     gass.deploy_mariadb_cleanup()
     
-    if printing: Printer.st_tprint("Main: waiting before reconfiguration")
-    time.sleep(5)
+    if printing: Printer.st_tprint("Main: waiting 5 minutes before reconfiguration")
+    if printing: Printer.st_err_tprint("Main: waiting 5 minutes before reconfiguration")
+    time.sleep(300)
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
     reconf_start_time : float = time.perf_counter()
