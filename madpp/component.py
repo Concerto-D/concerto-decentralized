@@ -337,7 +337,7 @@ class Component (object, metaclass=ABCMeta):
         if type == DepType.DATA_USE:
             for bind in bindings:
                 if bind not in self.st_transitions:
-                    raise("Trying to bind dependency %s (of type %s) to something else than a transition"%(name,str(type)))
+                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a transition"%(name,str(type)))
             
             self.st_dependencies[name] = Dependency(self, name, type)
             for transition_name in bindings:
@@ -356,7 +356,7 @@ class Component (object, metaclass=ABCMeta):
                 elif bind in self.st_groups:
                     groups.append(bind)
                 else:
-                    raise("Trying to bind dependency %s (of type %s) to something else than a place, a transition or a group"%(name,str(type)))
+                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a place, a transition or a group"%(name,str(type)))
                 
             self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in places:
@@ -369,7 +369,7 @@ class Component (object, metaclass=ABCMeta):
         elif type == DepType.DATA_PROVIDE:
             for bind in bindings:
                 if bind not in self.st_places:
-                    raise("Trying to bind dependency %s (of type %s) to something else than a place"%(name,str(type)))
+                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a place"%(name,str(type)))
             
             self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in bindings:
@@ -384,7 +384,7 @@ class Component (object, metaclass=ABCMeta):
                 elif bind in self.st_groups:
                     groups.append(bind)
                 else:
-                    raise("Trying to bind dependency %s (of type %s) to something else than a place or a group"%(name,str(type)))
+                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a place or a group"%(name,str(type)))
                 
             self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in places:
