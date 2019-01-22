@@ -51,7 +51,7 @@ class MariaDB(Component):
         }
 
         self.dependencies = {
-            'config': (DepType.DATA_USE, ['send_config', 'change_config']),
+            'config': (DepType.DATA_USE, ['send_config']),
             'pip_libs': (DepType.USE, ['using_docker']),
             'docker': (DepType.USE, ['using_docker']),
             'registry': (DepType.USE, ['pull']),
