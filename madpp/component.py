@@ -538,6 +538,8 @@ class Component (object, metaclass=ABCMeta):
             raise Exception("Trying to set behavior %s in component %s while this behavior does not exist in this component." % (behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
+        if self.gantt is not None:
+            self.gantt.change_behavior(self.get_name(), behavior, time.perf_counter())
         self.visited_places = set()
         if self.get_verbosity() >= 1:
             self.print_color("Changing behavior to '%s'"%behavior)

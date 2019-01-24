@@ -71,6 +71,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     sca.terminate()
     gc : GanttChart = sca.get_gantt_chart()
     gc.export_gnuplot("results.gpl")
+    gc.export_json("results.json")
     return total_time
     
         

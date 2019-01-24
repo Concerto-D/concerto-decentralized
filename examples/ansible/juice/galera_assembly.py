@@ -358,9 +358,9 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: cleaning up the assembly")
     gass.deploy_mariadb_cleanup()
     
-    if printing: Printer.st_tprint("Main: waiting 5 minutes before reconfiguration")
-    if printing: Printer.st_err_tprint("Main: waiting 5 minutes before reconfiguration")
-    time.sleep(300)
+    if printing: Printer.st_tprint("Main: waiting 1 minute before reconfiguration")
+    if printing: Printer.st_err_tprint("Main: waiting 1 minute before reconfiguration")
+    time.sleep(60)
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
     reconf_start_time : float = time.perf_counter()
@@ -377,6 +377,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gass.terminate(debug=True)
     gc : GanttChart = gass.get_gantt_chart()
     gc.export_gnuplot("results.gpl")
+    gc.export_json("results.json")
     return total_time
     
 
