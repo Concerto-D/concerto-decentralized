@@ -111,7 +111,7 @@ def get_host_dict(g5k_address):
     return {"address": g5k_address, "ip": get_ip(g5k_address)}
 
 
-def deploy(conf, provider='g5k', force_deployment=False):
+def deploy(conf, working_directory='.', provider='g5k', force_deployment=False):
     from execo.action import Put, Get, Remote
     from execo.host import Host
     from json import dump
@@ -151,7 +151,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
             "rbd": ceph_rbd
         }
     }
-    madpp_config_file = open("madpp_config.json", "w")
+    madpp_config_file = open(working_directory+"/madpp_config.json", "w")
     dump(madpp_config, madpp_config_file)
     madpp_config_file.close()
     remote_host = Host(madpp_machine["address"], user="root")
@@ -166,7 +166,7 @@ def deploy(conf, provider='g5k', force_deployment=False):
     ).run()
     put = Put(
         hosts=[remote_host],
-        local_files=["madpp_config.json"],
+        local_files=[working_directory+"/madpp_config.json"],
         remote_location= "madppnode/madpp/examples/ansible/juice"
     ).run()
     put = Put(
@@ -185,8 +185,8 @@ def deploy(conf, provider='g5k', force_deployment=False):
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl'],
-        local_location='.'
+        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json'],
+        local_location=working_directory
     ).run()
     
     
@@ -194,18 +194,20 @@ def deploy(conf, provider='g5k', force_deployment=False):
 
 SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-sweeper')
 def experiments():
-    import copy
+    import copy, yaml
+    from os import makedirs
     from execo_engine.sweep import (ParamSweeper, sweep)
     from pprint import pformat
     
-    CONF = [] #TO GET SOMEHOW
+    #CONF = [] #TO GET SOMEHOW
+    CONF = yaml.load("conf.yaml")
     
     sweeper = ParamSweeper(
         SWEEPER_DIR,
         sweeps=sweep({
-              'param1': []
-            , 'param2': []
-            , 'param3': []
+            'nb_db_nodes': [3, 5, 10],
+            'nb_db_entries': [0, 1000, 10000, 100000],
+            'attempt': [1]
         }))
 
     while sweeper.get_remaining():
@@ -216,13 +218,18 @@ def experiments():
             # Setup parameters
             conf = copy.deepcopy(CONF)  # Make a deepcopy so we can run
                                         # multiple sweeps in parallels
-            conf['g5k']['resources']['machines'][0]['nodes'] = combination['db-nodes']
-            conf['tc']['constraints'][0]['delay'] = "%sms" % combination['delay']
-            db = combination['db']
-            xp_name = "%s-%s-%s" % (db, combination['db-nodes'], combination['delay'])
+            nb_db_nodes = combination['nb_db_nodes']
+            nb_db_entries = combination['nb_db_entries']
+            attempt = combination['attempt']
+            conf['g5k']['resources']['machines'][0]['nodes'] = nb_db_nodes
+            xp_name = "nb_db_%d-nb_ent_%d-%d" % (nb_db_nodes, nb_db_entries, attempt)
 
             # Let's get it started hun!
-            allocate(conf, db, xp_name)
+            wd = "exp/%s"%xp_name
+            makedirs(wd)
+            with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
+                yaml.dump(conf, g5k_config_file)
+            deploy(conf,wd)
 
             # Everything works well, mark combination as done
             sweeper.done(combination)
@@ -242,4 +249,5 @@ def experiments():
 if __name__ == '__main__':
     #Testing
     logging.basicConfig(level=logging.DEBUG)
-    deploy("conf.yaml")
+    experiments()
+    #deploy("conf.yaml", '.')

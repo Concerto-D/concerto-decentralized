@@ -141,16 +141,18 @@ class GanttChart():
         
         for (component, behavior, start_time, end_time, transition) in transitions:
             if component in change_behaviors_dict:
+                cn = component.replace("_","\\\\\\_")
                 for (s, e, b) in change_behaviors_dict[component]:
-                    tuple_list.append((component,s,e))
+                    tuple_list.append((cn,s,e))
                 del change_behaviors_dict[component]
             name = "%s.%s.%s"%(component,behavior,transition)
             name = name.replace("_","\\\\\\_")
             tuple_list.append((name,start_time,end_time))
             
         for c in change_behaviors_dict:
+            cn = c.replace("_","\\\\\\_")
             for (s, e, b) in change_behaviors_dict[c]:
-                tuple_list.append((c,s,e))
+                tuple_list.append((cn,s,e))
         
         gnuplot_file_from_list(tuple_list, file_name, title)
         
