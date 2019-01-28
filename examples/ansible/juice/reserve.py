@@ -214,7 +214,9 @@ def experiments():
         }))
     
     logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
-    logging.info("Tasks already done:\n%s"%"\n".join("- " + pformat(task) for task in sweeper.get_done()))
+    done_tasks = sweeper.get_done()
+    if len(done_tasks) > 0:
+        logging.info("Tasks already done:\n%s"%"\n".join("- " + pformat(task) for task in done_tasks))
     
     while sweeper.get_remaining():
         combination = sweeper.get_next()
