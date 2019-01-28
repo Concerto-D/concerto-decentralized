@@ -12,7 +12,7 @@ def g5k_deploy(g5k_config, force_deploy=False, **kwargs):
     env['networks'] = networks
     logging.info('Wait 30 seconds for iface to be ready...')
     time.sleep(30)
-    return env
+    return env, provider
 
 
 def allocate(conf, provider='g5k', force_deployment=False):
@@ -36,14 +36,13 @@ def allocate(conf, provider='g5k', force_deployment=False):
     env['config'] = config
 
     # Claim resources on Grid'5000
-    if provider == 'g5k' and 'g5k' in config:
-        env['provider'] = 'g5k'
-        updated_env = g5k_deploy(config['g5k'], force_deploy=force_deployment)
-        env.update(updated_env)
-    else:
+    if not (provider == 'g5k' and 'g5k' in config):
         raise Exception(
             'The provider {!r} is not supported or it lacks a configuration'.format(provider))
-    return env
+    env['provider'] = 'g5k'
+    updated_env, g5k_job = g5k_deploy(config['g5k'], force_deploy=force_deployment)
+    env.update(updated_env)
+    return env, g5k_job
 
 #{
     #'roles': {
@@ -111,12 +110,12 @@ def get_host_dict(g5k_address):
     return {"address": g5k_address, "ip": get_ip(g5k_address)}
 
 
-def deploy(conf, working_directory='.', provider='g5k', force_deployment=False):
+def run_experiment(conf, working_directory='.', provider='g5k', force_deployment=True):
     from execo.action import Put, Get, Remote
     from execo.host import Host
     from json import dump
     
-    env = allocate(conf, provider, force_deployment)
+    env, g5k_job = allocate(conf, provider, force_deployment)
     database_machines = [get_host_dict(host.address) for host in env['roles']['database']]
     master_machine = database_machines[0]
     workers_marchines = database_machines[1:len(database_machines)]
@@ -188,13 +187,14 @@ def deploy(conf, working_directory='.', provider='g5k', force_deployment=False):
         remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json'],
         local_location=working_directory
     ).run()
+    g5k_job.destroy()
     
     
     
 
 SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-sweeper')
 def experiments():
-    import copy, yaml
+    import copy, yaml, traceback
     from os import makedirs
     from execo_engine.sweep import (ParamSweeper, sweep)
     from pprint import pformat
@@ -230,7 +230,7 @@ def experiments():
             makedirs(wd)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
                 yaml.dump(conf, g5k_config_file)
-            deploy(conf,wd)
+            run_experiment(conf,wd)
 
             # Everything works well, mark combination as done
             sweeper.done(combination)
@@ -239,9 +239,8 @@ def experiments():
         except Exception as e:
           # Oh no, something goes wrong! Mark combination as cancel for
           # a later retry
-            logging.error("Combination %s Failed with message %s" % (pformat(combination), e))
+            logging.error("Combination %s Failed with message \"%s\". Full exception message:\n%s" % (pformat(combination), e, traceback.format_exc()))
             sweeper.cancel(combination)
-            raise e
 
         finally:
             pass
@@ -252,4 +251,4 @@ if __name__ == '__main__':
     #Testing
     logging.basicConfig(level=logging.DEBUG)
     experiments()
-    #deploy("conf.yaml", '.')
+    #run_experiment("conf.yaml", '.')
