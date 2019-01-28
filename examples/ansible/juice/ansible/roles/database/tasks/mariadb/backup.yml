@@ -19,7 +19,7 @@
   tags: mariadb-backup
   
 - name: Restore MariaDB
-  command: cat backup.sql | docker exec -i CONTAINER /usr/bin/mysql -u root --password=my-secret-pw
+  command: cat backup.sql | docker exec -i mariadb-container /usr/bin/mysql -u root --password=my-secret-pw
   tags: mariadb-restore
 
 
