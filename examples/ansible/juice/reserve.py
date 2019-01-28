@@ -212,7 +212,10 @@ def experiments():
             'nb_db_entries': [1000], #, 0, 10000, 100000],
             'attempt': [1]
         }))
-
+    
+    logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
+    logging.info("Tasks already done:\n%s"%"\n".join("- " + pformat(task) for task in sweeper.get_done()))
+    
     while sweeper.get_remaining():
         combination = sweeper.get_next()
         logging.info("Treating combination %s" % pformat(combination))
