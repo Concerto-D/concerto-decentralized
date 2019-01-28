@@ -9,11 +9,15 @@ def generate_db(nb_entries):
 
     with open('data.sqlp') as f: 
         for line in f:
+            line = line.strip()
             if nb_entries is 0:
                 break
             if not line.startswith("INSERT"):
                 nb_entries-=1
-            print(line, end='')
+            if nb_entries is 0:
+                if line[-1] is ',':
+                    line = line[:-1] + ';'
+            print(line, end='\n')
 
 if len(sys.argv) < 2:
     print("Error: requires 1 argument, the number of entries.", file=sys.stderr)
