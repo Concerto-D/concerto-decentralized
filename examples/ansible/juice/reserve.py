@@ -222,7 +222,7 @@ def experiments():
             nb_db_entries = combination['nb_db_entries']
             attempt = combination['attempt']
             print("Test")
-            print(yaml.dump(conf))
+            print(yaml.dump(CONF))
             print("Test")
             conf['g5k']['resources']['machines'][0]['nodes'] = nb_db_nodes
             xp_name = "nb_db_%d-nb_ent_%d-%d" % (nb_db_nodes, nb_db_entries, attempt)
