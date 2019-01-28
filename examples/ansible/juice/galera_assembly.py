@@ -360,15 +360,23 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Main: cleaning up the assembly")
     gass.deploy_mariadb_cleanup()
     
-    if printing: Printer.st_tprint("Main: sending database content")
-    if printing: Printer.st_err_tprint("Main: sending database content")
-    command = "cd experiments/db_builder/;python3 generate_db.py %d > ../../data.sql"%nb_db_entries
-    completed_process = run(command, shell=True, check=False)
-    if completed_process.returncode is not 0:
-        raise Exception("Error: Could not generate DB data")
-    with open('data.sql') as sql_file:
-        sql_data=sql_file.read()
-    call_ansible_on_host(master_host["ip"], "ansible/experiment.yml", "send-data-to-db", extra_vars={"data": sql_data})
+    if nb_db_entries > 0:
+        if printing: Printer.st_tprint("Main: sending database content")
+        if printing: Printer.st_err_tprint("Main: sending database content")
+        command = "cd experiments/db_builder/;python3 generate_db.py %d > ../../data.sql"%nb_db_entries
+        completed_process = run(command, shell=True, check=False)
+        if completed_process.returncode is not 0:
+            raise Exception("Error: Could not generate DB data")
+        with open('data.sql') as sql_file:
+            sql_data=sql_file.read()
+        call_ansible_on_host(master_host["ip"], "ansible/experiment.yml", "send-data-to-db", extra_vars={"data": sql_data})
+    else:
+        if printing: Printer.st_tprint("Main: not sending database content (0 entries)")
+        if printing: Printer.st_err_tprint("Main: sending database content (0 entries)")
+    
+    if printing: Printer.st_tprint("Main: waiting 10 seconds before reconfiguring")
+    if printing: Printer.st_err_tprint("Main: waiting 10 seconds before reconfiguring")
+    time.sleep(10)
     
     if printing: Printer.st_tprint("Main: reconfiguring to Galera")
     reconf_start_time : float = time.perf_counter()
