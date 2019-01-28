@@ -313,13 +313,13 @@ class GaleraAssembly(Assembly):
             self.change_behavior('master_sysbench_master', 'suspend')
             self.change_behavior('master_mariadb', 'uninstall_backup')
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
-            #self.change_behavior('master_mariadb', 'install')
-            #self.change_behavior('master_mariadb', 'restore_run')
-            #self.change_behavior('master_sysbench_master', 'install')
+            self.change_behavior('master_mariadb', 'install')
+            self.change_behavior('master_mariadb', 'restore_run')
+            self.change_behavior('master_sysbench_master', 'install')
         def reconf_worker(i, mariadb_config=''):
             prefix = 'worker%d'%i
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, prefix+'_mariadb', 'config')
-            #self.change_behavior(prefix+'_mariadb', 'install')
+            self.change_behavior(prefix+'_mariadb', 'install')
         
         self.print("## RECONFIGURING ##")
         for i in range(len(self.workers_hosts)):
@@ -372,7 +372,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
         call_ansible_on_host(master_host["ip"], "ansible/experiment.yml", "send-data-to-db", extra_vars={"data": sql_data})
     else:
         if printing: Printer.st_tprint("Main: not sending database content (0 entries)")
-        if printing: Printer.st_err_tprint("Main: sending database content (0 entries)")
+        if printing: Printer.st_err_tprint("Main: not sending database content (0 entries)")
     
     if printing: Printer.st_tprint("Main: waiting 10 seconds before reconfiguring")
     if printing: Printer.st_err_tprint("Main: waiting 10 seconds before reconfiguring")
