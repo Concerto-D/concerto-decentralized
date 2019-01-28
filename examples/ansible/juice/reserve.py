@@ -240,6 +240,7 @@ def experiments():
           # a later retry
             logging.error("Combination %s Failed with message %s" % (pformat(combination), e))
             sweeper.cancel(combination)
+            raise e
 
         finally:
             pass
