@@ -343,12 +343,9 @@ class GaleraAssembly(Assembly):
         self.synchronize(debug=True)
         
 
-def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
+def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, nb_db_entries, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     from subprocess import run, CompletedProcess
     from madpp.plugins.ansible import call_ansible_on_host
-    
-    #TODO: debug
-    nb_sql_entries = 1
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.perf_counter()
@@ -365,7 +362,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     
     if printing: Printer.st_tprint("Main: sending database content")
     if printing: Printer.st_err_tprint("Main: sending database content")
-    command = "cd experiments/db_builder/;python3 generate_db.py %d > ../../data.sql"%nb_sql_entries
+    command = "cd experiments/db_builder/;python3 generate_db.py %d > ../../data.sql"%nb_db_entries
     completed_process = run(command, shell=True, check=False)
     if completed_process.returncode is not 0:
         raise Exception("Error: Could not generate DB data")
@@ -405,8 +402,9 @@ if __name__ == '__main__':
     workers_hosts = config['workers_hosts']
     registry_host = config['registry_host']
     registry_ceph_config = config['ceph']
+    nb_db_entries = config['nb_db_entries']
     time_test(
-        master_host, workers_hosts, registry_host, registry_ceph_config,
+        master_host, workers_hosts, registry_host, registry_ceph_config, nb_db_entries,
         verbosity = 1,
         printing = True,
         print_time = True

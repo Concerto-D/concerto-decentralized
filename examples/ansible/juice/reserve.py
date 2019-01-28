@@ -110,7 +110,7 @@ def get_host_dict(g5k_address):
     return {"address": g5k_address, "ip": get_ip(g5k_address)}
 
 
-def run_experiment(conf, working_directory='.', provider='g5k', force_deployment=True):
+def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', force_deployment=True, destroy=True):
     from execo.action import Put, Get, Remote
     from execo.host import Host
     from json import dump
@@ -148,7 +148,8 @@ def run_experiment(conf, working_directory='.', provider='g5k', force_deployment
             "keyring_path": ceph_keyring_path,
             "id": ceph_id,
             "rbd": ceph_rbd
-        }
+        },
+        "nb_db_entries": nb_db_entries
     }
     madpp_config_file = open(working_directory+"/madpp_config.json", "w")
     dump(madpp_config, madpp_config_file)
@@ -184,10 +185,11 @@ def run_experiment(conf, working_directory='.', provider='g5k', force_deployment
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json'],
+        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json', 'madppnode/madpp/examples/ansible/juice/data.sql'],
         local_location=working_directory
     ).run()
-    g5k_job.destroy()
+    if destroy:
+        g5k_job.destroy()
     
     
     
@@ -206,8 +208,8 @@ def experiments():
     sweeper = ParamSweeper(
         SWEEPER_DIR,
         sweeps=sweep({
-            'nb_db_nodes': [3, 5, 10],
-            'nb_db_entries': [0, 1000, 10000, 100000],
+            'nb_db_nodes': [3], #, 5, 10],
+            'nb_db_entries': [1000], #, 0, 10000, 100000],
             'attempt': [1]
         }))
 
@@ -230,7 +232,7 @@ def experiments():
             makedirs(wd, exist_ok=True)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
                 yaml.dump(conf, g5k_config_file)
-            run_experiment(conf,wd)
+            run_experiment(nb_db_entries, conf, wd, destroy=False)
 
             # Everything works well, mark combination as done
             sweeper.done(combination)
@@ -251,4 +253,4 @@ if __name__ == '__main__':
     #Testing
     logging.basicConfig(level=logging.DEBUG)
     experiments()
-    #run_experiment("conf.yaml", '.')
+    #run_experiment(0, "conf.yaml", '.')
