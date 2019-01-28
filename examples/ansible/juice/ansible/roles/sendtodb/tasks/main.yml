@@ -6,5 +6,5 @@
   tags: send-data-to-db
 
 - name: Register data to MariaDB
-  command: cat data.sql | docker exec -i mariadb-container /usr/bin/mysql -u root --password=my-secret-pw
+  command: "cat data.sql | docker exec -i mariadb-container /usr/bin/mysql -u root --password=my-secret-pw"
   tags: send-data-to-db
