@@ -1,0 +1,10 @@
+---
+- name: Send SQL data to file
+  copy:
+    content: "{{ data }}"
+    dest: ~/data.sql
+  tags: send-data-to-db
+
+- name: Register data to MariaDB
+  command: cat data.sql | docker exec -i CONTAINER /usr/bin/mysql -u root --password=my-secret-pw
+  tags: send-data-to-db
