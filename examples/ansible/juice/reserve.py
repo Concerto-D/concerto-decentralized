@@ -227,7 +227,7 @@ def experiments():
 
             # Let's get it started hun!
             wd = "exp/%s"%xp_name
-            makedirs(wd)
+            makedirs(wd, exist_ok=True)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
                 yaml.dump(conf, g5k_config_file)
             run_experiment(conf,wd)
