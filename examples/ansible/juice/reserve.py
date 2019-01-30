@@ -210,7 +210,7 @@ def experiments():
         sweeps=sweep({
             'nb_db_nodes': [3, 5, 10], #, 5, 10],
             'nb_db_entries': [1,1000, 50000, 1000000], #, 0, 10000, 100000],
-            'attempt': [1,2,3,4,5]
+            'attempt': [1,2,3,4,5, 6, 7, 8, 9, 10]
         }))
     
     logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
