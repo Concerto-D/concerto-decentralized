@@ -6,9 +6,9 @@
     force_kill: yes
   tags: mariadb-d0
 
-- name: Unmount /database-mariadb
+- name: Unmount /database
   mount:
-    path: /database-mariadb
+    path: /database
     src: tmpfs
     fstype: tmpfs
     state: absent

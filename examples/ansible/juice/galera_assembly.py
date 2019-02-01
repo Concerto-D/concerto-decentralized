@@ -345,6 +345,7 @@ class GaleraAssembly(Assembly):
 
 def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, nb_db_entries, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     from subprocess import run, CompletedProcess
+    from json import dump
     from madpp.plugins.ansible import call_ansible_on_host
     
     if printing: Printer.st_tprint("Main: creating the assembly")
@@ -371,6 +372,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
             sql_data=sql_file.read()
         call_ansible_on_host(master_host["ip"], "ansible/experiment.yml", "send-data-to-db", extra_vars={"data": sql_data})
     else:
+        open('data.sql', "a").close() # create an empty file to be sure it is there
         if printing: Printer.st_tprint("Main: not sending database content (0 entries)")
         if printing: Printer.st_err_tprint("Main: not sending database content (0 entries)")
     
@@ -394,7 +396,9 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gc : GanttChart = gass.get_gantt_chart()
     gc.export_gnuplot("results.gpl")
     gc.export_json("results.json")
-    return total_time
+    with open("times.json", "w") as results_file:
+        dump({"total_time": total_time, "total_deploy_time": total_deploy_time, "total_reconf_time": total_reconf_time}, results_file)
+    return total_time, total_deploy_time, total_reconf_time
     
 
 def load_config(conf_file_location):

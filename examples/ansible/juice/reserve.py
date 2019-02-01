@@ -185,7 +185,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json', 'madppnode/madpp/examples/ansible/juice/data.sql'],
+        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json', 'madppnode/madpp/examples/ansible/juice/times.json', 'madppnode/madpp/examples/ansible/juice/data.sql'],
         local_location=working_directory
     ).run()
     if destroy:
