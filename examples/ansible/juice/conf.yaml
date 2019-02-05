@@ -8,7 +8,7 @@ g5k:
   # reservation: "2018-03-12 19:00:01"
   walltime: "02:00:00"
   dhcp: true
-  job_name: juice-tests
+  job_name: madpp-tests
   env_name: debian9-x64-nfs-madpp
   resources:
     machines:
