@@ -9,15 +9,14 @@ class Server(Component):
         self.places = [
             'undeployed',
             'allocated',
-            'running',
-            'maintenance'
+            'running'
         ]
 
         self.transitions = {
             'allocate': ('undeployed', 'allocated', 'deploy', 0, self.allocate),
             'run': ('allocated', 'running', 'deploy', 0, self.run),
-            'suspend': ('running', 'maintenance', 'stop', 0, self.suspend),
-            'restart': ('maintenance', 'allocated', 'deploy', 1, self.restart)
+            'update': ('running', 'allocated', 'stop', 0, self.update),
+            'cleanup': ('running', 'allocated', 'stop', 0, self.cleanup)
         }
 
         self.dependencies = {
@@ -27,28 +26,32 @@ class Server(Component):
         
         self.initial_place = 'undeployed'
 
-    def __init__(self):
+    def __init__(self, t_sa=4., t_sr=4., t_su=1., t_sc=0.5):
         self.my_ip = None
+        self.t_sa = t_sa
+        self.t_sr = t_sr
+        self.t_su = t_su
+        self.t_sc = t_sc
         Component.__init__(self)
 
     def allocate(self):
         self.print_color("allocating resources")
-        time.sleep(4)
+        time.sleep(self.t_sa)
         self.my_ip = "123.124.1.2"
-        self.print_color("got IP %s" % self.my_ip)
         self.write('ip', self.my_ip)
-        self.print_color("finished allocation")
+        self.print_color("finished allocation (IP: %s)" % self.my_ip)
 
     def run(self):
         self.print_color("preparing to run")
-        time.sleep(4)
+        time.sleep(self.t_sr)
         self.print_color("running")
 
-    def suspend(self):
-        self.print_color("suspending")
-        time.sleep(1)
-        self.print_color("suspended")
+    def update(self):
+        self.print_color("updating")
+        time.sleep(self.t_su)
+        self.print_color("updated")
 
-    def restart(self):
-        self.print_color("restarting")
-        time.sleep(0.5) 
+    def cleanup(self):
+        self.print_color("cleaning up")
+        time.sleep(self.t_sc) 
+        self.print_color("cleaned up")
