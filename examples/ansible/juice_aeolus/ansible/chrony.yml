@@ -1,0 +1,6 @@
+---
+- name: Apply role chrony
+  hosts: all
+  roles:
+    - { role: chrony,
+        tags: chrony }

@@ -1,0 +1,115 @@
+---
+- name: Mount /database in tmpfs to store MariaDB
+  mount:
+    path: /database
+    src: tmpfs
+    fstype: tmpfs
+    state: mounted
+    opts: size=16G
+  tags: mariadb-0
+
+- name: Create MariaDB store and conf directories in /database
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /database/data
+    - /database/mysql.conf.d
+  tags: mariadb-1
+
+#- name: Generate the configuration file
+  #template:
+    #src: mariadb-galera.conf.j2
+    #dest: /database/mysql.conf.d/mysql_server.cnf
+  #tags: mariadb-2
+  
+- name: Generate the configuration file
+  copy:
+    content: "{{ mariadb_config }}"
+    dest: /database/mysql.conf.d/mysql_server.cnf
+  tags: mariadb-2-galera
+
+- name: Pull the MariaDB container
+  docker_image:
+      name: "mariadb"
+  tags: mariadb-3
+
+- name: Start the MariaDB container
+  docker_container:
+    name: "mariadb-container"
+    image: "mariadb"
+    detach: True
+    exposed_ports:
+      - 4567
+    published_ports:
+      - "3306:3306"
+      - "4567:4567"
+      - "4567:4567/udp"
+      - "4568:4568"
+      - "4444:4444"
+    volumes:
+      - "/database/data:/var/lib/mysql"
+    env:
+      MYSQL_INITDB_SKIP_TZINFO=yes
+      MYSQL_ROOT_PASSWORD=my-secret-pw
+  tags: mariadb-4-only
+
+- name: Start the MariaDB-Galera first container
+  docker_container:
+    name: "mariadb-container"
+    image: "mariadb"
+    detach: True
+    exposed_ports:
+      - 4567
+    published_ports:
+      - "3306:3306"
+      - "4567:4567"
+      - "4567:4567/udp"
+      - "4568:4568"
+      - "4444:4444"
+    volumes:
+      - /database/mysql.conf.d:/etc/mysql/conf.d
+      - /database/data:/var/lib/mysql
+    env:
+      MYSQL_INITDB_SKIP_TZINFO=yes
+      MYSQL_ROOT_PASSWORD=my-secret-pw
+    command: >
+      --wsrep-new-cluster
+      --wsrep_node_address="{{ db_host }}"
+  tags: mariadb-4-first
+
+# The mariadb Docker image, by default, initializes a new database.
+# But we don't want it to do so, since this is an active/active
+# replication and database has been initialized during the previous
+# task. To prevent the initialization, we `touch` the /var/lib/mysql
+# directory.
+- name: Create the /database/data/mysql directory to prevent MariaDB init
+  file:
+    path: /database/data/mysql
+    state: directory
+  tags: mariadb-4-other
+
+- name: Start MariaDB-Galera other containers
+  docker_container:
+    name: "mariadb-container"
+    image: "mariadb"
+    detach: True
+    exposed_ports:
+      - 4567
+    published_ports:
+      - "3306:3306"
+      - "4567:4567"
+      - "4567:4567/udp"
+      - "4568:4568"
+      - "4444:4444"
+    volumes:
+      - /database/mysql.conf.d:/etc/mysql/conf.d
+      - /database/data:/var/lib/mysql
+    command: --wsrep_node_address="{{ db_host }}"
+  tags: mariadb-4-other
+
+- name: Waiting for MariaDB to be ready
+  wait_for:
+    host: "{{ db_host }}"
+    port: 3306
+  tags: mariadb-5

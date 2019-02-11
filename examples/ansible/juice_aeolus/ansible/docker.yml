@@ -1,0 +1,6 @@
+---
+- name: Docker deployment
+  hosts: all
+  roles:
+    - { role: docker,
+        tags: docker }

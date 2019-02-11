@@ -1,0 +1,6 @@
+---
+- name: Install registry
+  hosts: all
+  roles :
+    - { role: registry,
+        tags: registry }

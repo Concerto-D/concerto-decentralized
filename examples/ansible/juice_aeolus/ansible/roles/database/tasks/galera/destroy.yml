@@ -1,0 +1,13 @@
+---
+- name: Destroying MariaDB container
+  docker_container:
+    name: "mariadb-{{ inventory_hostname_short }}"
+    state: absent
+    force_kill: yes
+
+- name: Unmount /database
+  mount:
+    path: /database-galera
+    src: tmpfs
+    fstype: tmpfs
+    state: absent

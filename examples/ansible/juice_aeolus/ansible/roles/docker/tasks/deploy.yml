@@ -1,0 +1,25 @@
+- name: Mount /run
+  command: mount --make-shared /run
+  args:
+    warn: false
+  tags: docker-0
+
+#- name: Allow Docker to use an insecure registry
+  #template:
+    #src: docker.conf.j2
+    #dest: /etc/systemd/system/docker.service
+  #tags: docker-4
+  
+- name: Allow Docker to use an insecure registry (inline config)
+  copy:
+    content: "{{ docker_config }}"
+    dest: /etc/systemd/system/docker.service
+  tags: docker-4
+
+- name: Restart docker daemon
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: yes
+  tags: docker-5
+

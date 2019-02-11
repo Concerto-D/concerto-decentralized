@@ -1,0 +1,6 @@
+---
+- name: Manage sysbench
+  hosts: sysbench
+  roles:
+    - { role: sysbench,
+        tags: stress }

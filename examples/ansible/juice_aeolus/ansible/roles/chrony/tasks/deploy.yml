@@ -1,0 +1,19 @@
+---
+# Installing chrony
+- name: Installing chrony
+  apt:
+    name: chrony
+    state: present
+  tags: chrony-0
+
+- name: Configuring chrony
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+  tags: chrony-1
+
+- name: Restart chrony
+  service:
+    name: chrony
+    state: restarted
+  tags: chrony-2

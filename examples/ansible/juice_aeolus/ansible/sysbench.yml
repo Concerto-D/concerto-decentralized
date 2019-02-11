@@ -1,0 +1,6 @@
+---
+- name: Sysbench deployment
+  hosts: all
+  roles:
+    - { role: sysbench,
+        tags: sysbench }
