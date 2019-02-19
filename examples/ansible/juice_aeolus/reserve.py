@@ -208,7 +208,7 @@ def experiments():
     sweeper = ParamSweeper(
         SWEEPER_DIR,
         sweeps=sweep({
-            'nb_db_nodes': [3, 5], #,10, 20],
+            'nb_db_nodes': [3, 5, 10], #, 20],
             'nb_db_entries': [1000], #, 0, 10000, 100000],
             'attempt': [1,2,3,4,5,6,7,8,9,10]
         }))
