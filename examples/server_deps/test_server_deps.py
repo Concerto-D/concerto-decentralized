@@ -88,17 +88,67 @@ def time_test(verbosity : int = -1, printing : bool = True, print_time : bool = 
     Printer.st_tprint("Theoretical time in seconds: %f\n  deploy: %f\n  reconf: %f"%(total_theoretical_time,deploy_theoretical_time,reconf_theoretical_time))
     
     sda.terminate()
-    return total_time
+    return deploy_time, update_time, deploy_theoretical_time, reconf_theoretical_time
+
+
+def random_tests(nb_trials, min_value=0., max_value=10.):
+    from random import uniform
+    from json import dumps
+    from sys import stderr
+    results = {
+        "trials": [],
+        "max_distance_deploy": 0.,
+        "max_distance_reconf": 0.
+    }
+    for nb_deps in [1,5,10]:
+        for i in range(nb_trials):
+            print("Trial %d/%d (%d deps)"%(i+1,nb_trials, nb_deps), file=stderr)
+            t_sa  = uniform(min_value,max_value)
+            t_sc  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            t_sr  = uniform(min_value,max_value)
+            t_ss  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            t_sp  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            t_di  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            t_dr  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            t_du  = [uniform(min_value,max_value) for i in range(nb_deps)]
+            trial = {
+                "t_sa": t_sa,
+                "t_sc": t_sc,
+                "t_sr": t_sr,
+                "t_ss": t_ss,
+                "t_sp": t_sp,
+                "t_di": t_di,
+                "t_dr": t_dr,
+                "t_du": t_du
+            }
+            real_deploy, real_reconf, theoretical_deploy, theoretical_reconf = time_test(verbosity=-1, printing = False, print_time = False,
+                        t_sa=t_sa, t_sc=t_sc, t_sr=t_sr, t_ss=t_ss, t_sp=t_sp, t_di=t_di, t_dr=t_dr, t_du=t_du)
+            distance_deploy = abs(real_deploy-theoretical_deploy)
+            distance_reconf = abs(real_reconf-theoretical_reconf)
+            trial["real_deploy"] = real_deploy
+            trial["real_reconf"] = real_reconf
+            trial["theoretical_deploy"] = theoretical_deploy
+            trial["theoretical_reconf"] = theoretical_reconf
+            trial["distance_deploy"] = distance_deploy
+            trial["distance_reconf"] = distance_reconf
+            trial["nb_deps"] = nb_deps
+            results["trials"].append(trial)
+            if (distance_deploy) > results["max_distance_deploy"]:
+                results["max_distance_deploy"] = distance_deploy
+            if (distance_reconf) > results["max_distance_reconf"]:
+                results["max_distance_reconf"] = distance_reconf
+    print(dumps(results, indent='\t'))
     
 
 if __name__ == '__main__':
-    time_test(
-        t_sa=2.,
-        t_sc=[3., 1.],
-        t_sr=6.,
-        t_ss=[4., 8.],
-        t_sp=[5., 7.],
-        t_di=[0.5, 1.5],
-        t_dr=[2.5, 3.5],
-        t_du=[4.5, 5.5]
-    )
+    #time_test(
+        #t_sa=2.,
+        #t_sc=[3., 1.],
+        #t_sr=6.,
+        #t_ss=[4., 8.],
+        #t_sp=[5., 7.],
+        #t_di=[0.5, 1.5],
+        #t_dr=[2.5, 3.5],
+        #t_du=[4.5, 5.5]
+    #)
+    random_tests(160)
