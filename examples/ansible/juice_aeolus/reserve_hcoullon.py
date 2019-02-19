@@ -167,7 +167,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     put = Put(
         hosts=[remote_host],
         local_files=[working_directory+"/madpp_config.json"],
-        remote_location= "madppnode/madpp/examples/ansible/juice"
+        remote_location= "madppnode/madpp/examples/ansible/juice_aeolus"
     ).run()
     put = Put(
         hosts=[remote_host],
@@ -176,7 +176,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ).run()
     run_cmd = "cd madppnode/madpp;"+\
               "source source_dir.sh;"+\
-              "cd examples/ansible/juice/;"+\
+              "cd examples/ansible/juice_aeolus/;"+\
               "python3 galera_assembly.py >stdout 2>stderr"
     print("Executing commands: %s"%run_cmd)
     exp = Remote(
@@ -185,7 +185,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json', 'madppnode/madpp/examples/ansible/juice/times.json', 'madppnode/madpp/examples/ansible/juice/data.sql'],
+        remote_files=['madppnode/madpp/examples/ansible/juice_aeolus/stdout', 'madppnode/madpp/examples/ansible/juice_aeolus/stderr', 'madppnode/madpp/examples/ansible/juice_aeolus/results.gpl', 'madppnode/madpp/examples/ansible/juice_aeolus/results.json', 'madppnode/madpp/examples/ansible/juice_aeolus/times.json', 'madppnode/madpp/examples/ansible/juice_aeolus/data.sql'],
         local_location=working_directory
     ).run()
     if destroy:
@@ -194,7 +194,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     
     
 
-SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'madpp-aeolus-sweeper')
+SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'galera-aeolus-sweeper')
 def experiments():
     import copy, yaml, traceback
     from os import makedirs
@@ -208,9 +208,9 @@ def experiments():
     sweeper = ParamSweeper(
         SWEEPER_DIR,
         sweeps=sweep({
-            'nb_db_nodes': [3, 5, 10], #, 5, 10],
-            'nb_db_entries': [1,1000, 50000, 1000000], #, 0, 10000, 100000],
-            'attempt': [41,42,43,44,45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+            'nb_db_nodes': [3, 5], #,10, 20],
+            'nb_db_entries': [1000], #, 0, 10000, 100000],
+            'attempt': [51,52,53,54,55,56,57,58,59,60]
         }))
     
     logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
@@ -230,7 +230,7 @@ def experiments():
             nb_db_entries = combination['nb_db_entries']
             attempt = combination['attempt']
             conf['g5k']['resources']['machines'][0]['nodes'] = nb_db_nodes
-            xp_name = "nb_db_%d-nb_ent_%d-%d" % (nb_db_nodes, nb_db_entries, attempt)
+            xp_name = "aeolus_nb_db_%d-nb_ent_%d-%d" % (nb_db_nodes, nb_db_entries, attempt)
 
             # Let's get it started hun!
             wd = "exp/%s"%xp_name
