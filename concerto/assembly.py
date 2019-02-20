@@ -269,10 +269,10 @@ class Assembly (object):
             return False
         
     
-    def change_behavior(self, component_name : str, behavior : str):
-        self.add_instruction(InternalInstruction.build_change_behavior(component_name, behavior))
+    def push_b(self, component_name : str, behavior : str):
+        self.add_instruction(InternalInstruction.build_push_b(component_name, behavior))
             
-    def _change_behavior(self, component_name : str, behavior : str):
+    def _push_b(self, component_name : str, behavior : str):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
         if component_name not in self.act_components:

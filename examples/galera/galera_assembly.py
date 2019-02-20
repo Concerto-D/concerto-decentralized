@@ -137,7 +137,7 @@ class GaleraAssembly(Assembly):
         self.add_component(provider_name, dp)
         self.connect(provider_name, 'data',
                      component_name, input_port)
-        self.change_behavior(provider_name, 'provide')
+        self.push_b(provider_name, 'provide')
         
     def _provide_data(self, data, component_name, input_port):
         self._provide_data_custom("%s_%s"%(component_name, input_port), data, component_name, input_port)
@@ -153,12 +153,12 @@ class GaleraAssembly(Assembly):
     
     def _deploy(self, galera=False):
         def deploy_registry():
-            self.change_behavior('registry_apt_utils', 'install')
-            self.change_behavior('registry_python', 'install')
-            self.change_behavior('registry_docker', 'install')
-            self.change_behavior('registry_ceph', 'install')
-            self.change_behavior('registry_registry', 'install')
-            self.change_behavior('registry_chrony', 'install')
+            self.push_b('registry_apt_utils', 'install')
+            self.push_b('registry_python', 'install')
+            self.push_b('registry_docker', 'install')
+            self.push_b('registry_ceph', 'install')
+            self.push_b('registry_registry', 'install')
+            self.push_b('registry_chrony', 'install')
             #dummy data
             self._provide_data('', 'registry_docker', 'config')
             self._provide_data('', 'registry_chrony', 'config')
@@ -166,13 +166,13 @@ class GaleraAssembly(Assembly):
             self._provide_data('', 'registry_ceph', 'id')
             self._provide_data('', 'registry_ceph', 'rdb')
         def deploy_master(mariadb_config='', mariadb_command=''):
-            self.change_behavior('master_apt_utils', 'install')
-            self.change_behavior('master_python', 'install')
-            self.change_behavior('master_docker', 'install')
-            self.change_behavior('master_mariadb', 'install')
-            self.change_behavior('master_sysbench', 'install')
-            self.change_behavior('master_sysbench_master', 'install')
-            self.change_behavior('master_chrony', 'install')
+            self.push_b('master_apt_utils', 'install')
+            self.push_b('master_python', 'install')
+            self.push_b('master_docker', 'install')
+            self.push_b('master_mariadb', 'install')
+            self.push_b('master_sysbench', 'install')
+            self.push_b('master_sysbench_master', 'install')
+            self.push_b('master_chrony', 'install')
             #dummy data
             self._provide_data('', 'master_docker', 'config')
             self._provide_data('', 'master_chrony', 'config')
@@ -184,13 +184,13 @@ class GaleraAssembly(Assembly):
             self._provide_data('', 'master_sysbench_master', 'my_ip')
         def deploy_worker(i, deploy_mariadb=False, mariadb_config='', mariadb_command=''):
             prefix = 'worker%d'%i
-            self.change_behavior(prefix+'_apt_utils', 'install')
-            self.change_behavior(prefix+'_python', 'install')
-            self.change_behavior(prefix+'_docker', 'install')
+            self.push_b(prefix+'_apt_utils', 'install')
+            self.push_b(prefix+'_python', 'install')
+            self.push_b(prefix+'_docker', 'install')
             if deploy_mariadb:
-                self.change_behavior(prefix+'_mariadb', 'install')
-            self.change_behavior(prefix+'_sysbench', 'install')
-            self.change_behavior(prefix+'_chrony', 'install')
+                self.push_b(prefix+'_mariadb', 'install')
+            self.push_b(prefix+'_sysbench', 'install')
+            self.push_b(prefix+'_chrony', 'install')
             #dummy data
             self._provide_data('', prefix+'_docker', 'config')
             self._provide_data('', prefix+'_chrony', 'config')
@@ -265,17 +265,17 @@ class GaleraAssembly(Assembly):
         
     def mariadb_to_galera(self):
         def reconf_master(mariadb_config='', mariadb_command=''):
-            self.change_behavior('master_sysbench_master', 'suspend')
-            self.change_behavior('master_mariadb', 'uninstall')
-            self.change_behavior('master_mariadb', 'install')
-            self.change_behavior('master_sysbench_master', 'install')
+            self.push_b('master_sysbench_master', 'suspend')
+            self.push_b('master_mariadb', 'uninstall')
+            self.push_b('master_mariadb', 'install')
+            self.push_b('master_sysbench_master', 'install')
             #dummy data
             #self._provide_data(mariadb_config, 'master_mariadb', 'config')
             #self._provide_data(mariadb_command, 'master_mariadb', 'command')
             #self._provide_data('', 'master_mariadb', 'root_pw')
         def reconf_worker(i, mariadb_config='', mariadb_command=''):
             prefix = 'worker%d'%i
-            self.change_behavior(prefix+'_mariadb', 'install')
+            self.push_b(prefix+'_mariadb', 'install')
             #dummy data
             self._provide_data(mariadb_config, prefix+'_mariadb', 'config')
             self._provide_data(mariadb_command, prefix+'_mariadb', 'command')

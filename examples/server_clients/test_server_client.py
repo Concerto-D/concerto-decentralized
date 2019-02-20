@@ -33,31 +33,31 @@ class ServerClient(Assembly):
                     'server', 'ip')
         self.connect('client', 'service',
                     'server', 'service')
-        self.change_behavior('client', 'install_start')
-        self.change_behavior('server', 'deploy')
+        self.push_b('client', 'install_start')
+        self.push_b('server', 'deploy')
         self.wait('client')
         self.synchronize()
         
     def suspend(self):
         self.print("### SUSPENDING ###")
-        self.change_behavior('client', 'stop')
-        self.change_behavior('server', 'stop')
+        self.push_b('client', 'stop')
+        self.push_b('server', 'stop')
         self.wait('server')
         self.synchronize()
         
     def restart(self):
         self.print("### RESTARTING ###")
-        self.change_behavior('client', 'install_start')
-        self.change_behavior('server', 'deploy')
+        self.push_b('client', 'install_start')
+        self.push_b('server', 'deploy')
         self.wait('client')
         self.synchronize()
         
     def maintain(self):
         self.print("### MAINTAINING ###")
-        self.change_behavior('client', 'stop')
-        self.change_behavior('server', 'stop')
-        self.change_behavior('client', 'install_start')
-        self.change_behavior('server', 'deploy')
+        self.push_b('client', 'stop')
+        self.push_b('server', 'stop')
+        self.push_b('client', 'install_start')
+        self.push_b('server', 'deploy')
         self.wait('client')
         self.synchronize()
         

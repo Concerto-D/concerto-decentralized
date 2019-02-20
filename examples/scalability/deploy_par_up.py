@@ -30,9 +30,9 @@ class DeployParUp(Assembly):
         for i in range(0, self.nb_comp):
             self.connect('provider', 'service',
                          self.name_for_user(i), 'service')
-        self.change_behavior('provider', 'start')
+        self.push_b('provider', 'start')
         for i in range(0, self.nb_comp):
-            self.change_behavior(self.name_for_user(i), 'start')
+            self.push_b(self.name_for_user(i), 'start')
         self.print("Waiting provider")
         self.wait('provider')
         for i in range(0, self.nb_comp):

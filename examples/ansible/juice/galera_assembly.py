@@ -182,7 +182,7 @@ class GaleraAssembly(Assembly):
         self.add_component(provider_name, j2)
         self.connect(provider_name, 'jinja2_result',
                      component_name, input_port)
-        self.change_behavior(provider_name, 'generate')
+        self.push_b(provider_name, 'generate')
     
     def _provide_jinja2_static(self, template_file_location, parameters, component_name, input_port):
         with open(template_file_location, 'r') as template_file:
@@ -205,25 +205,25 @@ class GaleraAssembly(Assembly):
     
     def _deploy(self, galera=False):
         def deploy_registry():
-            self.change_behavior('registry_apt_utils', 'install')
-            self.change_behavior('registry_pip_libs', 'install')
-            self.change_behavior('registry_docker', 'install')
-            self.change_behavior('registry_registry', 'install')
+            self.push_b('registry_apt_utils', 'install')
+            self.push_b('registry_pip_libs', 'install')
+            self.push_b('registry_docker', 'install')
+            self.push_b('registry_registry', 'install')
             self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, 'registry_docker', 'config')
             if (self.registry_ceph_config['use']):
-                self.change_behavior('registry_ceph', 'install')
+                self.push_b('registry_ceph', 'install')
                 self._provide_jinja2_static('templates/ceph.conf.j2', {'registry_ceph_mon_host': self.registry_ceph_config['mon_host']}, 'registry_ceph', 'config')
                 self._provide_data(self.registry_ceph_config['keyring_path'], 'registry_ceph', 'keyring_path')
                 self._provide_data(self.registry_ceph_config['rbd'], 'registry_ceph', 'rbd')
                 self._provide_data(self.registry_ceph_config['id'], 'registry_ceph', 'id')
         def deploy_master(galera=False):
-            self.change_behavior('master_apt_utils', 'install')
-            self.change_behavior('master_pip_libs', 'install')
-            self.change_behavior('master_docker', 'install')
-            self.change_behavior('master_mariadb', 'install')
-            self.change_behavior('master_mariadb', 'run')
-            self.change_behavior('master_sysbench', 'install')
-            self.change_behavior('master_sysbench_master', 'install')
+            self.push_b('master_apt_utils', 'install')
+            self.push_b('master_pip_libs', 'install')
+            self.push_b('master_docker', 'install')
+            self.push_b('master_mariadb', 'install')
+            self.push_b('master_mariadb', 'run')
+            self.push_b('master_sysbench', 'install')
+            self.push_b('master_sysbench_master', 'install')
             self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, 'master_docker', 'config')
             if galera:
                 self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
@@ -231,12 +231,12 @@ class GaleraAssembly(Assembly):
                 self._provide_data('', 'master_mariadb', 'config')
         def deploy_worker(i, deploy_galera=False):
             prefix = 'worker%d'%i
-            self.change_behavior(prefix+'_apt_utils', 'install')
-            self.change_behavior(prefix+'_pip_libs', 'install')
-            self.change_behavior(prefix+'_docker', 'install')
+            self.push_b(prefix+'_apt_utils', 'install')
+            self.push_b(prefix+'_pip_libs', 'install')
+            self.push_b(prefix+'_docker', 'install')
             if deploy_galera:
-                self.change_behavior(prefix+'_mariadb', 'install')
-            self.change_behavior(prefix+'_sysbench', 'install')
+                self.push_b(prefix+'_mariadb', 'install')
+            self.push_b(prefix+'_sysbench', 'install')
             self._provide_jinja2_static('templates/docker.conf.j2', {'registry_ip': self.registry_host["ip"], 'registry_port': Registry.REGISTRY_PORT}, prefix+'_docker', 'config')
             #dummy data
             if deploy_galera:
@@ -310,16 +310,16 @@ class GaleraAssembly(Assembly):
         
     def mariadb_to_galera(self):
         def reconf_master(mariadb_config=''):
-            self.change_behavior('master_sysbench_master', 'suspend')
-            self.change_behavior('master_mariadb', 'uninstall_backup')
+            self.push_b('master_sysbench_master', 'suspend')
+            self.push_b('master_mariadb', 'uninstall_backup')
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
-            self.change_behavior('master_mariadb', 'install')
-            self.change_behavior('master_mariadb', 'restore_run')
-            self.change_behavior('master_sysbench_master', 'install')
+            self.push_b('master_mariadb', 'install')
+            self.push_b('master_mariadb', 'restore_run')
+            self.push_b('master_sysbench_master', 'install')
         def reconf_worker(i, mariadb_config=''):
             prefix = 'worker%d'%i
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, prefix+'_mariadb', 'config')
-            self.change_behavior(prefix+'_mariadb', 'install')
+            self.push_b(prefix+'_mariadb', 'install')
         
         self.print("## RECONFIGURING ##")
         for i in range(len(self.workers_hosts)):

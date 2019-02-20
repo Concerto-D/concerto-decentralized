@@ -17,7 +17,7 @@ class GanttChart():
     def stop_transition(self,component,behavior,transition,time):
         self.log.append((self.STOP,component,behavior,transition,time))
     
-    def change_behavior(self,component,behavior,time):
+    def push_b(self,component,behavior,time):
         self.log.append((self.CHANGE_BEHAVIOR, component, behavior, None, time))
         
     def dump(self, file_name):
@@ -41,7 +41,7 @@ class GanttChart():
     
     def _get_ordered_tuples(self):
         transitions = []
-        change_behaviors = []
+        push_bs = []
         
         max_time = 0.0
         
@@ -68,27 +68,27 @@ class GanttChart():
                 del temp_dict[(component,behavior,transition)]
             else:
                 start_time = time-min_time
-                change_behaviors.append((component, start_time, behavior))
+                push_bs.append((component, start_time, behavior))
                 if start_time > max_time: max_time = start_time
         
         next_cb_dict = {}
-        new_change_behaviors = []
-        for (component, start_time, behavior) in reversed(change_behaviors):
+        new_push_bs = []
+        for (component, start_time, behavior) in reversed(push_bs):
             if component in next_cb_dict:
                 end_time = next_cb_dict[component]
             else:
                 end_time = max_time
             if behavior is not None:
-                new_change_behaviors.insert(0,(component, start_time, end_time, behavior))
+                new_push_bs.insert(0,(component, start_time, end_time, behavior))
             next_cb_dict[component] = start_time
         
         transitions.sort()
-        new_change_behaviors.sort()
+        new_push_bs.sort()
         
-        return (transitions, new_change_behaviors)
+        return (transitions, new_push_bs)
         
     def get_formatted(self):
-        (transitions, change_behaviors) = self._get_ordered_tuples()
+        (transitions, push_bs) = self._get_ordered_tuples()
         
         to_return = {
             "transitions": [],
@@ -112,10 +112,10 @@ class GanttChart():
             component_set.append({"behavior": old_behavior, "transitions": behavior_set})
             to_return["transitions"].append({"component": old_component, "behaviors": component_set})
             
-        if len(change_behaviors) > 0:
-            (old_component, _, _, _) = change_behaviors[0]
+        if len(push_bs) > 0:
+            (old_component, _, _, _) = push_bs[0]
             component_set = []
-            for (component, start_time, end_time, behavior) in change_behaviors:
+            for (component, start_time, end_time, behavior) in push_bs:
                 if component is not old_component:
                     to_return["behaviors"].append({"component": old_component, "behaviors": component_set})
                 component_set.append({"behavior": behavior, "start": start_time, "end": end_time})
@@ -130,41 +130,41 @@ class GanttChart():
             dump(self.get_formatted(), f, indent='\t')
     
     @staticmethod
-    def export_gnuplot_from_tuples(transitions, change_behaviors, file_name, title):
+    def export_gnuplot_from_tuples(transitions, push_bs, file_name, title):
         tuple_list = []
-        change_behaviors_dict = {}
+        push_bs_dict = {}
         
-        for (component, start_time, end_time, behavior) in change_behaviors:
-            if component not in change_behaviors_dict:
-                change_behaviors_dict[component] = []
-            change_behaviors_dict[component].append((start_time, end_time, behavior))
+        for (component, start_time, end_time, behavior) in push_bs:
+            if component not in push_bs_dict:
+                push_bs_dict[component] = []
+            push_bs_dict[component].append((start_time, end_time, behavior))
         
         for (component, behavior, start_time, end_time, transition) in transitions:
-            if component in change_behaviors_dict:
+            if component in push_bs_dict:
                 cn = component.replace("_","\\\\\\_")
-                for (s, e, b) in change_behaviors_dict[component]:
+                for (s, e, b) in push_bs_dict[component]:
                     tuple_list.append((cn,s,e))
-                del change_behaviors_dict[component]
+                del push_bs_dict[component]
             name = "%s.%s.%s"%(component,behavior,transition)
             name = name.replace("_","\\\\\\_")
             tuple_list.append((name,start_time,end_time))
             
-        for c in change_behaviors_dict:
+        for c in push_bs_dict:
             cn = c.replace("_","\\\\\\_")
-            for (s, e, b) in change_behaviors_dict[c]:
+            for (s, e, b) in push_bs_dict[c]:
                 tuple_list.append((cn,s,e))
         
         gnuplot_file_from_list(tuple_list, file_name, title)
         
     def export_gnuplot(self, file_name, title=''):
-        (transitions, change_behaviors) = self._get_ordered_tuples()
-        self.export_gnuplot_from_tuples(transitions, change_behaviors, file_name, title)
+        (transitions, push_bs) = self._get_ordered_tuples()
+        self.export_gnuplot_from_tuples(transitions, push_bs, file_name, title)
         
     
     @staticmethod
     def formatted_to_ordered_tuples(formatted, min_time=0., max_time=float('inf'), components_to_remove=[]):
         transitions = []
-        change_behaviors = []
+        push_bs = []
         for c_block in formatted["transitions"]:
             component = c_block["component"]
             for b_block in c_block["behaviors"]:
@@ -182,18 +182,18 @@ class GanttChart():
                 start = b_block["start"]
                 end = b_block["end"]
                 if start >= min_time and end <= max_time and component not in components_to_remove:
-                    change_behaviors.append((component,start-min_time,end-min_time,behavior))
+                    push_bs.append((component,start-min_time,end-min_time,behavior))
         
         transitions.sort()
-        change_behaviors.sort()
+        push_bs.sort()
         
-        return (transitions, change_behaviors)
+        return (transitions, push_bs)
     
     @staticmethod
     def json_to_gnuplot(json_file_name, gnuplot_file_name, title='', min_time=0., max_time=float('inf'), components_to_remove=[]):
         from json import load
         with open(json_file_name) as f:
             formatted = load(f)
-        transitions, change_behaviors = GanttChart.formatted_to_ordered_tuples(formatted, min_time=min_time, max_time=max_time, components_to_remove=components_to_remove)
-        GanttChart.export_gnuplot_from_tuples(transitions, change_behaviors, gnuplot_file_name, title)
+        transitions, push_bs = GanttChart.formatted_to_ordered_tuples(formatted, min_time=min_time, max_time=max_time, components_to_remove=components_to_remove)
+        GanttChart.export_gnuplot_from_tuples(transitions, push_bs, gnuplot_file_name, title)
         

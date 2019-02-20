@@ -33,21 +33,21 @@ class ServerDeps(Assembly):
                          'server', Server.name_for_dep_service(i))
             self.connect(self.dep_name(i), 'ip',
                          'server', Server.name_for_dep_ip(i))
-        self.change_behavior('server', 'deploy')
+        self.push_b('server', 'deploy')
         for i in range(len(self.deps)):
-            self.change_behavior(self.dep_name(i), 'deploy')
+            self.push_b(self.dep_name(i), 'deploy')
         self.wait('server')
         self.synchronize()
         
     def update(self):
         self.print("### UPDATING ####")
-        self.change_behavior('server', 'suspend')
+        self.push_b('server', 'suspend')
         for i in range(len(self.deps)):
-            self.change_behavior(self.dep_name(i), 'update')
+            self.push_b(self.dep_name(i), 'update')
         
-        self.change_behavior('server', 'deploy')
+        self.push_b('server', 'deploy')
         for i in range(len(self.deps)):
-            self.change_behavior(self.dep_name(i), 'deploy')
+            self.push_b(self.dep_name(i), 'deploy')
         self.wait('server')
         self.synchronize()
     

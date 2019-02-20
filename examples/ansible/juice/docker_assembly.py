@@ -39,7 +39,7 @@ class DockerAssembly(Assembly):
         self.add_component(provider_name, dp)
         self.connect(provider_name, 'data',
                      component_name, input_port)
-        self.change_behavior(provider_name, 'provide')
+        self.push_b(provider_name, 'provide')
         
     def _provide_data(self, data, component_name, input_port):
         self._provide_data_custom("%s_%s"%(component_name, input_port), data, component_name, input_port)
@@ -69,7 +69,7 @@ class DockerAssembly(Assembly):
         self.add_component(provider_name, j2)
         self.connect(provider_name, 'jinja2_result',
                      component_name, input_port)
-        self.change_behavior(provider_name, 'generate')
+        self.push_b(provider_name, 'generate')
         
     def _stop_provide_jinja2(self, component_name, input_port):
         provider_name = "%s_%s"%(component_name, input_port)
@@ -81,10 +81,10 @@ class DockerAssembly(Assembly):
     
     def deploy(self):
         self.print("### DEPLOYING ####")
-        self.change_behavior('apt_utils', 'install')
-        self.change_behavior('docker', 'install')
+        self.push_b('apt_utils', 'install')
+        self.push_b('docker', 'install')
         self._provide_jinja2('templates/docker.conf.j2', {'registry_ip': self.host, 'registry_port': Registry.REGISTRY_PORT}, 'docker', 'config')
-        self.change_behavior('docker', 'change_config')
+        self.push_b('docker', 'change_config')
         self.wait('docker')
         self.wait('apt_utils')
         self.synchronize()

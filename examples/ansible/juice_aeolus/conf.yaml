@@ -25,7 +25,7 @@ g5k:
         primary_network: n1
         secondary_networks: []
       - roles:
-          - madpp
+          - concerto
         cluster: ecotype
         nodes: 1
         primary_network: n1

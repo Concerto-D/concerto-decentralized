@@ -15,10 +15,10 @@ class LampAssembly(Assembly):
         self.add_component("python2", self.python2)
         self.add_component("web", self.web)
         #self.add_component("db", self.db)
-        self.change_behavior("python2", "install")
+        self.push_b("python2", "install")
         self.wait("python2") # Temporary
-        self.change_behavior("web", "install")
-        #self.change_behavior("db", "install")
+        self.push_b("web", "install")
+        #self.push_b("db", "install")
         self.wait("python2")
         self.wait("web")
         #self.wait("db")

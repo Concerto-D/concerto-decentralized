@@ -9,7 +9,7 @@ class InternalInstruction:
         DEL = 1
         CONNECT = 2
         DISCONNECT = 3
-        CHANGE_BEHAVIOR = 4
+        PUSH_B = 4
         WAIT = 5
         WAIT_ALL = 6
         
@@ -60,9 +60,9 @@ class InternalInstruction:
             })
     
     @staticmethod
-    def build_change_behavior(component_name : str, behavior : str):
+    def build_push_b(component_name : str, behavior : str):
         return InternalInstruction(
-            InternalInstruction.Type.CHANGE_BEHAVIOR,
+            InternalInstruction.Type.PUSH_B,
             {
                 "component_name": component_name,
                 "behavior": behavior
@@ -92,8 +92,8 @@ class InternalInstruction:
             return assembly._connect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.DISCONNECT:
             return assembly._disconnect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
-        elif self.type is InternalInstruction.Type.CHANGE_BEHAVIOR:
-            return assembly._change_behavior(self.args['component_name'], self.args['behavior'])
+        elif self.type is InternalInstruction.Type.PUSH_B:
+            return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
             return assembly._wait(self.args['component_name'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:

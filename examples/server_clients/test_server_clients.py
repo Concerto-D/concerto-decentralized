@@ -34,8 +34,8 @@ class ServerClient(Assembly):
                     'server', 'ip')
             self.connect(self.client_name(i), 'service',
                     'server', 'service')
-            self.change_behavior(self.client_name(i), 'install_start')
-        self.change_behavior('server', 'deploy')
+            self.push_b(self.client_name(i), 'install_start')
+        self.push_b('server', 'deploy')
         for i in range(self.nb_clients):
             self.wait(self.client_name(i))
         self.synchronize()
@@ -43,16 +43,16 @@ class ServerClient(Assembly):
     def suspend(self):
         self.print("### SUSPENDING ###")
         for i in range(self.nb_clients):
-            self.change_behavior(self.client_name(i), 'stop')
-        self.change_behavior('server', 'stop')
+            self.push_b(self.client_name(i), 'stop')
+        self.push_b('server', 'stop')
         self.wait('server')
         self.synchronize()
         
     def restart(self):
         self.print("### RESTARTING ###")
         for i in range(self.nb_clients):
-            self.change_behavior(self.client_name(i), 'install_start')
-        self.change_behavior('server', 'deploy')
+            self.push_b(self.client_name(i), 'install_start')
+        self.push_b('server', 'deploy')
         for i in range(self.nb_clients):
             self.wait(self.client_name(i))
         self.synchronize()

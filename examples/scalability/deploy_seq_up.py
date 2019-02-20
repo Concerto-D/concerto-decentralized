@@ -45,10 +45,10 @@ class DeploySeqUp(Assembly):
         self.synchronize()
             
     def deploy(self):
-        self.change_behavior('provider', 'start')
+        self.push_b('provider', 'start')
         for i in range(0, self.nb_comp-2):
-            self.change_behavior(self.name_for_up(i), 'start')
-        self.change_behavior('user', 'start')
+            self.push_b(self.name_for_up(i), 'start')
+        self.push_b('user', 'start')
         self.wait('user')
         self.synchronize()
     
