@@ -6,7 +6,7 @@ monitoring: false
 
 g5k:
   # reservation: "2018-03-12 19:00:01"
-  # oargrid_jobid: # overriding the rest
+  oargrid_jobid: 65535 # overriding the rest
   walltime: "02:00:00"
   dhcp: true
   job_name: madpp-tests
