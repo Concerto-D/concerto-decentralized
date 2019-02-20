@@ -337,7 +337,8 @@ class GaleraAssembly(Assembly):
     def mariadb_to_galera(self):
         def reconf_master():
             self.push_b('master_sysbench_master', 'suspend')
-            self.push_b('master_mariadb', 'uninstall_backup')
+            self.push_b('master_mariadb', 'backup')
+            self.push_b('master_mariadb', 'uninstall')
             self._provide_jinja2_static('templates/mariadb-galera.conf.j2', {'db_ips': list([h["ip"] for h in [self.master_host]+self.workers_hosts])}, 'master_mariadb', 'config')
             self.push_b('master_mariadb', 'install')
             self.push_b('master_mariadb', 'restore_run')

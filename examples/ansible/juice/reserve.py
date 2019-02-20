@@ -256,11 +256,12 @@ def perform_experiments(start_attempt = DEFAULT_START_ATTEMPT, nb_attempts = DEF
             # Setup parameters
             conf = copy.deepcopy(CONF)  # Make a deepcopy so we can run
                                         # multiple sweeps in parallels
-            nb_db_nodes = combination['nb_db_nodes']
+            (nb_db_nodes,nb_additional_db_nodes) = combination['nb_db_nodes']
             nb_db_entries = combination['nb_db_entries']
             attempt = combination['attempt']
             conf['g5k']['resources']['machines'][0]['nodes'] = nb_db_nodes
-            xp_name = "%s-nb_db_%d-nb_ent_%d-%d" % (PREFIX_EXPERIMENT, nb_db_nodes, nb_db_entries, attempt)
+            conf['g5k']['resources']['machines'][1]['nodes'] = nb_additional_db_nodes
+            xp_name = "%s-nb_db_%d+%d-nb_ent_%d-%d" % (PREFIX_EXPERIMENT, nb_db_nodes, nb_additional_db_nodes, nb_db_entries, attempt)
 
             # Let's get it started!
             wd = "exp/%s"%xp_name

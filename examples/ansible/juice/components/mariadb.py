@@ -43,10 +43,9 @@ class MariaDB(Component):
             'run': ('ready', 'running', 'run', 0, empty_transition),
             'restore_run': ('ready', 'running', 'restore_run', 0, self.restore_backup),
             
-            'uninstallb_backup': ('running', 'backuped', 'uninstall_backup', 0, self.backup),
-            'uninstallb_stop': ('backuped', 'stopped', 'uninstall_backup', 0, self.stop),
-            'uninstallb': ('stopped', 'uninstalled', 'uninstall_backup', 0, self.uninstall),
-            'uninstall_stop': ('running', 'stopped', 'uninstall', 0, self.stop),
+            'backup': ('running', 'backuped', 'backup', 0, self.backup),
+            'no_backup': ('running', 'backuped', 'uninstall', 0, empty_transition),
+            'uninstall_stop': ('backuped', 'stopped', 'uninstall', 0, self.stop),
             'uninstall': ('stopped', 'uninstalled', 'uninstall', 0, self.uninstall)
         }
 
