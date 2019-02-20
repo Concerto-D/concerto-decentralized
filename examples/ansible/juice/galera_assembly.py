@@ -416,7 +416,7 @@ def time_test(master_host, workers_hosts, additional_workers_hosts, registry_hos
     
     if nb_db_entries > 0:
         if printing: Printer.st_tprint("Main: sending database content")
-        command = "cd experiments/db_builder/;python3 generate_db.py %d > ../../data.sql"%nb_db_entries
+        command = "cd db_builder/;python3 generate_db.py %d > ../data.sql"%nb_db_entries
         completed_process = run(command, shell=True, check=False)
         if completed_process.returncode is not 0:
             raise Exception("Error: Could not generate DB data")
