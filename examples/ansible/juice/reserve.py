@@ -112,16 +112,16 @@ def get_host_dict(g5k_address):
 
 CONCERTO_GIT = 'https://gitlab.inria.fr/mchardet/madpp.git'
 CONCERTO_DIR_IN_GIT = 'madpp'
-EXP_GIT = ''
-EXP_DIR_IN_GIT = 'concerto'
+EXP_GIT = 'https://gitlab.inria.fr/mchardet/galera-reconfiguration-madpp-ansible.git'
+EXP_DIR_IN_GIT = 'galera-reconfiguration-madpp-ansible/concerto'
 ROOT_DIR = '~/concertonode'
 PYTHON_FILE = 'galera_assembly.py'
 
 CONCERTO_DIR = '%s/%s'%(ROOT_DIR,CONCERTO_DIR_IN_GIT)
 EXP_DIR = '%s/%s'%(ROOT_DIR,EXP_DIR_IN_GIT)
 
-
 DEFAULT_WORKING_DIRECTORY = '.'
+
 def run_experiment(nb_db_entries, conf, working_directory=DEFAULT_WORKING_DIRECTORY, provider='g5k', force_deployment=True, destroy=False):
     from execo.action import Put, Get, Remote
     from execo.host import Host
@@ -217,11 +217,19 @@ DEFAULT_NBS_ENTRIES = [1000]
 DEFAULT_START_ATTEMPT = 1
 DEFAULT_NB_ATTEMPTS = 10
 DEFAULT_SWEEPER_DIR = os.path.join(os.getenv('HOME'), DEFAULT_SWEEPER_NAME)
+
 def perform_experiments(start_attempt = DEFAULT_START_ATTEMPT, nb_attempts = DEFAULT_NB_ATTEMPTS, nbs_nodes = DEFAULT_NBS_NODES, nbs_entries = DEFAULT_NBS_ENTRIES, sweeper_dir = DEFAULT_SWEEPER_DIR):
-    import copy, yaml, traceback
+    import copy, yaml, traceback, multiprocessing
     from os import makedirs
-    from execo_engine.sweep import (ParamSweeper, sweep)
     from pprint import pformat
+    from execo_engine.sweep import (ParamSweeper, sweep)
+    
+    def re_destroy_false(nb_db_entries, conf, wd):
+        try:
+            run_experiment(nb_db_entries, conf, wd, destroy=False)
+            return 0
+        except Exception as e:
+            return 1
     
     #CONF = [] #TO GET SOMEHOW
     with open("conf.yaml") as f:
@@ -230,8 +238,8 @@ def perform_experiments(start_attempt = DEFAULT_START_ATTEMPT, nb_attempts = DEF
     sweeper = ParamSweeper(
         sweeper_dir,
         sweeps=sweep({
-            'nb_db_nodes': list(nbs_nodes), #, 5, 10],
-            'nb_db_entries': list(nbs_entries), #, 0, 10000, 100000],
+            'nb_db_nodes': list(nbs_nodes),
+            'nb_db_entries': list(nbs_entries),
             'attempt': list(range(start_attempt, start_attempt+nb_attempts))
         }))
     
@@ -259,7 +267,16 @@ def perform_experiments(start_attempt = DEFAULT_START_ATTEMPT, nb_attempts = DEF
             makedirs(wd, exist_ok=True)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
                 yaml.dump(conf, g5k_config_file)
-            run_experiment(nb_db_entries, conf, wd, destroy=False)
+                
+            exp_process = multiprocessing.Process(target=re_destroy_false, args=(nb_db_entries, conf, wd))
+            exp_process.start()
+            exp_process.join(30*60) # Timeout 30 minutes
+            if exp_process.is_alive():
+                exp_process.terminate()
+                exp_process.join()
+            if exp_process.exitcode is not 0:
+                raise Exception("Return code not 0!")
+            
 
             # Everything works well, mark combination as done
             sweeper.done(combination)
