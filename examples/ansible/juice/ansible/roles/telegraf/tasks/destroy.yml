@@ -1,7 +1,0 @@
----
-- name: Destroying telegraf container
-  docker_container:
-    name: "telegraf"
-    state: absent
-    force_kill: yes
-

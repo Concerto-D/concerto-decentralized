@@ -1,6 +1,0 @@
----
-- name: Common configuration
-  hosts: all
-  roles:
-    - { role: piplibs,
-        tags: piplibs }

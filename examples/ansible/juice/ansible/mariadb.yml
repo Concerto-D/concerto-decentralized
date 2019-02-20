@@ -1,7 +1,0 @@
----
-- name: MariaDB deployment
-  hosts: all
-  roles:
-    - { role: database,
-        tags: mariadb,
-        when: db == "mariadb" }

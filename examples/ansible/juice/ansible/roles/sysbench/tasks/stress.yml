@@ -1,3 +1,0 @@
----
-- include: "{{ db }}/stress.yml"
-  # when: inventory_hostname in sysbench_nodes

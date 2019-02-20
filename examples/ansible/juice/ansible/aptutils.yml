@@ -1,7 +1,0 @@
----
-- name: Install apt utils
-  hosts: all
-  roles :
-    - { role: aptutils,
-        tags: aptutils }
-

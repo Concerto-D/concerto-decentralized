@@ -1,7 +1,0 @@
----
-
-- name: Destroying cadvisor container
-  docker_container:
-    name: "cadvisor"
-    state: absent
-    force_kill: yes

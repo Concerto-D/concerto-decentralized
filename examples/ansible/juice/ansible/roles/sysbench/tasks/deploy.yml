@@ -1,6 +1,0 @@
----
-- name: Create the /sysbench directory for storing results
-  file:
-    path: /sysbench
-    state: directory
-  tags: sysbench-0

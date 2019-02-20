@@ -1,6 +1,0 @@
----
-- name: Send data to database
-  hosts: all
-  roles:
-    - { role: sendtodb,
-        tags: sendtodb }

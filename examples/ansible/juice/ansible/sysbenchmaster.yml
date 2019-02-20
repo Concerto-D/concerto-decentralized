@@ -1,6 +1,0 @@
----
-- name: Sysbench deployment
-  hosts: all
-  roles:
-    - { role: sysbenchmaster,
-        tags: sysbenchmaster }
