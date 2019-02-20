@@ -20,6 +20,12 @@ g5k:
         primary_network: n1
         secondary_networks: []
       - roles:
+          - database_add
+        cluster: ecotype
+        nodes: 0
+        primary_network: n1
+        secondary_networks: []
+      - roles:
           - registry
         cluster: ecotype
         nodes: 1

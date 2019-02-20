@@ -110,13 +110,26 @@ def get_host_dict(g5k_address):
     return {"address": g5k_address, "ip": get_ip(g5k_address)}
 
 
-def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', force_deployment=True, destroy=True):
+CONCERTO_GIT = 'https://gitlab.inria.fr/mchardet/madpp.git'
+CONCERTO_DIR_IN_GIT = 'madpp'
+EXP_GIT = ''
+EXP_DIR_IN_GIT = 'concerto'
+ROOT_DIR = '~/concertonode'
+PYTHON_FILE = 'galera_assembly.py'
+
+CONCERTO_DIR = '%s/%s'%(ROOT_DIR,CONCERTO_DIR_IN_GIT)
+EXP_DIR = '%s/%s'%(ROOT_DIR,EXP_DIR_IN_GIT)
+
+
+DEFAULT_WORKING_DIRECTORY = '.'
+def run_experiment(nb_db_entries, conf, working_directory=DEFAULT_WORKING_DIRECTORY, provider='g5k', force_deployment=True, destroy=False):
     from execo.action import Put, Get, Remote
     from execo.host import Host
     from json import dump
     
     env, g5k_job = allocate(conf, provider, force_deployment)
     database_machines = [get_host_dict(host.address) for host in env['roles']['database']]
+    database_add_machines = [get_host_dict(host.address) for host in env['roles']['database_add']]
     master_machine = database_machines[0]
     workers_marchines = database_machines[1:len(database_machines)]
     registry_machine = get_host_dict(env['roles']['registry'][0].address)
@@ -140,6 +153,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
         "database_hosts": database_machines,
         "master_host" : master_machine,
         "workers_hosts": workers_marchines,
+        "additional_workers_hosts": database_add_machines,
         "registry_host": registry_machine,
         "concerto_host": concerto_machine,
         "ceph": {
@@ -155,10 +169,9 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     dump(concerto_config, concerto_config_file)
     concerto_config_file.close()
     remote_host = Host(concerto_machine["address"], user="root")
-    run_cmd = "mkdir -p concertonode;"+\
-              "cd concertonode;"+\
-              "rm -r madpp;"+\
-              "git clone https://gitlab.inria.fr/mchardet/madpp.git"
+    run_cmd = "mkdir -p %s;"%ROOT_DIR+\
+              "cd %s;"%ROOT_DIR+\
+              "git clone %s"%CONCERTO_GIT
     print("Executing commands: %s"%run_cmd)
     exp = Remote(
         cmd=run_cmd,
@@ -167,25 +180,29 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     put = Put(
         hosts=[remote_host],
         local_files=[working_directory+"/concerto_config.json"],
-        remote_location= "concertonode/madpp/examples/ansible/juice"
+        remote_location= EXP_DIR
     ).run()
     put = Put(
         hosts=[remote_host],
         local_files=["~/.ssh/id_rsa","~/.ssh/id_rsa.pub"],
         remote_location= "~/.ssh"
     ).run()
-    run_cmd = "cd concertonode/madpp;"+\
+    run_cmd = "cd %s;"%CONCERTO_DIR+\
               "source source_dir.sh;"+\
-              "cd examples/ansible/juice/;"+\
-              "python3 galera_assembly.py >stdout 2>stderr"
+              "cd %s;"%ROOT_DIR+\
+              "git clone %s;"%EXP_GIT+\
+              "cd %s;"%EXP_DIR+\
+              "python3 %s >stdout 2>stderr"%PYTHON_FILE
     print("Executing commands: %s"%run_cmd)
     exp = Remote(
         cmd=run_cmd,
         hosts=[remote_host]
     ).run()
+    files_to_get_names = ['stdout', 'stderr', 'results.gpl', 'results.json', 'times.json'] # 'data.sql'
+    files_to_get = ["%s/%s"%(EXP_DIR,fn) for fn in files_to_get_names]
     Get(
         hosts=[remote_host],
-        remote_files=['concertonode/madpp/examples/ansible/juice/stdout', 'concertonode/madpp/examples/ansible/juice/stderr', 'concertonode/madpp/examples/ansible/juice/results.gpl', 'concertonode/madpp/examples/ansible/juice/results.json', 'concertonode/madpp/examples/ansible/juice/times.json', 'concertonode/madpp/examples/ansible/juice/data.sql'],
+        remote_files=files_to_get,
         local_location=working_directory
     ).run()
     if destroy:
@@ -193,9 +210,14 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     
     
     
-
-SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-test-sweeper')
-def experiments():
+PREFIX_EXPERIMENT = "concerto"
+DEFAULT_SWEEPER_NAME = "galera-concerto-sweeper"
+DEFAULT_NBS_NODES = [(3,1),(3,5),(3,10),(3,20),(5,0),(10,0),(20,0)]
+DEFAULT_NBS_ENTRIES = [1000]
+DEFAULT_START_ATTEMPT = 1
+DEFAULT_NB_ATTEMPTS = 10
+DEFAULT_SWEEPER_DIR = os.path.join(os.getenv('HOME'), DEFAULT_SWEEPER_NAME)
+def perform_experiments(start_attempt = DEFAULT_START_ATTEMPT, nb_attempts = DEFAULT_NB_ATTEMPTS, nbs_nodes = DEFAULT_NBS_NODES, nbs_entries = DEFAULT_NBS_ENTRIES, sweeper_dir = DEFAULT_SWEEPER_DIR):
     import copy, yaml, traceback
     from os import makedirs
     from execo_engine.sweep import (ParamSweeper, sweep)
@@ -206,14 +228,14 @@ def experiments():
         CONF = yaml.load(f)
     
     sweeper = ParamSweeper(
-        SWEEPER_DIR,
+        sweeper_dir,
         sweeps=sweep({
-            'nb_db_nodes': [3], #, 5, 10],
-            'nb_db_entries': [1000], #, 0, 10000, 100000],
-            'attempt': [1,2,3]
+            'nb_db_nodes': list(nbs_nodes), #, 5, 10],
+            'nb_db_entries': list(nbs_entries), #, 0, 10000, 100000],
+            'attempt': list(range(start_attempt, start_attempt+nb_attempts))
         }))
     
-    logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
+    logging.info("Using Execo sweeper in directory: %s"%sweeper_dir)
     done_tasks = sweeper.get_done()
     if len(done_tasks) > 0:
         logging.info("Tasks already done:\n%s"%"\n".join("- " + pformat(task) for task in done_tasks))
@@ -230,9 +252,9 @@ def experiments():
             nb_db_entries = combination['nb_db_entries']
             attempt = combination['attempt']
             conf['g5k']['resources']['machines'][0]['nodes'] = nb_db_nodes
-            xp_name = "nb_db_%d-nb_ent_%d-%d" % (nb_db_nodes, nb_db_entries, attempt)
+            xp_name = "%s-nb_db_%d-nb_ent_%d-%d" % (PREFIX_EXPERIMENT, nb_db_nodes, nb_db_entries, attempt)
 
-            # Let's get it started hun!
+            # Let's get it started!
             wd = "exp/%s"%xp_name
             makedirs(wd, exist_ok=True)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
@@ -257,5 +279,5 @@ def experiments():
 if __name__ == '__main__':
     #Testing
     logging.basicConfig(level=logging.DEBUG)
-    experiments()
+    perform_experiments()
     #run_experiment(0, "conf.yaml", '.')
