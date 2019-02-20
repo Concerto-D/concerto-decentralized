@@ -11,7 +11,7 @@ if sys.version_info < (3, 6):
 here = os.path.dirname(__file__)
 pks=find_packages()
 
-setup(name = "madpp",
+setup(name = "concerto",
       version = "0.1",
       description = "The implementation of the Madeus++ model in Python.",
       author = "Maverick Chardet, Hélène Coullon, Christian Perez",

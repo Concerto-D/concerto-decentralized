@@ -11,11 +11,11 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set
 
-from madpp.place import Dock, Place
-from madpp.dependency import DepType, Dependency
-from madpp.transition import Transition
-from madpp.gantt_chart import GanttChart
-from madpp.utility import Messages, Printer
+from concerto.place import Dock, Place
+from concerto.dependency import DepType, Dependency
+from concerto.transition import Transition
+from concerto.gantt_chart import GanttChart
+from concerto.utility import Messages, Printer
 
 class Group(object):
     """
@@ -592,7 +592,7 @@ class Component (object, metaclass=ABCMeta):
     
     
     def init(self):
-        from madpp.utility import empty_transition
+        from concerto.utility import empty_transition
         """
         This method initializes the component and returns the set of active places
         """

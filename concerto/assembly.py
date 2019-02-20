@@ -10,12 +10,12 @@ import sys
 from typing import Dict, Tuple, List, Set
 from threading import Thread, Lock, Event
 from queue import Queue
-from madpp.dependency import DepType, Dependency
-from madpp.component import Component
-from madpp.connection import Connection
-from madpp.internal_instruction import InternalInstruction
-from madpp.gantt_chart import GanttChart
-from madpp.utility import Messages, COLORS, Printer
+from concerto.dependency import DepType, Dependency
+from concerto.component import Component
+from concerto.connection import Connection
+from concerto.internal_instruction import InternalInstruction
+from concerto.gantt_chart import GanttChart
+from concerto.utility import Messages, COLORS, Printer
 
 
 class Assembly (object):

@@ -1,5 +1,5 @@
-from madpp.all import *
-from madpp.plugins.ansible import call_ansible_on_host, AnsibleCallResult
+from concerto.all import *
+from concerto.plugins.ansible import call_ansible_on_host, AnsibleCallResult
 
 class Apache2(Component):
 

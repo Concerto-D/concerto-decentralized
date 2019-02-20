@@ -1,5 +1,5 @@
-from madpp.dependency import DepType, Dependency
-from madpp.component import *
+from concerto.dependency import DepType, Dependency
+from concerto.component import *
 
 class Connection(object):
     """

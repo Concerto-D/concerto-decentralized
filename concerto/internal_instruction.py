@@ -1,6 +1,6 @@
 from enum import Enum
 
-from madpp.component import Component
+from concerto.component import Component
 
 class InternalInstruction:
 

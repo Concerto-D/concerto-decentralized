@@ -1,7 +1,7 @@
 import csv
 from collections import OrderedDict
 
-from madpp.gnuplot.gnuplot_gantt import gnuplot_file_from_list
+from concerto.gnuplot.gnuplot_gantt import gnuplot_file_from_list
 
 class GanttChart():
     START = 0
@@ -162,7 +162,7 @@ class GanttChart():
         
     
     @staticmethod
-    def formatted_to_ordered_tuples(formatted, min_time=0., max_time=float('inf')):
+    def formatted_to_ordered_tuples(formatted, min_time=0., max_time=float('inf'), components_to_remove=[]):
         transitions = []
         change_behaviors = []
         for c_block in formatted["transitions"]:
@@ -173,38 +173,27 @@ class GanttChart():
                     transition = t_block["transition"]
                     start = t_block["start"]
                     end = t_block["end"]
-                    if start < min_time or end > max_time:
-                        continue
-                    transitions.append((component,behavior,start,end,transition))
+                    if start >= min_time and end <= max_time and component not in components_to_remove:
+                        transitions.append((component,behavior,start-min_time,end-min_time,transition))
         for c_block in formatted["behaviors"]:
             component = c_block["component"]
             for b_block in c_block["behaviors"]:
                 behavior = b_block["behavior"]
                 start = b_block["start"]
                 end = b_block["end"]
-                if start < min_time or end > max_time:
-                    continue
-                change_behaviors.append((component,start,end,behavior))
+                if start >= min_time and end <= max_time and component not in components_to_remove:
+                    change_behaviors.append((component,start-min_time,end-min_time,behavior))
         
-        new_transitions = []
-        new_change_behaviors = []
+        transitions.sort()
+        change_behaviors.sort()
         
-        for (component,behavior,start,end,transition) in transitions:
-            new_transitions.append((component,behavior,start-min_time,end-min_time,transition))
-        
-        for (component,start,end,behavior) in change_behaviors:
-            new_change_behaviors.append((component,start-min_time,end-min_time,behavior))
-        
-        new_transitions.sort()
-        new_change_behaviors.sort()
-        
-        return (new_transitions, new_change_behaviors)
+        return (transitions, change_behaviors)
     
     @staticmethod
-    def json_to_gnuplot(json_file_name, gnuplot_file_name, title='', min_time=0., max_time=float('inf')):
+    def json_to_gnuplot(json_file_name, gnuplot_file_name, title='', min_time=0., max_time=float('inf'), components_to_remove=[]):
         from json import load
         with open(json_file_name) as f:
             formatted = load(f)
-        transitions, change_behaviors = GanttChart.formatted_to_ordered_tuples(formatted)
+        transitions, change_behaviors = GanttChart.formatted_to_ordered_tuples(formatted, min_time=min_time, max_time=max_time, components_to_remove=components_to_remove)
         GanttChart.export_gnuplot_from_tuples(transitions, change_behaviors, gnuplot_file_name, title)
         

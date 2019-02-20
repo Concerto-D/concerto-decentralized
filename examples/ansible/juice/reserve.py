@@ -120,7 +120,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     master_machine = database_machines[0]
     workers_marchines = database_machines[1:len(database_machines)]
     registry_machine = get_host_dict(env['roles']['registry'][0].address)
-    madpp_machine = get_host_dict(env['roles']['madpp'][0].address)
+    concerto_machine = get_host_dict(env['roles']['concerto'][0].address)
     ceph_use = env['config']['registry']['ceph']
     ceph_mon_host = env['config']['registry']['ceph_mon_host']
     ceph_keyring_path = env['config']['registry']['ceph_keyring']
@@ -128,7 +128,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ceph_rbd = env['config']['registry']['ceph_rbd']
     print("Databases: %s"%str(database_machines))
     print("Registry: %s"%str(registry_machine))
-    print("Madpp: %s"%str(madpp_machine))
+    print("Concerto: %s"%str(concerto_machine))
     print("Ceph: %s"%str(ceph_mon_host))
             #'ceph_id': 'discovery',
             #'ceph': True,
@@ -136,12 +136,12 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
             #'ceph_mon_host': ['ceph0.rennes.grid5000.fr', 'ceph1.rennes.grid5000.fr', 'ceph2.rennes.grid5000.fr'],
             #'ceph_keyring': '/home/discovery/.ceph/ceph.client.discovery.keyring',
             #'ceph_rbd': 'discovery_kolla_registry/datas'
-    madpp_config = {
+    concerto_config = {
         "database_hosts": database_machines,
         "master_host" : master_machine,
         "workers_hosts": workers_marchines,
         "registry_host": registry_machine,
-        "madpp_host": madpp_machine,
+        "concerto_host": concerto_machine,
         "ceph": {
             "use": ceph_use,
             "mon_host": ceph_mon_host,
@@ -151,12 +151,12 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
         },
         "nb_db_entries": nb_db_entries
     }
-    madpp_config_file = open(working_directory+"/madpp_config.json", "w")
-    dump(madpp_config, madpp_config_file)
-    madpp_config_file.close()
-    remote_host = Host(madpp_machine["address"], user="root")
-    run_cmd = "mkdir -p madppnode;"+\
-              "cd madppnode;"+\
+    concerto_config_file = open(working_directory+"/concerto_config.json", "w")
+    dump(concerto_config, concerto_config_file)
+    concerto_config_file.close()
+    remote_host = Host(concerto_machine["address"], user="root")
+    run_cmd = "mkdir -p concertonode;"+\
+              "cd concertonode;"+\
               "rm -r madpp;"+\
               "git clone https://gitlab.inria.fr/mchardet/madpp.git"
     print("Executing commands: %s"%run_cmd)
@@ -166,15 +166,15 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ).run()
     put = Put(
         hosts=[remote_host],
-        local_files=[working_directory+"/madpp_config.json"],
-        remote_location= "madppnode/madpp/examples/ansible/juice"
+        local_files=[working_directory+"/concerto_config.json"],
+        remote_location= "concertonode/madpp/examples/ansible/juice"
     ).run()
     put = Put(
         hosts=[remote_host],
         local_files=["~/.ssh/id_rsa","~/.ssh/id_rsa.pub"],
         remote_location= "~/.ssh"
     ).run()
-    run_cmd = "cd madppnode/madpp;"+\
+    run_cmd = "cd concertonode/madpp;"+\
               "source source_dir.sh;"+\
               "cd examples/ansible/juice/;"+\
               "python3 galera_assembly.py >stdout 2>stderr"
@@ -185,7 +185,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     ).run()
     Get(
         hosts=[remote_host],
-        remote_files=['madppnode/madpp/examples/ansible/juice/stdout', 'madppnode/madpp/examples/ansible/juice/stderr', 'madppnode/madpp/examples/ansible/juice/results.gpl', 'madppnode/madpp/examples/ansible/juice/results.json', 'madppnode/madpp/examples/ansible/juice/times.json', 'madppnode/madpp/examples/ansible/juice/data.sql'],
+        remote_files=['concertonode/madpp/examples/ansible/juice/stdout', 'concertonode/madpp/examples/ansible/juice/stderr', 'concertonode/madpp/examples/ansible/juice/results.gpl', 'concertonode/madpp/examples/ansible/juice/results.json', 'concertonode/madpp/examples/ansible/juice/times.json', 'concertonode/madpp/examples/ansible/juice/data.sql'],
         local_location=working_directory
     ).run()
     if destroy:

@@ -2,11 +2,11 @@
 
 import time, datetime
 
-from madpp.all import *
-from madpp.utility import Printer
-from madpp.components.data_provider import DataProvider
-from madpp.components.jinja2 import Jinja2, Jinja2Static
-from madpp.gantt_chart import GanttChart
+from concerto.all import *
+from concerto.utility import Printer
+from concerto.components.data_provider import DataProvider
+from concerto.components.jinja2 import Jinja2, Jinja2Static
+from concerto.gantt_chart import GanttChart
 
 from components.apt_utils import AptUtils
 from components.ceph import Ceph
@@ -346,7 +346,7 @@ class GaleraAssembly(Assembly):
 def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, nb_db_entries, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
     from subprocess import run, CompletedProcess
     from json import dump
-    from madpp.plugins.ansible import call_ansible_on_host
+    from concerto.plugins.ansible import call_ansible_on_host
     
     if printing: Printer.st_tprint("Main: creating the assembly")
     deploy_start_time : float = time.perf_counter()
@@ -409,7 +409,7 @@ def load_config(conf_file_location):
 
 
 if __name__ == '__main__':
-    config = load_config("madpp_config.json")
+    config = load_config("concerto_config.json")
     master_host = config['master_host']
     workers_hosts = config['workers_hosts']
     registry_host = config['registry_host']

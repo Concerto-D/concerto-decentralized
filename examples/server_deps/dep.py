@@ -1,6 +1,6 @@
 import time
 
-from madpp.all import *
+from concerto.all import *
 from examples.utils import *
 
 class Dep(Component):

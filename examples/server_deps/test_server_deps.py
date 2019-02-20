@@ -3,8 +3,8 @@
 import time, datetime
 from typing import Dict, Tuple, List, Set
 
-from madpp.all import *
-from madpp.gantt_chart import GanttChart
+from concerto.all import *
+from concerto.gantt_chart import GanttChart
 
 from server import Server
 from dep import Dep
