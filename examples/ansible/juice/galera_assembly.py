@@ -289,24 +289,24 @@ class GaleraAssembly(Assembly):
         #time.sleep(120)
         #Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
         self.wait_all()
-        self.synchronize(debug=True)
+        self.synchronize()
         Printer.st_err_tprint("Deploy MadiaDB finished")
         
     def deploy_mariadb_cleanup(self):
         self._deploy_cleanup(False)
-        self.synchronize(debug=True)
+        self.synchronize()
         
     def deploy_galera(self):
         self._deploy(True)
         #time.sleep(120)
         #Printer.st_err_tprint("After 120 seconds:\n" + self.get_debug_info())
         self.wait_all()
-        self.synchronize(debug=True)
+        self.synchronize()
         Printer.st_err_tprint("Deploy Galera finished")
         
     def deploy_galera_cleanup(self):
         self._deploy_cleanup(True)
-        self.synchronize(debug=True)
+        self.synchronize()
         
     def mariadb_to_galera(self):
         def reconf_master(mariadb_config=''):
@@ -340,7 +340,7 @@ class GaleraAssembly(Assembly):
         cleanup_master()
         for i in range(len(self.workers_hosts)):
             cleanup_worker(i)
-        self.synchronize(debug=True)
+        self.synchronize()
         
 
 def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host, nb_db_entries, verbosity : int = 0, printing : bool = False, print_time : bool = False) -> float:
@@ -392,7 +392,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     total_time = total_deploy_time+total_reconf_time
     if printing: Printer.st_tprint("Total time in seconds: %f (deploy: %f, reconf: %f)"%(total_time, total_deploy_time, total_reconf_time))
     
-    gass.terminate(debug=True)
+    gass.terminate()
     gc : GanttChart = gass.get_gantt_chart()
     gc.export_gnuplot("results.gpl")
     gc.export_json("results.json")

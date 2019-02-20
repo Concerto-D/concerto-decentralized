@@ -194,7 +194,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
     
     
 
-SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-sweeper')
+SWEEPER_DIR = os.path.join(os.getenv('HOME'), 'juice-test-sweeper')
 def experiments():
     import copy, yaml, traceback
     from os import makedirs
@@ -208,9 +208,9 @@ def experiments():
     sweeper = ParamSweeper(
         SWEEPER_DIR,
         sweeps=sweep({
-            'nb_db_nodes': [3, 5, 10], #, 5, 10],
-            'nb_db_entries': [1,1000, 50000, 1000000], #, 0, 10000, 100000],
-            'attempt': [1,2,3,4,5, 6, 7, 8, 9, 10]
+            'nb_db_nodes': [3], #, 5, 10],
+            'nb_db_entries': [1000], #, 0, 10000, 100000],
+            'attempt': [1,2,3]
         }))
     
     logging.info("Using Execo sweeper in directory: %s"%SWEEPER_DIR)
@@ -237,7 +237,7 @@ def experiments():
             makedirs(wd, exist_ok=True)
             with open(wd+'/g5k_config.yaml', 'w') as g5k_config_file:
                 yaml.dump(conf, g5k_config_file)
-            run_experiment(nb_db_entries, conf, wd, destroy=True)
+            run_experiment(nb_db_entries, conf, wd, destroy=False)
 
             # Everything works well, mark combination as done
             sweeper.done(combination)
