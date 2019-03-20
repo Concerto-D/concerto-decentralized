@@ -34,41 +34,35 @@ class Client(Component):
         
         self.initial_place = 'off'
 
-    def __init__(self, t_ci1=1., t_ci2=1., t_cc=1., t_cr=1., t_cs1=2., t_cs2=0.):
+    def __init__(self):
         self.server_ip = None
-        self.t_ci1 = t_ci1
-        self.t_ci2 = t_ci2
-        self.t_cc = t_cc
-        self.t_cr = t_cr
-        self.t_cs1 = t_cs1
-        self.t_cs2 = t_cs2
         Component.__init__(self)
 
     def install1(self):
         self.print_color("installing (1/2)")
-        time.sleep(self.t_ci1)
+        time.sleep(2.)
         self.print_color("installed (1/2)")
 
     def install2(self):
         self.print_color("installing (2/2)")
-        time.sleep(self.t_ci2)
+        time.sleep(3.)
         self.print_color("installed (2/2)")
 
     def configure(self):
         self.server_ip = self.read('server_ip')
         self.print_color("configuring [server IP: %s]" % self.server_ip)
-        time.sleep(self.t_cc)
+        time.sleep(1.)
         self.print_color("configured")
 
     def start(self):
         self.print_color("starting")
-        time.sleep(self.t_cr)
+        time.sleep(1.)
         self.print_color("running")
 
     def suspend1(self):
         self.print_color("suspending")
-        time.sleep(self.t_cs1)
+        time.sleep(0.)
 
     def suspend2(self):
+        time.sleep(1.)
         self.print_color("suspended")
-        time.sleep(self.t_cs2)

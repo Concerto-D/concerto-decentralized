@@ -141,10 +141,9 @@ from client import Client
 from server import Server
 
 class ServerClient(Assembly):
-    def __init__(self, ...):
-        ...
-        self.server = Server(...)
-        self.client = Client(...)
+    def __init__(self):
+        self.server = Server()
+        self.client = Client()
         Assembly.__init__(self)
     
     def deploy(self):
@@ -157,7 +156,7 @@ class ServerClient(Assembly):
                     'server', 'service')
         self.push_b('client', 'install_start')
         self.push_b('server', 'deploy')
-        self.wait('client') # In this case, equivalent to self.wait_all()
+        self.wait_all()
         self.synchronize()
 ```
 
