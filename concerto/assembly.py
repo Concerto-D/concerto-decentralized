@@ -78,7 +78,7 @@ class Assembly (object):
         for c in self.components:
             self.components[c].set_print_time(value)
     
-    def set_dryrun(self, value : int):
+    def set_dryrun(self, value : bool):
         self.dryrun = value
         for c in self.components:
             self.components[c].set_dryrun(value)
