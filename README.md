@@ -4,6 +4,20 @@ This is a preliminary implementation in Python 3 of the Concerto reconfiguration
 Authors: Maverick Chardet, Hélène Coullon, Christian Perez {first}.{last}@inria.fr
 Licence: GNU GPL v3
 
+## Setup
+
+### Option 1: installing Concerto (permanent)
+
+TODO: packaging
+
+
+### Option 2: adding Concerto to PYTHONPATH (temporary)
+
+If using bash, go to the Concerto root directory using `cd`, and then run `source source_dir.sh`, which will append the
+current directory to your `PYTHONPATH` during this session only. You can then run any Concerto script inside this
+terminal.
+
+
 ## Getting started
 
 TODO: this introduction needs to be reworked to explain everything in more detail.
