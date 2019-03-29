@@ -9,7 +9,7 @@
 import sys, time
 from queue import Queue
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Tuple, List, Set
+from typing import Dict, Tuple, List, Set, Callable
 
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
@@ -122,6 +122,7 @@ class Component (object, metaclass=ABCMeta):
         self.hidden_from_gantt_chart = False
         
         self.places : List[str] = []
+        self.switches : List[Tuple[str,Callable[[Place,str],List[int]]]] = []
         self.transitions : Dict[str,Tuple] = {}
         self.groups : Dict[str,List[str]] = {}
         self.dependencies : Dict[str,Tuple] = {}
@@ -210,6 +211,35 @@ class Component (object, metaclass=ABCMeta):
         elif name in self.st_groups:
             raise Exception("Trying to add '%s' as a place while it is already a group"%name)
         self.st_places[name] = Place(name)
+        self.place_dependencies[name] = []
+        self.place_groups[name] = []
+        
+        if initial:
+            self.set_initial_place(initial)
+
+
+    def add_switches(self, switches : List[Tuple[str,Callable[[Place,str],List[int]]]], initial=None):
+        for key in switches:
+            self.add_switch(key)
+        if initial is not None:
+            self.set_initial_place(initial)
+
+    def add_switch(self, tuple : Tuple[str,Callable[[Place,str],List[int]]], initial=False):
+        """
+        This method offers the possibility to add a single place to an
+        already existing dictionary of places.
+
+        :param name: the name of the place to add
+        :param initial: whether the place is the initial place of the component (default: False)
+        """
+        (name, override_f) = tuple
+        if name in self.st_places:
+            raise Exception("Trying to add '%s' as a place while it is already a place"%name)
+        elif name in self.st_transitions:
+            raise Exception("Trying to add '%s' as a place while it is already a transition"%name)
+        elif name in self.st_groups:
+            raise Exception("Trying to add '%s' as a place while it is already a group"%name)
+        self.st_places[name] = Place(name, override_f, cp=self) # TODO: Remove cp
         self.place_dependencies[name] = []
         self.place_groups[name] = []
         

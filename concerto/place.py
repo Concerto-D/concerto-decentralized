@@ -50,11 +50,13 @@ class Place (object):
         A place represents an evolution state in the deployment of a component.
     """
 
-    def __init__(self,name):
+    def __init__(self,name,override_get_output_docks=None,cp=None):  # TODO remove cp
         self.name = name
+        self.override_get_output_docks = override_get_output_docks
         self.input_docks = {}  # dictionary behavior -> docks[]
         self.output_docks = {} # dictionary behavior -> docks[]
         self.provides = []
+        self.cp=cp # TODO remove cp
 
     def create_input_dock(self, transition : Transition):
         """
@@ -120,4 +122,7 @@ class Place (object):
         if behavior not in self.output_docks:
             return []
         else:
-            return self.output_docks[behavior]
+            if self.override_get_output_docks is not None:
+                return [self.output_docks[behavior][i] for i in self.override_get_output_docks(self.cp, behavior)]
+            else:
+                return self.output_docks[behavior]
