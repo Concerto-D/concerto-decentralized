@@ -324,9 +324,9 @@ class Component (object, metaclass=ABCMeta):
         if bhv is "_init":
             raise Exception("Cannot name a behavior '_init' (used internally)")
         if src_name not in self.st_places:
-            raise Exception("Trying to add transition '%s' starting from unexisting place '%s'"%(name, src))
+            raise Exception("Trying to add transition '%s' starting from unexisting place '%s'"%(name, src_name))
         if dst_name not in self.st_places:
-            raise Exception("Trying to add transition '%s' going to unexisting place '%s'"%(name, dst))
+            raise Exception("Trying to add transition '%s' going to unexisting place '%s'"%(name, dst_name))
         
         self._force_add_transition(name,src_name,dst_name,bhv,idset,func,args)
     
