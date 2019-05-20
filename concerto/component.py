@@ -130,6 +130,7 @@ class Component (object, metaclass=ABCMeta):
         
         self.st_places : Dict[str, Place] = {}
         self.st_transitions : Dict[str,Transition] = {}
+        self.st_switches : Set[str] = set()
         self.st_dependencies : Dict[str, Dependency] = {}
         self.st_groups : Dict[str, Group] = {}
         self.st_behaviors : Set[str] = set()
@@ -151,6 +152,7 @@ class Component (object, metaclass=ABCMeta):
         
         self.create()
         self.add_places(self.places)
+        self.add_switches(self.switches)
         self.add_groups(self.groups)
         self.add_transitions(self.transitions)
         self.add_dependencies(self.dependencies)
@@ -242,6 +244,7 @@ class Component (object, metaclass=ABCMeta):
         self.st_places[name] = Place(name, override_f, cp=self) # TODO: Remove cp
         self.place_dependencies[name] = []
         self.place_groups[name] = []
+        self.st_switches.add(name)
         
         if initial:
             self.set_initial_place(initial)
@@ -365,13 +368,21 @@ class Component (object, metaclass=ABCMeta):
         :param binding: the name of the binding of the dependency (place or transition)
         """
         if type == DepType.DATA_USE:
+            transitions = []
+            switches = []
             for bind in bindings:
-                if bind not in self.st_transitions:
-                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a transition"%(name,str(type)))
+                if bind in self.st_transitions:
+                    transitions.append(bind)
+                elif bind in self.st_switches:
+                    switches.append(bind)
+                else:
+                    raise Exception("Trying to bind dependency %s (of type %s) to something else than a transition or a switch"%(name,str(type)))
             
             self.st_dependencies[name] = Dependency(self, name, type)
-            for transition_name in bindings:
+            for transition_name in transitions:
                 self.trans_dependencies[transition_name].append(self.st_dependencies[name])
+            for switch_name in switches:
+                self.place_dependencies[switch_name].append(self.st_dependencies[name])
                 
                 
         elif type == DepType.USE:
