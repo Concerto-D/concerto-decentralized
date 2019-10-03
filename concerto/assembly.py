@@ -141,6 +141,12 @@ class Assembly (object):
         self.synchronize()
         self.alive = False
         self.semantics_thread.join()
+
+    def kill(self):
+        """Warning: use only as last resort, anything run by the assembly will be killed, not exiting properly code
+        run by the transitions """
+        self.alive = False
+        self.semantics_thread.join()
     
     def print(self, string : str):
         if self.verbosity < 0:
@@ -319,6 +325,19 @@ class Assembly (object):
             Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n"%(
         self.instructions_queue.unfinished_tasks, str(self.current_instruction), "\n".join(["- %s"%str(ins) for ins in self.instructions_queue.queue])))
         self.instructions_queue.join()
+
+
+    def synchronize_timeout(self, time):
+        from concerto.utility import timeout
+        finished = False
+        with timeout(time):
+            self.synchronize()
+            finished = True
+
+        if finished:
+            return True, None
+        else:
+            return False, self.get_debug_info()
     
     
     def is_component_idle(self, component_name : str) -> bool:

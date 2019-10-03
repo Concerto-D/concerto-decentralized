@@ -71,7 +71,6 @@ class WeightedGraph:
             i += 1
         
         treated_vertices = set()
-        treated_arcs = set()
         
         gstr = "digraph G {\n"
         gstr += "\trankdir=BT;\n"
@@ -125,6 +124,20 @@ class WeightedGraph:
         for v in self._graph:
             self._graph[v] = list(filter(lambda t: t[0] not in not_reached, self._graph[v]))
         return not_reached
+
+    def detect_cycle(self, source_vertex):
+        def _dfs(vertex, visited):
+            if vertex in visited:
+                i = visited.index(vertex)
+                cycle = visited[i:] + [vertex]
+                return cycle
+
+            for (child, _, _) in self._graph[vertex]:
+                r = _dfs(child, visited+[vertex])
+                if r:
+                    return r
+            return None
+        return _dfs(source_vertex, [])
 
     def get_longest_path_length(self, source_vertex, destination_vertex, transitions_lengths):
         def _topological_order():
