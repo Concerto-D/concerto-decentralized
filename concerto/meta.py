@@ -125,8 +125,7 @@ class WeightedGraph:
         for v in self._graph:
             self._graph[v] = list(filter(lambda t: t[0] not in not_reached, self._graph[v]))
         return not_reached
-            
-    
+
     def get_longest_path_length(self, source_vertex, destination_vertex, transitions_lengths):
         def _topological_order():
             unmarked = set(self._graph.keys())
@@ -176,37 +175,48 @@ class WeightedGraph:
         def simplify(self):
             new_sum_lists = []
             for sum_list in self._sum_lists:
-                print("Original: ", sum_list)
-                f_sum_list = filter(
+                for elem in sum_list:
+                    if isinstance(elem, WeightedGraph.MaxFormula) and elem.is_singleton():
+                        sum_list += elem._sum_lists[0]
+                        elem._sum_lists = []
+                f_sum_list = list(filter(
                     lambda x: (not x.is_null()) if isinstance(x,WeightedGraph.MaxFormula) else (not is_number(x) or x != 0),
                     sum_list
-                )
-                print("Filtered: ", list(f_sum_list))
+                ))
                 if f_sum_list:
-                    new_sum_lists.append(list(f_sum_list))
+                    new_sum_lists.append(f_sum_list)
             self._sum_lists = new_sum_lists
-            
-        
+
+        def is_singleton(self):
+            self.simplify()
+            return len(self._sum_lists) == 1
+
         def is_null(self):
             self.simplify()
-            return bool(self._sum_lists)
-    
-        def __str__(self):
+            return not bool(self._sum_lists)
+
+        def to_string(self, f_variable_str=lambda x: str(x)):
             def _str_sum_list(sl):
-                return '+'.join([str(e) for e in sl])
-            
+                def __str_elem(e):
+                    if is_number(e):
+                        return str(e)
+                    elif isinstance(e, WeightedGraph.MaxFormula):
+                        return e.to_string(f_variable_str)
+                    else:
+                        return f_variable_str(e)
+                return '+'.join([__str_elem(e) for e in sl])
+
             l = len(self._sum_lists)
             if l == 0:
-                return 0
+                return str(0)
             elif l == 1:
                 return _str_sum_list(self._sum_lists[0])
             else:
                 return "max(" + ",".join([_str_sum_list(sl) for sl in self._sum_lists]) + ")"
-        
-        def __repr__(self):
-            return self.__str__()
-        
-    
+
+        def __str__(self):
+            return self.to_string()
+
     def get_longest_path_formula(self, source_vertex, destination_vertex):
         reversed_graph = dict()
         for s, transitions in self._graph.items():
@@ -219,16 +229,13 @@ class WeightedGraph:
             if vertex == source_vertex:
                 return 0
             sum_lists = [[w, _build_formula_rec(s)] for (s,w) in reversed_graph[vertex]]
-            return WeightedGraph.MaxFormula(sum_lists)
+            return WeightedGraph.MaxFormula(*sum_lists)
         
         mf = _build_formula_rec(destination_vertex)
         if mf == 0:
             mf = WeightedGraph.MaxFormula([])
-        else:
-            mf.simplify()
         return mf
                 
-    
 
 def flatten(list_of_lists):
     from itertools import chain
@@ -249,12 +256,10 @@ class ComponentPerfAnalyzer:
         self.treated_elements = set()
         
         self.graph = WeightedGraph()
-            
-    
+
     def v(self, element, vertex_type):
         return (self.name, element, vertex_type)
-    
-    
+
     def group_entry(self, group_name):
         group_contents = self.groups_contents[group_name]
         entry_elements = set()
@@ -265,8 +270,7 @@ class ComponentPerfAnalyzer:
                 else:
                     entry_elements.add(destination)
         return entry_elements
-    
-    
+
     def group_exit(self, group_name):
         group_content = self.groups_contents[group_name]
         exit_elements = set()
@@ -277,8 +281,7 @@ class ComponentPerfAnalyzer:
                 else:
                     exit_elements.add(source)
         return exit_elements
-    
-    
+
     def get_port_vertices(self, elem_name, f_type_filter, f_port_vertex):
         bindings = self.bindings.get(elem_name, [])
         for (group_name, (group_entry, group_exit)) in self.groups.items():
@@ -292,40 +295,35 @@ class ComponentPerfAnalyzer:
                 self.graph.add_vertex(port_vertex, ignore_already_existing=True, shape="diamond")
                 port_vertices.append(port_vertex)
         return port_vertices
-    
-    
+
     def get_provide_port_stop_vertices(self, elem_name):
         return self.get_port_vertices(
             elem_name,
             f_type_filter = lambda t: t == DepType.PROVIDE,
             f_port_vertex = self.port_stop_vertex
         )
-    
-    
+
     def get_use_port_stop_vertices(self, elem_name):
         return self.get_port_vertices(
             elem_name,
             f_type_filter = lambda t: t == DepType.USE,
             f_port_vertex = self.port_stop_vertex
         )
-    
-    
+
     def get_provide_port_start_vertices(self, elem_name):
         return self.get_port_vertices(
             elem_name,
             f_type_filter = lambda t: t == DepType.PROVIDE or t == DepType.DATA_PROVIDE,
             f_port_vertex = self.port_start_vertex
         )
-    
-    
+
     def get_use_port_start_vertices(self, elem_name):
         return self.get_port_vertices(
             elem_name,
             f_type_filter = lambda t: t == DepType.USE or t == DepType.DATA_USE,
             f_port_vertex = self.port_start_vertex
         )
-    
-    
+
     def get_elem_identifier(self, elem_name):
         if elem_name in self.treated_during_behavior:
             return self.treated_during_behavior[elem_name]
@@ -337,8 +335,7 @@ class ComponentPerfAnalyzer:
         self.treated_during_behavior[elem_name] = eid
         self.treated_elements.add(eid)
         return eid
-        
-    
+
     def treat_place(self, place_name, entry=False):
         new = place_name not in self.treated_during_behavior
         pid = self.get_elem_identifier(place_name)
@@ -363,8 +360,7 @@ class ComponentPerfAnalyzer:
             self.graph.add_arcs([(leaving_vertex, upsv, 0) for upsv in use_port_stop_vertices])
         
         return place_vertex, leaving_vertex
-        
-    
+
     def treat_active_places(self, entry=False):
         active_place_vertices = dict()
         active_leaving_vertices = dict()
@@ -375,8 +371,7 @@ class ComponentPerfAnalyzer:
             
         self.active_place_vertices = active_place_vertices
         self.active_leaving_vertices = active_leaving_vertices
-    
-    
+
     def treat_transition(self, transition_name):
         tid = self.get_elem_identifier(transition_name)
         beginning_vertex = self.transition_beginning_vertex(tid)
@@ -402,8 +397,7 @@ class ComponentPerfAnalyzer:
         
         use_port_stop_vertices = self.get_use_port_stop_vertices(transition_name)
         self.graph.add_arcs([(end_vertex, upsv, 0) for upsv in use_port_stop_vertices])
-    
-    
+
     def initialize(self, initial_places=[]):
         self.active_places = set(initial_places)
         self.treated_during_behavior = dict()
@@ -411,8 +405,7 @@ class ComponentPerfAnalyzer:
             self.active_places = set(self.component.get_initial_places())
         self.treat_active_places()
         return self.active_place_vertices.values()
-    
-    
+
     def get_next(self, behavior):
         next_places = set(self.active_places)
         places_left = set()
@@ -428,9 +421,7 @@ class ComponentPerfAnalyzer:
         next_places -= places_left
         next_places |= places_arrived
         return next_places, next_transitions
-        
-        
-    
+
     def push_b(self, behavior):
         self.treated_during_behavior = dict()
         initial_active_place_vertices = self.active_place_vertices
@@ -447,8 +438,7 @@ class ComponentPerfAnalyzer:
     
     def wait(self):
         return self.active_place_vertices.values()
-    
-    
+
     def place_place_vertex(self, place_name):
         return self.v(place_name, "place")
     
@@ -475,55 +465,10 @@ class ComponentPerfAnalyzer:
     
     def get_graph(self):
         return self.graph
-    
-    
-    
-    #def __init__(self, component, name):
-        #self.component = component
-        #self.name = name
-        
-        #self.places = set(self.component.get_places())
-        #self.transitions = self.component.get_transitions()
-        #self.transitions_names = set([name for (_,name,_) in self.transitions])
-        #self.use_ports = set(self.component.get_use_ports())
-        #self.provide_ports = set(self.component.get_provide_ports())
-        #self.ports = self.use_ports | self.provide_ports
-        #self.groups_contents = self.component.get_groups()
-        #self.groups = dict([(group_name, {"entry": self.group_entry(group_name), "exit": self.group_exit(group_name)}) for group_name in self.groups_contents])
-        #self.bindings = self.component.get_bindings()
-        
-        
-        #self.places_vertices = set(flatten([[self.place_place_vertex(p),self.place_leaving_vertex(p)] for p in self.places]))
-        #self.transitions_vertices = set(flatten([[self.transition_beginning_vertex(t),self.transition_end_vertex(t)] for t in self.transitions_names]))
-        #self.ports_vertices = set(flatten([[self.port_start_vertex(p), self.port_stop_vertex(p)] for p in self.ports]))
-        #self.all_vertices = self.places_vertices | self.transitions_vertices | self.ports_vertices | {self.source_vertex(), self.sink_vertex()}
-        
-        #self.graph = WeightedGraph(self.all_vertices, self.name)
-        
-        #for p in self.places:
-            #self.graph.add_arc(self.place_place_vertex(p), self.place_leaving_vertex(p), 0)
-        
-        #for (port, elem) in self.bindings:
-            #if port in self.use_ports:
-                #if elem in self.transitions_names:
-                    #self.graph.add_arc(self.port_start_vertex(port), self.transition_beginning_vertex(elem), 0)
-                    #self.graph.add_arc(self.transition_end_vertex(elem), self.port_stop_vertex(port), 0)
-                #else:
-                    #raise Exception("Use port bound to something else than a transition, not yet implemented!")
-            #elif port in self.provide_ports:
-                #if elem in self.places:
-                    #self.graph.add_arc(self.place_place_vertex(elem), self.port_start_vertex(port), 0)
-                    #self.graph.add_arc(self.port_stop_vertex(port), self.place_leaving_vertex(elem),0)
-                #elif elem in self.groups:
-                    #self.graph.add_arcs([(self.place_place_vertex(p), self.port_start_vertex(port), 0) for p in self.groups[elem]["entry"]] + [(self.port_stop_vertex(port), self.place_leaving_vertex(p), 0) for p in self.groups[elem]["exit"]])
-            #else:
-                #raise Exception("Error: port is neither use nor provide")
-    
-    
-            
 
-class ReconfigurationPerfAnalyzer():
-    def __init__(self, reconfiguration : Reconfiguration, existing_components = []):
+
+class ReconfigurationPerfAnalyzer:
+    def __init__(self, reconfiguration: Reconfiguration, existing_components=()):
         self.reconfiguration = reconfiguration
         self.source_vertex = "source"
         self._graph = WeightedGraph([self.source_vertex])
@@ -614,23 +559,19 @@ class ReconfigurationPerfAnalyzer():
                     self._graph.add_vertices(idle_vertices, ignore_already_existing=True)
                     for v in idle_vertices:
                         self._graph.add_arc(v, wait_s, 0)
-    
-    
+
     def _generate_total_graph(self):
         for component_analyzer in self._component_analyzers.values():
             self._graph += component_analyzer.get_graph()
         removed = self._graph.remove_unreachable_from(self.source_vertex)
         if removed:
             print("Warning: unreachable vertices were removed from the graph: %s" % removed)
-            
-    
+
     def get_graph(self):
         return self._graph
-    
-    
+
     def get_exec_time_formula(self):
         return self._graph.get_longest_path_formula(self.source_vertex, self._latest_synchro)
     
     def get_exec_time(self, transitions_durations):
         return self._graph.get_longest_path_length(self.source_vertex, self._latest_synchro, transitions_durations)
-        
