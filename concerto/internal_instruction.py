@@ -14,11 +14,32 @@ class InternalInstruction:
         WAIT_ALL = 6
         
     def __str__(self):
-        return "{type: %s, arguments: %s}"%(self.type, str(self.args))
+        if self.type is InternalInstruction.Type.ADD:
+            return "add(%s,%s)"%(self.args['name'], type(self.args['comp']).__name__)
+        elif self.type is InternalInstruction.Type.DEL:
+            return "del(%s)"%(self.args['component_name'])
+        elif self.type is InternalInstruction.Type.CONNECT:
+            return "con(%s.%s,%s.%s)"%(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+        elif self.type is InternalInstruction.Type.DISCONNECT:
+            return "dcon(%s.%s,%s.%s)"%(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+        elif self.type is InternalInstruction.Type.PUSH_B:
+            return "pushB(%s,%s)"%(self.args['component_name'], self.args['behavior'])
+        elif self.type is InternalInstruction.Type.WAIT:
+            return "wait(%s)"%(self.args['component_name'])
+        elif self.type is InternalInstruction.Type.WAIT_ALL:
+            return "waitAll()"
+        else:
+            return "{type: %s, arguments: %s}"%(self.type, str(self.args))
         
     def __init__(self, type, args):
         self.type = type
         self.args = args
+    
+    def get_type(self):
+        return self.type
+    
+    def get_args(self):
+        return self.args
     
     @staticmethod
     def build_add(name : str, comp : Component):

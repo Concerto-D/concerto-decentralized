@@ -70,7 +70,7 @@ class ValueProvider(Component):
     def provide(self):
         import time
         time.sleep(5)
-        self.write('value', 6)
+        self.write('value', 3)
 
 
 

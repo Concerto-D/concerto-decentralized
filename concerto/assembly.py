@@ -33,10 +33,10 @@ class Assembly (object):
 
     def __init__(self):
         # dict of Component objects: id => object
-        self.components : Dict[str, Component] = {}
+        self._components : Dict[str, Component] = {}
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
-        self.connections : Dict[Tuple[Dependency,Dependency],Connection] = {}
+        self._connections : Dict[Tuple[Dependency,Dependency],Connection] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
@@ -66,36 +66,48 @@ class Assembly (object):
         self.dryrun : bool = False
         self.gantt : GanttChart = None
         self.name : str = None
+        
+        self.dump_program : bool = False
+        self.program_str : str = ""
     
     
     def set_verbosity(self, level : int):
         self.verbosity = level
-        for c in self.components:
-            self.components[c].set_verbosity(level)
+        for c in self._components:
+            self._components[c].set_verbosity(level)
         
     def set_print_time(self, value : bool):
         self.print_time = value
-        for c in self.components:
-            self.components[c].set_print_time(value)
+        for c in self._components:
+            self._components[c].set_print_time(value)
     
     def set_dryrun(self, value : bool):
         self.dryrun = value
-        for c in self.components:
-            self.components[c].set_dryrun(value)
+        for c in self._components:
+            self._components[c].set_dryrun(value)
             
     def set_use_gantt_chart(self, value : bool):
         if value:
             if self.gantt is None:
                 self.gantt = GanttChart()
-                for c in self.components:
-                    self.components[c].set_gantt_chart(self.gantt)
+                for c in self._components:
+                    self._components[c].set_gantt_chart(self.gantt)
         else:
             self.gantt = None
-            for c in self.components:
-                self.components[c].set_gantt_chart(None)
+            for c in self._components:
+                self._components[c].set_gantt_chart(None)
         
     def get_gantt_chart(self):
         return self.gantt
+    
+    def set_dump_program(self, value : bool):
+        self.dump_program = value
+    
+    def get_program_deump(self):
+        return self.program_str
+    
+    def clear_program_dump(self):
+        self.program_str = ""
             
     def set_name(self, name : str):
         self.name = name
@@ -105,12 +117,12 @@ class Assembly (object):
     
     def get_debug_info(self) -> str:
         debug_info = "Inactive components:\n"
-        for component_name in self.components:
+        for component_name in self._components:
             if component_name not in self.act_components:
-                debug_info += "- %s: %s\n"%(component_name, ','.join(self.components[component_name].get_active_places()))
+                debug_info += "- %s: %s\n"%(component_name, ','.join(self._components[component_name].get_active_places()))
         debug_info += "Active components:\n"
         for component_name in self.act_components:
-            debug_info += self.components[component_name].get_debug_info()
+            debug_info += self._components[component_name].get_debug_info()
         return debug_info
     
     def terminate(self, debug=False):
@@ -144,6 +156,9 @@ class Assembly (object):
     
     
     def add_instruction(self, instruction : InternalInstruction):
+        if self.dump_program:
+            self.program_str += (str(instruction) + "\n")
+        
         self.instructions_queue.put(instruction)
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
@@ -158,15 +173,15 @@ class Assembly (object):
 
         :param comp: the component instance to add
         """
-        if name in self.components:
+        if name in self._components:
             raise Exception("Trying to add '%s' as a component while it is already a component"%name)
         comp.set_name(name)
-        comp.set_color(COLORS[len(self.components)%len(COLORS)])
+        comp.set_color(COLORS[len(self._components)%len(COLORS)])
         comp.set_verbosity(self.verbosity)
         comp.set_print_time(self.print_time)
         comp.set_dryrun(self.dryrun)
         comp.set_gantt_chart(self.gantt)
-        self.components[name]=comp
+        self._components[name]=comp
         self.component_connections[name] = set()
         self.act_components.add(name) # _init
         return True
@@ -181,7 +196,7 @@ class Assembly (object):
         if len(self.component_connections[component_name]) > 0:
             return False
         del self.component_connections[component_name]
-        del self.components[component_name]
+        del self._components[component_name]
         return True
 
 
@@ -215,10 +230,10 @@ class Assembly (object):
             provide_dep = new_connection.get_provide_dep()
             use_dep = new_connection.get_use_dep()
             
-            if (provide_dep, use_dep) in self.connections:
+            if (provide_dep, use_dep) in self._connections:
                 raise Exception("Trying to add already existing connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
             
-            self.connections[(provide_dep, use_dep)] = new_connection
+            self._connections[(provide_dep, use_dep)] = new_connection
             self.component_connections[comp1_name].add(new_connection)
             self.component_connections[comp2_name].add(new_connection)
 
@@ -255,15 +270,15 @@ class Assembly (object):
             provide_dep = dep2
             use_dep = dep1
             
-        if (provide_dep, use_dep) not in self.connections:
+        if (provide_dep, use_dep) not in self._connections:
             raise Exception("Trying to remove unexisting connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
         
-        connection : Connection = self.connections[(provide_dep, use_dep)]
+        connection : Connection = self._connections[(provide_dep, use_dep)]
         if connection.can_remove():
             connection.disconnect()
             self.component_connections[comp1_name].discard(connection)
             self.component_connections[comp2_name].discard(connection)
-            del self.connections[(provide_dep, use_dep)]
+            del self._connections[(provide_dep, use_dep)]
             return True
         else:
             return False
@@ -307,14 +322,14 @@ class Assembly (object):
         
 
     def get_component(self, name : str) -> Component:
-        if name in self.components:
-            return self.components[name]
+        if name in self._components:
+            return self._components[name]
         else:
             raise(Exception("ERROR - Unknown component %s"%name))
 
 
     def get_components(self) -> List[Component]:
-        return list(self.components.values())
+        return list(self._components.values())
 
     """
     CHECK ASSEMBLY
@@ -386,7 +401,7 @@ class Assembly (object):
         idle_components : Set[str] = set()
         
         for c in self.act_components:
-            is_idle = self.components[c].semantics()
+            is_idle = self._components[c].semantics()
             if is_idle:
                 idle_components.add(c)
         

@@ -919,3 +919,34 @@ class Component (object, metaclass=ABCMeta):
         debug_string += ("  active odocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_odocks]))
         debug_string += ("  active idocks (transition): %s\n" % ','.join([d.get_transition().get_name() for d in self.act_idocks]))
         return debug_string
+    
+    
+    # META ANALYSIS
+    def get_transitions(self):
+        transitions = [(name, rest[0], rest[1], rest[2]) for (name,rest) in self.transitions.items()]
+        return transitions
+    
+    def get_ports(self):
+        ports = [(name, ptype) for (name, (ptype, _)) in self.dependencies.items()]
+        return ports
+    
+    def get_groups(self):
+        groups = dict([(name, set(contents)) for (name, contents) in self.groups.items()])
+        transitions = self.get_transitions()
+        for group_contents in groups.keys():
+            for (name, source, destination, _) in transitions:
+                if source in group_contents and destination in group_contents:
+                    group_contents.add(name)
+        return groups
+    
+    def get_bindings(self):
+        bindings = dict()
+        for (name, (_, elements)) in self.dependencies.items():
+            for e in elements:
+                if e not in bindings:
+                    bindings[e] = []
+                bindings[e].append(name)
+        return bindings
+    
+    def get_initial_places(self):
+        return [self.initial_place]
