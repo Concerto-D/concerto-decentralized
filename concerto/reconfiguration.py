@@ -32,5 +32,8 @@ class Reconfiguration:
         self._instructions.append(InternalInstruction.build_wait_all())
         return self
 
+    def call(self, other_reconfiguration):
+        self._instructions += other_reconfiguration._get_instructions()
+
     def _get_instructions(self):
         return self._instructions

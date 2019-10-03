@@ -217,6 +217,27 @@ class WeightedGraph:
         def __str__(self):
             return self.to_string()
 
+        def evaluate(self, values_dict = None):
+            if values_dict is None:
+                values_dict = dict()
+
+            def _eval_sum_list(sl):
+                def __eval_elem(e):
+                    if is_number(e):
+                        return e
+                    elif isinstance(e, WeightedGraph.MaxFormula):
+                        return e.evaluate(values_dict)
+                    else:
+                        if e not in values_dict:
+                            raise Exception("Error: no value provided for %s" % str(e))
+                        return values_dict[e]
+                return sum([__eval_elem(e) for e in sl])
+
+            if len(self._sum_lists) == 0:
+                return 0
+            else:
+                return max([_eval_sum_list(sl) for sl in self._sum_lists])
+
     def get_longest_path_formula(self, source_vertex, destination_vertex):
         reversed_graph = dict()
         for s, transitions in self._graph.items():

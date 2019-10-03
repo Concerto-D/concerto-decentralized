@@ -14,6 +14,7 @@ from concerto.dependency import DepType, Dependency
 from concerto.component import Component
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
+from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_chart import GanttChart
 from concerto.utility import Messages, COLORS, Printer
 
@@ -163,6 +164,9 @@ class Assembly (object):
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
 
+    def run_reconfiguration(self, reconfiguration : Reconfiguration):
+        for instr in reconfiguration._get_instructions():
+            self.add_instruction(instr)
 
     def add_component(self, name : str, comp : Component):
         self.add_instruction(InternalInstruction.build_add(name,comp))

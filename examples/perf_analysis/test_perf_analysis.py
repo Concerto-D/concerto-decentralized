@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from concerto.all import *
-from concerto.utility import Printer
+from concerto.meta import ReconfigurationPerfAnalyzer
 import time, datetime
 
 from examples.perf_analysis.client import Client
@@ -9,17 +9,17 @@ from examples.perf_analysis.server import Server
 
 
 class ServerClient(Assembly):
-    def __init__(self, t_sa=4., t_sr=4., t_su=1., t_sc=0.5, t_ci1=1., t_ci2=1., t_cc=1., t_cr=1., t_cs1=2., t_cs2=0.):
-        self.t_sa = t_sa
-        self.t_sr = t_sr
-        self.t_su = t_su
-        self.t_sc = t_sc
-        self.t_ci1 = t_ci1
-        self.t_ci2 = t_ci2
-        self.t_cc = t_cc
-        self.t_cr = t_cr
-        self.t_cs1 = t_cs1
-        self.t_cs2 = t_cs2
+    def __init__(self, times_dict):
+        self.t_sa = times_dict[('server', 'allocate')]
+        self.t_sr = times_dict[('server', 'run')]
+        self.t_su = times_dict[('server', 'update')]
+        self.t_sc = times_dict[('server', 'cleanup')]
+        self.t_ci1 = times_dict[('client', 'install1')]
+        self.t_ci2 = times_dict[('client', 'install2')]
+        self.t_cc = times_dict[('client', 'configure')]
+        self.t_cr = times_dict[('client', 'start')]
+        self.t_cs1 = times_dict[('client', 'suspend1')]
+        self.t_cs2 = times_dict[('client', 'suspend2')]
         
         dr = Reconfiguration()
         dr.add('client', Client, t_ci1=self.t_ci1, t_ci2=self.t_ci2, t_cc=self.t_cc, t_cr=self.t_cr, t_cs1=self.t_cs1, t_cs2=self.t_cs2)
@@ -38,21 +38,36 @@ class ServerClient(Assembly):
     
     def deploy(self):
         self.print("### DEPLOYING ####")
-        self.add_component('client', self.client)
-        self.add_component('server', self.server)
-        self.connect('client', 'server_ip',
-                    'server', 'ip')
-        self.connect('client', 'service',
-                    'server', 'service')
-        self.push_b('client', 'install_start')
-        self.push_b('server', 'deploy')
-        self.wait('client')
+        self.run_reconfiguration(self.deploy_reconf)
         self.synchronize()
 
 
-from concerto.meta import ReconfigurationPerfAnalyzer
-sc = ServerClient()
+times = {
+    ('server', 'allocate'): 4,
+    ('server', 'run'): 4,
+    ('server', 'update'): 1,
+    ('server', 'cleanup'): 0.5,
+    ('client', 'install1'): 1,
+    ('client', 'install2'): 1,
+    ('client', 'configure'): 1,
+    ('client', 'start'): 1,
+    ('client', 'suspend1'): 1,
+    ('client', 'suspend2'): 1,
+}
+
+sc = ServerClient(times)
 pa = ReconfigurationPerfAnalyzer(sc.deploy_reconf)
 g = pa.get_graph()
 g.save_as_dot("server_client.dot")
-print(pa.get_exec_time_formula().to_string(lambda x: '.'.join(x)))
+formula = pa.get_exec_time_formula()
+print(formula.to_string(lambda x: '.'.join(x)))
+print("Time predicted by graph traversal:\n%f" % pa.get_exec_time(times))
+print("Time predicted by formula evaluation:\n%f" % formula.evaluate(times))
+
+print("Running reconf...")
+start_time: float = time.perf_counter()
+sc.deploy()
+end_time: float = time.perf_counter()
+sc.terminate()
+print("Time actually measured:\n%f" % (end_time-start_time))
+
