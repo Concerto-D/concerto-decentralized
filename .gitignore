@@ -1,0 +1,13 @@
+**/__pycache__/
+.idea/
+venv/
+**.kdev4
+**/*~
+**.dot
+**.pdf
+**.gpl
+**.dia
+**.json
+**.autosave
+**#
+**.kate-swp
