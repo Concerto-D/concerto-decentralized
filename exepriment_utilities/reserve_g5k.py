@@ -87,7 +87,3 @@ class G5kReservation:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._alive:
             self.terminate()
-
-    def __del__(self):
-        if self._alive:
-            self.terminate()
