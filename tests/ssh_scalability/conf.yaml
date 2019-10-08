@@ -2,6 +2,7 @@ g5k:
   # reservation: "2018-03-12 19:00:01"
   oargrid_jobid: 65542 # overriding the rest
   walltime: "02:00:00"
+  force_deploy: false
   dhcp: true
   job_name: concerto_ssh_scalability
   env_name: debian9-x64-nfs-madpp
