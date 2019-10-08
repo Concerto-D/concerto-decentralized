@@ -8,7 +8,8 @@ class G5kReservation:
     @staticmethod
     def _g5k_deploy(g5k_config, force_deploy=False, **kwargs):
         from enoslib.infra.enos_g5k.provider import G5k
-        provider = G5k(g5k_config)
+        from enoslib.infra.enos_g5k.configuration import Configuration
+        provider = G5k(Configuration.from_dictionnary(g5k_config))
         roles, networks = provider.init(force_deploy=force_deploy)
         env = {'roles': roles, 'networks': networks}
         logging.info('Wait 30 seconds for iface to be ready...')
