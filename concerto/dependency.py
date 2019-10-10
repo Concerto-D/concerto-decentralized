@@ -152,4 +152,3 @@ class Dependency (object):
             if c.is_locked():
                 return True
         return False
-            

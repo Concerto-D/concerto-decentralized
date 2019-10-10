@@ -4,7 +4,7 @@ import time, datetime
 from typing import Dict, Tuple, List, Set
 
 from concerto.all import *
-from concerto.gantt_chart import GanttChart
+from concerto.gantt_record import GanttRecord
 
 from server import Server
 from dep import Dep
@@ -60,7 +60,7 @@ def time_test(verbosity : int = -1, printing : bool = True, print_time : bool = 
     sda = ServerDeps(t_sa, t_sc, t_sr, t_ss, t_sp, t_di, t_dr, t_du)
     sda.set_verbosity(verbosity)
     sda.set_print_time(print_time)
-    sda.set_use_gantt_chart(False)
+    sda.set_record_gantt(False)
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
     deploy_start_time : float = time.perf_counter()

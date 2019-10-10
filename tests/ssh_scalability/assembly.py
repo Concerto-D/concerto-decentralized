@@ -66,7 +66,7 @@ def run_experiments(remote_hosts, list_nb_remote_ssh, nb_repeats,
     assembly = SSHAssembly()
     assembly.set_verbosity(verbosity)
     assembly.set_print_time(print_time)
-    assembly.set_use_gantt_chart(True)
+    assembly.set_record_gantt(True)
     assembly.set_dryrun(dryrun)
 
     if printing:
@@ -103,7 +103,7 @@ def run_experiments(remote_hosts, list_nb_remote_ssh, nb_repeats,
         Printer.st_tprint("Terminating assembly")
     assembly.terminate()
 
-    gc = assembly.get_gantt_chart()
+    gc = assembly.get_gantt_record()
     gc.export_gnuplot("results.gpl")
     gc.export_json("results.json")
 

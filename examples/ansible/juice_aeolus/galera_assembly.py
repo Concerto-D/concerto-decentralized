@@ -6,7 +6,7 @@ from concerto.all import *
 from concerto.utility import Printer
 from concerto.components.data_provider import DataProvider
 from concerto.components.jinja2 import Jinja2, Jinja2Static
-from concerto.gantt_chart import GanttChart
+from concerto.gantt_record import GanttRecord
 
 from components.apt_utils import AptUtils
 from components.ceph import Ceph
@@ -353,7 +353,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     gass = GaleraAssembly(master_host, workers_hosts, registry_host, registry_ceph_mon_host)
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
-    gass.set_use_gantt_chart(True)
+    gass.set_record_gantt(True)
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
     gass.deploy_mariadb()
@@ -393,7 +393,7 @@ def time_test(master_host, workers_hosts, registry_host, registry_ceph_mon_host,
     if printing: Printer.st_tprint("Total time in seconds: %f (deploy: %f, reconf: %f)"%(total_time, total_deploy_time, total_reconf_time))
     
     gass.terminate()
-    gc : GanttChart = gass.get_gantt_chart()
+    gc : GanttRecord = gass.get_gantt_record()
     gc.export_gnuplot("results.gpl")
     gc.export_json("results.json")
     with open("times.json", "w") as results_file:

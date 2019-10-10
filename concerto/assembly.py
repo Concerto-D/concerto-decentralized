@@ -15,7 +15,7 @@ from concerto.component import Component
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
 from concerto.reconfiguration import Reconfiguration
-from concerto.gantt_chart import GanttChart
+from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer
 
 
@@ -65,7 +65,7 @@ class Assembly (object):
         self.verbosity : int = 0
         self.print_time : bool = False
         self.dryrun : bool = False
-        self.gantt : GanttChart = None
+        self.gantt : GanttRecord = None
         self.name : str = None
         
         self.dump_program : bool = False
@@ -87,18 +87,18 @@ class Assembly (object):
         for c in self._components:
             self._components[c].set_dryrun(value)
             
-    def set_use_gantt_chart(self, value : bool):
+    def set_record_gantt(self, value : bool):
         if value:
             if self.gantt is None:
-                self.gantt = GanttChart()
+                self.gantt = GanttRecord()
                 for c in self._components:
-                    self._components[c].set_gantt_chart(self.gantt)
+                    self._components[c].set_gantt_record(self.gantt)
         else:
             self.gantt = None
             for c in self._components:
-                self._components[c].set_gantt_chart(None)
+                self._components[c].set_gantt_record(None)
         
-    def get_gantt_chart(self):
+    def get_gantt_record(self) -> GanttRecord:
         return self.gantt
     
     def set_dump_program(self, value : bool):
@@ -170,7 +170,7 @@ class Assembly (object):
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
 
-    def run_reconfiguration(self, reconfiguration : Reconfiguration):
+    def run_reconfiguration(self, reconfiguration: Reconfiguration):
         for instr in reconfiguration._get_instructions():
             self.add_instruction(instr)
 
@@ -190,7 +190,7 @@ class Assembly (object):
         comp.set_verbosity(self.verbosity)
         comp.set_print_time(self.print_time)
         comp.set_dryrun(self.dryrun)
-        comp.set_gantt_chart(self.gantt)
+        comp.set_gantt_record(self.gantt)
         self._components[name]=comp
         self.component_connections[name] = set()
         self.act_components.add(name) # _init

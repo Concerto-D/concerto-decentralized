@@ -214,7 +214,7 @@ Example (modified extract from from `examples/server_clients/test_server_client.
 from server_client_assembly import ServerClient
 
 sca = ServerClient()
-sca.set_use_gantt_chart(True)
+sca.set_record_gantt(True)
 sca.set_verbosity(-1)
 sca.set_print_time(False)
 
@@ -228,7 +228,7 @@ sca.restart()
 
 sca.terminate()
 
-gc : GanttChart = sca.get_gantt_chart()
+gc : GanttRecord = sca.get_gantt_record()
 gc.export_gnuplot("results_server.gpl", "Gantt chart with the Server component only")
 gc.export_json("results_server.json")
 ```

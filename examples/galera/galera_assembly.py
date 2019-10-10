@@ -5,7 +5,7 @@ import time, datetime
 from concerto.all import *
 from concerto.utility import Printer
 from concerto.components.data_provider import DataProvider
-from concerto.gantt_chart import GanttChart
+from concerto.gantt_record import GanttRecord
 
 from apt_utils import AptUtils
 from ceph import Ceph
@@ -299,7 +299,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     gass = GaleraAssembly()
     gass.set_verbosity(verbosity)
     gass.set_print_time(print_time)
-    gass.set_use_gantt_chart(True)
+    gass.set_record_gantt(True)
     
     if printing: Printer.st_tprint("Main: deploying the assembly")
     gass.deploy_mariadb()
@@ -320,7 +320,7 @@ def time_test(verbosity : int = 0, printing : bool = False, print_time : bool = 
     if printing: Printer.st_tprint("Total time in seconds: %f (deploy: %f, reconf: %f)"%(total_time, total_deploy_time, total_reconf_time))
     
     gass.terminate(debug=True)
-    gc : GanttChart = gass.get_gantt_chart()
+    gc : GanttRecord = gass.get_gantt_record()
     gc.export_gnuplot("results.gpl")
     return total_time
     

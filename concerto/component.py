@@ -14,7 +14,7 @@ from typing import Dict, Tuple, List, Set, Callable
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition
-from concerto.gantt_chart import GanttChart
+from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, Printer
 
 class Group(object):
@@ -118,7 +118,7 @@ class Component (object, metaclass=ABCMeta):
         self.forced_verobisty : int = None
         self.print_time : bool = False
         self.dryrun : bool = False
-        self.gantt : GanttChart = None
+        self.gantt : GanttRecord = None
         self.hidden_from_gantt_chart = False
         
         self.places : List[str] = []
@@ -146,7 +146,7 @@ class Component (object, metaclass=ABCMeta):
         self.act_idocks : Set[Dock] = set()
         self.act_behavior : str = "_init"
         self.queued_behaviors : Queue = Queue()
-        self.visited_places : List[Place] = set()
+        self.visited_places : Set[Place] = set()
         
         self.initialized : bool = False
         
@@ -167,7 +167,7 @@ class Component (object, metaclass=ABCMeta):
     def set_dryrun(self, value : bool):
         self.dryrun = value
         
-    def set_gantt_chart(self, gc : GanttChart):
+    def set_gantt_record(self, gc : GanttRecord):
         if not self.hidden_from_gantt_chart:
             self.gantt = gc
     
@@ -183,7 +183,6 @@ class Component (object, metaclass=ABCMeta):
             return self._verbosity
         else:
             return self.forced_verobisty
-
 
     def add_places(self, places : List[str], initial=None):
         """
@@ -217,8 +216,7 @@ class Component (object, metaclass=ABCMeta):
         self.place_groups[name] = []
         
         if initial:
-            self.set_initial_place(initial)
-
+            self.set_initial_place(name)
 
     def add_switches(self, switches : List[Tuple[str,Callable[[Place,str],List[int]]]], initial=None):
         for key in switches:
@@ -247,9 +245,8 @@ class Component (object, metaclass=ABCMeta):
         self.st_switches.add(name)
         
         if initial:
-            self.set_initial_place(initial)
-    
-    
+            self.set_initial_place(name)
+
     def add_groups(self, groups : Dict[str,List[str]]):
         for name in groups:
             self.add_group(name, groups[name])
@@ -273,7 +270,6 @@ class Component (object, metaclass=ABCMeta):
         self.st_groups[name].add_places(places)
         for place_name in places:
             self.place_groups[place_name].append(self.st_groups[name])
-
 
     def add_transitions(self, transitions : Dict[str,Tuple]):
         """
@@ -332,7 +328,6 @@ class Component (object, metaclass=ABCMeta):
             raise Exception("Trying to add transition '%s' going to unexisting place '%s'"%(name, dst_name))
         
         self._force_add_transition(name,src_name,dst_name,bhv,idset,func,args)
-    
 
     def add_dependencies(self, dep : Dict[str,Tuple[DepType, List[str]]]):
         """
@@ -383,8 +378,7 @@ class Component (object, metaclass=ABCMeta):
                 self.trans_dependencies[transition_name].append(self.st_dependencies[name])
             for switch_name in switches:
                 self.place_dependencies[switch_name].append(self.st_dependencies[name])
-                
-                
+
         elif type == DepType.USE:
             places = []
             transitions = []
@@ -433,7 +427,6 @@ class Component (object, metaclass=ABCMeta):
             for group_name in groups:
                 self.group_dependencies[group_name].append(self.st_dependencies[name])
 
-
     def set_initial_place(self, name : str):
         """
         This method allows to set the (unique) initial place of the component, if not already done
@@ -447,7 +440,6 @@ class Component (object, metaclass=ABCMeta):
         if self.initial_place is not None:
             raise Exception("Trying to set place %s as intial place of component %s while %s is already the intial place." % (name, self.get_name(), self.initial_place))
         self.initial_place = name
-        
 
     def get_places(self):
         """
@@ -511,6 +503,7 @@ class Component (object, metaclass=ABCMeta):
         else:
             print(message)
 
+    # TODO: Rewrite
     def is_connected(self, name : str):
         """
         This method is used to know if a given dependency is connected or not
@@ -550,6 +543,7 @@ class Component (object, metaclass=ABCMeta):
 
         return check
 
+    # TODO: Rewrite
     def check_connections(self):
         """
         This method check connections once the component has been
@@ -759,7 +753,6 @@ class Component (object, metaclass=ABCMeta):
         self.act_places.difference_update(places_to_remove)
         
         return did_something
-
 
     def _start_transition(self) -> bool:
         """

@@ -7,7 +7,7 @@
 """
 
 import threading
-from concerto.gantt_chart import GanttChart
+
 
 class Transition (object):
     """This Transition class is used to create a transition.
