@@ -77,8 +77,12 @@ class WeightedGraph:
         working_graph = deepcopy(self._graph)
 
         identifiers = dict()
+        vertices = set(working_graph.keys())
+        for source, arcs in working_graph.items():
+            for dest, _, _ in arcs:
+                vertices.add(dest)
         i = 0
-        for v in working_graph:
+        for v in vertices:
             identifiers[v] = "v%d" % i
             i += 1
 
@@ -93,6 +97,8 @@ class WeightedGraph:
             gstr += "\t\tcolor = black;\n"
             gstr += "\t\tlabel = \"%s\";\n" % cl_name
             for v in cl_contents:
+                if v not in vertices:  # was removed
+                    continue
                 gstr += "\t\t%s [label=\"%s\"] [shape=%s];\n" % (
                     identifiers[v], f_get_vertex_label(v), self._shapes.get(v, "oval"))
                 treated_vertices.add(v)
@@ -526,7 +532,7 @@ class ComponentPerfAnalyzer:
 
 
 class ReconfigurationPerfAnalyzer:
-    def __init__(self, reconfiguration: Reconfiguration, existing_components=()):
+    def __init__(self, reconfiguration: Reconfiguration, existing_components=(), debug=False):
         self.reconfiguration = reconfiguration
         self.source_vertex = "source"
         self._graph = WeightedGraph([self.source_vertex])
@@ -541,7 +547,7 @@ class ReconfigurationPerfAnalyzer:
             self._component_analyzers[name] = ca
 
         self._handle_instructions()
-        self._generate_total_graph()
+        self._generate_total_graph(debug=debug)
 
     def _handle_instructions(self):
         for ri in self.reconfiguration._get_instructions():
@@ -618,12 +624,12 @@ class ReconfigurationPerfAnalyzer:
                     for v in idle_vertices:
                         self._graph.add_arc(v, wait_s, 0)
 
-    def _generate_total_graph(self):
+    def _generate_total_graph(self, debug=False):
         for component_analyzer in self._component_analyzers.values():
             self._graph += component_analyzer.get_graph()
         removed = self._graph.remove_unreachable_from(self.source_vertex)
-        if removed:
-            print("Warning: unreachable vertices were removed from the graph: %s" % removed)
+        if debug and removed:
+            print("Debug: unreachable vertices were removed from the graph: %s" % removed)
 
     def get_graph(self):
         return self._graph

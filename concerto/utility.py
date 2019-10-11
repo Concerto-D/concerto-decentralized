@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, Any, Callable
 from datetime import datetime
+from contextlib import contextmanager
 
 
 """
@@ -8,7 +9,8 @@ from datetime import datetime
    :synopsis: this file contains utility classes.
 """
 
-class Messages():
+
+class Messages:
     """
     This class is not instanciated. It is used for valid, warning, and fail
     color-printed messages.
@@ -40,7 +42,7 @@ COLORS = ['\33[35m', # magenta
          ]
 
 
-class Printer():
+class Printer:
     def __init__(self, show : bool = True):
         self._show = show
     
@@ -75,8 +77,7 @@ class Printer():
         print(Printer._format_tprint(message))
         if flush:
             stdout.flush()
-        
-    
+
     @staticmethod
     def st_err_tprint(message : str, flush : bool = True):
         from sys import stderr
@@ -91,18 +92,16 @@ def remove_if(l : List[Any], remove_cond : Callable[[Any], bool]):
         if remove_cond(l[i]):
             del l[i]
             continue
-        i+=1
+        i += 1
+
 
 def empty_transition():
     pass
 
 
-import signal
-from contextlib import contextmanager
-
-
 @contextmanager
 def timeout(time):
+    import signal
     # Register a function to raise a TimeoutError on the signal.
     signal.signal(signal.SIGALRM, raise_timeout)
     # Schedule the signal to be sent after ``time``.

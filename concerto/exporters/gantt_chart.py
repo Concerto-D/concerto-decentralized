@@ -64,7 +64,7 @@ class GanttChart:
             '#17becf'   # blue-teal
         ]
         while len(self._transitions) > len(colors):
-            colors.append(f'rgb({randint(0,256)}, {randint(0,256)}, {randint(0,256)})')
+            colors.append(f'rgb({randint(0,220)}, {randint(0,220)}, {randint(0,220)})')
         # for component_name in self._transitions:
         #     colors[component_name] = f'rgb({randint(0,256)}, {randint(0,256)}, {randint(0,256)})'
 
@@ -110,6 +110,18 @@ class GanttChart:
         """
         fig = self.get_plotly(title, show_behaviors=show_behaviors, override_time_format=override_time_format)
         fig.write_image(filename)
+
+    def html_export_plotly(self, filename_no_ext, title="", show_behaviors=None, override_time_format=None, **kwargs):
+        from plotly.offline import plot
+        fig = self.get_plotly(title,
+                              show_behaviors=show_behaviors,
+                              override_time_format=override_time_format)
+        plot(fig,
+             image='svg',
+             filename=filename_no_ext + ".html",
+             image_filename=filename_no_ext,
+             auto_open=False,
+             **kwargs)
 
     def export_json(self, filename):
         readable_dict = dict()

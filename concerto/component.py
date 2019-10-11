@@ -156,8 +156,7 @@ class Component (object, metaclass=ABCMeta):
         self.add_groups(self.groups)
         self.add_transitions(self.transitions)
         self.add_dependencies(self.dependencies)
-    
-    
+
     def set_verbosity(self, level : int):
         self._verbosity = level
         

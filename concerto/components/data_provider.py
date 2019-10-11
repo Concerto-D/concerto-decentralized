@@ -1,6 +1,7 @@
 from concerto.component import Component
 from concerto.dependency import DepType
 
+
 class DataProvider(Component):
     
     def __init__(self, data):

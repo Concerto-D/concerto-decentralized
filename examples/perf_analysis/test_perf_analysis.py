@@ -56,7 +56,9 @@ times = {
 }
 
 sc = ServerClient(times)
+
 sc.set_record_gantt(True)
+
 pa = ReconfigurationPerfAnalyzer(sc.deploy_reconf)
 g = pa.get_graph()
 g.save_as_dot("server_client.dot")
@@ -71,6 +73,9 @@ sc.deploy()
 end_time: float = time.perf_counter()
 sc.terminate()
 print("Time actually measured:\n%f" % (end_time-start_time))
+
+sc.set_record_gantt(True)
+# ...
 gr = sc.get_gantt_record()
 gc = gr.get_gantt_chart()
 gc.export_json("gantt_chart.json")
