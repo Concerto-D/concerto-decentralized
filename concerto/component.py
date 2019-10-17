@@ -123,6 +123,8 @@ class Component(object, metaclass=ABCMeta):
         self.gantt: Optional[GanttRecord] = None
         self.hidden_from_gantt_chart: bool = False
 
+        self._assembly = None
+
         self.places: List[str] = []
         self.switches: List[Tuple[str, Callable[[Place, str], List[int]]]] = []
         self.transitions: Dict[str, Tuple] = {}
@@ -159,6 +161,9 @@ class Component(object, metaclass=ABCMeta):
         self.add_transitions(self.transitions)
         self.add_dependencies(self.dependencies)
 
+    def set_assembly(self, assembly):
+        self._assembly = assembly
+
     def set_verbosity(self, level: int):
         self._verbosity = level
 
@@ -168,7 +173,7 @@ class Component(object, metaclass=ABCMeta):
     def set_dryrun(self, value: bool):
         self.dryrun = value
 
-    def set_gantt_record(self, gc: GanttRecord):
+    def set_gantt_record(self, gc: Optional[GanttRecord]):
         if not self.hidden_from_gantt_chart:
             self.gantt = gc
 
@@ -299,7 +304,7 @@ class Component(object, metaclass=ABCMeta):
         src = None
         if src_name is not None:
             src = self.st_places[src_name]
-        self.st_transitions[name] = Transition(name, src, self.st_places[dst_name], bhv, idset, func, args)
+        self.st_transitions[name] = Transition(name, src, self.st_places[dst_name], bhv, idset, func, args, self)
         self.trans_dependencies[name] = []
         self.st_behaviors.add(bhv)
         for group in self.st_groups:
@@ -546,6 +551,9 @@ class Component(object, metaclass=ABCMeta):
         # corrected somewhere.
         # print(sys._getframe().f_back.f_code.co_name)
         self.st_dependencies[name].write(val)
+
+    def thread_safe_report_error(self, transition: Transition, error: str):
+        self._assembly.thread_safe_report_error(self, transition, error)
 
     """
     CHECK COMPONENT

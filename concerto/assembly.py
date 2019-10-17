@@ -7,11 +7,12 @@
 """
 
 import sys
-from typing import Dict, Tuple, List, Set
-from threading import Thread, Lock, Event
+from typing import Dict, Tuple, List, Set, Optional
+from threading import Thread
 from queue import Queue
 from concerto.dependency import DepType, Dependency
 from concerto.component import Component
+from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
 from concerto.reconfiguration import Reconfiguration
@@ -63,11 +64,13 @@ class Assembly(object):
         self.verbosity: int = 0
         self.print_time: bool = False
         self.dryrun: bool = False
-        self.gantt: GanttRecord = None
-        self.name: str = None
+        self.gantt: Optional[GanttRecord] = None
+        self.name: Optional[str] = None
 
         self.dump_program: bool = False
         self.program_str: str = ""
+
+        self.error_reports: List[str] = []
 
     def set_verbosity(self, level: int):
         self.verbosity = level
@@ -188,6 +191,7 @@ class Assembly(object):
         comp.set_print_time(self.print_time)
         comp.set_dryrun(self.dryrun)
         comp.set_gantt_record(self.gantt)
+        comp.set_assembly(self)
         self._components[name] = comp
         self.component_connections[name] = set()
         self.act_components.add(name)  # _init
@@ -343,6 +347,13 @@ class Assembly(object):
 
     def get_components(self) -> List[Component]:
         return list(self._components.values())
+
+    def thread_safe_report_error(self, component: Component, transition: Transition, error: str):
+        report = "Component: %s\nTransition: %s\nError:\n%s" % (component.name, transition.name, error)
+        self.error_reports.append(report)
+
+    def get_error_reports(self) -> List[str]:
+        return self.error_reports
 
     """
     CHECK ASSEMBLY

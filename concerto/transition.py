@@ -24,7 +24,7 @@ class Transition:
     BUILD TRANSITION
     """
 
-    def __init__(self, name, src, dst, bhv, idset, func, args):
+    def __init__(self, name, src, dst, bhv, idset, func, args, component):
         self.name = name
         self.src_place = None
         if src is not None:
@@ -34,6 +34,7 @@ class Transition:
         self.dst_idset = idset
         self.code = func
         self.args = args
+        self._component = component
         self.src_dock = None
         if src is not None:
             self.src_dock = src.create_output_dock(self)
@@ -83,6 +84,12 @@ class Transition:
         """
         return self.behavior
 
+    def execute_user_function(self, user_function, arguments):
+        try:
+            user_function(*arguments)
+        except Exception as e:
+            self._component.thread_safe_report_error(self, repr(e))
+
     def start_thread(self, gantt_tuple, dryrun):
         """
         This method creates the thread of the transition
@@ -90,7 +97,7 @@ class Transition:
         :return: the Thread of the transition
         """
         if not dryrun:
-            self.thread = threading.Thread(target=self.code, args=self.args)
+            self.thread = threading.Thread(target=self.execute_user_function, args=(self.code, self.args))
             if gantt_tuple is not None:
                 (gantt_chart, args) = gantt_tuple
                 gantt_chart.start_transition(*args)
