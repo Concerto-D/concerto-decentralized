@@ -2,8 +2,8 @@ from enum import Enum
 
 from concerto.component import Component
 
-class InternalInstruction:
 
+class InternalInstruction:
     class Type(Enum):
         ADD = 0
         DEL = 1
@@ -12,54 +12,56 @@ class InternalInstruction:
         PUSH_B = 4
         WAIT = 5
         WAIT_ALL = 6
-        
+
     def __str__(self):
         if self.type is InternalInstruction.Type.ADD:
-            return "add(%s,%s)"%(self.args['name'], type(self.args['comp']).__name__)
+            return "add(%s,%s)" % (self.args['name'], type(self.args['comp']).__name__)
         elif self.type is InternalInstruction.Type.DEL:
-            return "del(%s)"%(self.args['component_name'])
+            return "del(%s)" % (self.args['component_name'])
         elif self.type is InternalInstruction.Type.CONNECT:
-            return "con(%s.%s,%s.%s)"%(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+            return "con(%s.%s,%s.%s)" % (self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
+                                         self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.DISCONNECT:
-            return "dcon(%s.%s,%s.%s)"%(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+            return "dcon(%s.%s,%s.%s)" % (self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
+                                          self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.PUSH_B:
-            return "pushB(%s,%s)"%(self.args['component_name'], self.args['behavior'])
+            return "pushB(%s,%s)" % (self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
-            return "wait(%s)"%(self.args['component_name'])
+            return "wait(%s)" % (self.args['component_name'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
             return "waitAll()"
         else:
-            return "{type: %s, arguments: %s}"%(self.type, str(self.args))
-        
-    def __init__(self, type, args):
-        self.type = type
+            return "{type: %s, arguments: %s}" % (self.type, str(self.args))
+
+    def __init__(self, instr_type, args):
+        self.type = instr_type
         self.args = args
-    
+
     def get_type(self):
         return self.type
-    
+
     def get_args(self):
         return self.args
-    
+
     @staticmethod
-    def build_add(name : str, comp : Component):
+    def build_add(name: str, comp: Component):
         return InternalInstruction(
             InternalInstruction.Type.ADD,
             {
                 "name": name,
                 "comp": comp
             })
-    
+
     @staticmethod
-    def build_del(component_name : str):
+    def build_del(component_name: str):
         return InternalInstruction(
             InternalInstruction.Type.DEL,
             {
                 "component_name": component_name
             })
-    
+
     @staticmethod
-    def build_connect(comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
+    def build_connect(comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         return InternalInstruction(
             InternalInstruction.Type.CONNECT,
             {
@@ -68,9 +70,9 @@ class InternalInstruction:
                 "comp2_name": comp2_name,
                 "dep2_name": dep2_name
             })
-    
+
     @staticmethod
-    def build_disconnect(comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
+    def build_disconnect(comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         return InternalInstruction(
             InternalInstruction.Type.DISCONNECT,
             {
@@ -79,30 +81,30 @@ class InternalInstruction:
                 "comp2_name": comp2_name,
                 "dep2_name": dep2_name
             })
-    
+
     @staticmethod
-    def build_push_b(component_name : str, behavior : str):
+    def build_push_b(component_name: str, behavior: str):
         return InternalInstruction(
             InternalInstruction.Type.PUSH_B,
             {
                 "component_name": component_name,
                 "behavior": behavior
             })
-    
+
     @staticmethod
-    def build_wait(component_name : str):
+    def build_wait(component_name: str):
         return InternalInstruction(
             InternalInstruction.Type.WAIT,
             {
                 "component_name": component_name
             })
-    
+
     @staticmethod
     def build_wait_all():
         return InternalInstruction(
             InternalInstruction.Type.WAIT_ALL,
             {})
-    
+
     def apply_to(self, assembly) -> bool:
         import time
         if self.type is InternalInstruction.Type.ADD:
@@ -110,9 +112,11 @@ class InternalInstruction:
         elif self.type is InternalInstruction.Type.DEL:
             return assembly._del(self.args['component_name'])
         elif self.type is InternalInstruction.Type.CONNECT:
-            return assembly._connect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+            return assembly._connect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
+                                     self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.DISCONNECT:
-            return assembly._disconnect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'], self.args['dep2_name'])
+            return assembly._disconnect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
+                                        self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.PUSH_B:
             return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
@@ -121,4 +125,3 @@ class InternalInstruction:
             return assembly._wait_all()
         else:
             raise Exception("Invalid internal instruction type")
-    

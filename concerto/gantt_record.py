@@ -196,9 +196,11 @@ class GanttRecord:
         return transitions, push_bs
     
     @staticmethod
-    def json_to_gnuplot(json_file_name, gnuplot_file_name, title='', min_time=0., max_time=float('inf'), components_to_remove=()):
+    def json_to_gnuplot(json_file_name, gnuplot_file_name, title='', min_time=0., max_time=float('inf'),
+                        components_to_remove=()):
         from json import load
         with open(json_file_name) as f:
             formatted = load(f)
-        transitions, push_bs = GanttRecord.formatted_to_ordered_tuples(formatted, min_time=min_time, max_time=max_time, components_to_remove=components_to_remove)
+        transitions, push_bs = GanttRecord.formatted_to_ordered_tuples(formatted, min_time=min_time, max_time=max_time,
+                                                                       components_to_remove=components_to_remove)
         GanttRecord.export_gnuplot_from_tuples(transitions, push_bs, gnuplot_file_name, title)

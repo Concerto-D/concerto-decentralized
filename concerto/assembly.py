@@ -19,14 +19,12 @@ from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer
 
 
-class Assembly (object):
+class Assembly(object):
     """This Assembly class is used to create a assembly.
 
         An assembly is a set of component instances and the connection of
         their dependencies.
     """
-
-
 
     """
     BUILD ASSEMBLY
@@ -34,60 +32,59 @@ class Assembly (object):
 
     def __init__(self):
         # dict of Component objects: id => object
-        self._components : Dict[str, Component] = {}
+        self._components: Dict[str, Component] = {}
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
-        self._connections : Dict[Tuple[Dependency,Dependency],Connection] = {}
+        self._connections: Dict[Tuple[Dependency, Dependency], Connection] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
         # this is used to improve performance of the semantics
-        self.places_connections : Dict[str,List[Connection]] = {}
+        self.places_connections: Dict[str, List[Connection]] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
         # this is used to improve performance of the semantics
-        self.component_connections : Dict[str,Set[Connection]] = {}
-        
+        self.component_connections: Dict[str, Set[Connection]] = {}
+
         # Operational semantics
-        
+
         # thread running the semantics of the assembly in a loop
-        self.semantics_thread : Thread = Thread(target=self.loop_smeantics)
-        self.alive : bool = True
-        
+        self.semantics_thread: Thread = Thread(target=self.loop_smeantics)
+        self.alive: bool = True
+
         # queue of instructions (synchronized with semantics thread)
-        self.instructions_queue = Queue() # thread-safe
+        self.instructions_queue = Queue()  # thread-safe
         self.current_instruction = None
-        
+
         # set of active components
-        self.act_components : Set[str] = set()
-        
-        self.verbosity : int = 0
-        self.print_time : bool = False
-        self.dryrun : bool = False
-        self.gantt : GanttRecord = None
-        self.name : str = None
-        
-        self.dump_program : bool = False
-        self.program_str : str = ""
-    
-    
-    def set_verbosity(self, level : int):
+        self.act_components: Set[str] = set()
+
+        self.verbosity: int = 0
+        self.print_time: bool = False
+        self.dryrun: bool = False
+        self.gantt: GanttRecord = None
+        self.name: str = None
+
+        self.dump_program: bool = False
+        self.program_str: str = ""
+
+    def set_verbosity(self, level: int):
         self.verbosity = level
         for c in self._components:
             self._components[c].set_verbosity(level)
-        
-    def set_print_time(self, value : bool):
+
+    def set_print_time(self, value: bool):
         self.print_time = value
         for c in self._components:
             self._components[c].set_print_time(value)
-    
-    def set_dryrun(self, value : bool):
+
+    def set_dryrun(self, value: bool):
         self.dryrun = value
         for c in self._components:
             self._components[c].set_dryrun(value)
-            
-    def set_record_gantt(self, value : bool):
+
+    def set_record_gantt(self, value: bool):
         if value:
             if self.gantt is None:
                 self.gantt = GanttRecord()
@@ -97,46 +94,47 @@ class Assembly (object):
             self.gantt = None
             for c in self._components:
                 self._components[c].set_gantt_record(None)
-        
+
     def get_gantt_record(self) -> GanttRecord:
         return self.gantt
-    
-    def set_dump_program(self, value : bool):
+
+    def set_dump_program(self, value: bool):
         self.dump_program = value
-    
+
     def get_program_deump(self):
         return self.program_str
-    
+
     def clear_program_dump(self):
         self.program_str = ""
-            
-    def set_name(self, name : str):
+
+    def set_name(self, name: str):
         self.name = name
-    
+
     def get_name(self) -> str:
         return self.name
-    
+
     def get_debug_info(self) -> str:
         debug_info = "Inactive components:\n"
         for component_name in self._components:
             if component_name not in self.act_components:
-                debug_info += "- %s: %s\n"%(component_name, ','.join(self._components[component_name].get_active_places()))
+                debug_info += "- %s: %s\n" % (
+                    component_name, ','.join(self._components[component_name].get_active_places()))
         debug_info += "Active components:\n"
         for component_name in self.act_components:
             debug_info += self._components[component_name].get_debug_info()
         return debug_info
-    
+
     def terminate(self, debug=False):
         if debug:
-            Printer.st_err_tprint("DEBUG terminate:\n%s"%self.get_debug_info())
+            Printer.st_err_tprint("DEBUG terminate:\n%s" % self.get_debug_info())
         for component_name in self.act_components:
             self.wait(component_name)
             if debug:
-                Printer.st_err_tprint("DEBUG terminate: waiting component '%s'"%component_name)
+                Printer.st_err_tprint("DEBUG terminate: waiting component '%s'" % component_name)
         self.synchronize()
         self.alive = False
         self.semantics_thread.join()
-    
+
     def force_terminate(self):
         self.synchronize()
         self.alive = False
@@ -147,25 +145,24 @@ class Assembly (object):
         run by the transitions """
         self.alive = False
         self.semantics_thread.join()
-    
-    def print(self, string : str):
+
+    def print(self, string: str):
         if self.verbosity < 0:
             return
         if self.name is None:
             name = "Assembly"
         else:
             name = self.name
-        message : str = "[%s] %s"%(name, string)
+        message: str = "[%s] %s" % (name, string)
         if self.print_time:
             Printer.st_tprint(message)
         else:
             print(message)
-    
-    
-    def add_instruction(self, instruction : InternalInstruction):
+
+    def add_instruction(self, instruction: InternalInstruction):
         if self.dump_program:
             self.program_str += (str(instruction) + "\n")
-        
+
         self.instructions_queue.put(instruction)
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
@@ -174,33 +171,32 @@ class Assembly (object):
         for instr in reconfiguration._get_instructions():
             self.add_instruction(instr)
 
-    def add_component(self, name : str, comp : Component):
-        self.add_instruction(InternalInstruction.build_add(name,comp))
+    def add_component(self, name: str, comp: Component):
+        self.add_instruction(InternalInstruction.build_add(name, comp))
 
-    def _add(self, name : str, comp : Component) -> bool:
+    def _add(self, name: str, comp: Component) -> bool:
         """
         This method adds a component instance to the assembly
 
         :param comp: the component instance to add
         """
         if name in self._components:
-            raise Exception("Trying to add '%s' as a component while it is already a component"%name)
+            raise Exception("Trying to add '%s' as a component while it is already a component" % name)
         comp.set_name(name)
-        comp.set_color(COLORS[len(self._components)%len(COLORS)])
+        comp.set_color(COLORS[len(self._components) % len(COLORS)])
         comp.set_verbosity(self.verbosity)
         comp.set_print_time(self.print_time)
         comp.set_dryrun(self.dryrun)
         comp.set_gantt_record(self.gantt)
-        self._components[name]=comp
+        self._components[name] = comp
         self.component_connections[name] = set()
-        self.act_components.add(name) # _init
+        self.act_components.add(name)  # _init
         return True
-        
-    
-    def del_component(self, component_name : str):
+
+    def del_component(self, component_name: str):
         self.add_instruction(InternalInstruction.build_del(component_name))
-    
-    def _del(self, component_name : str) -> bool:
+
+    def _del(self, component_name: str) -> bool:
         if component_name in self.act_components:
             return False
         if len(self.component_connections[component_name]) > 0:
@@ -209,11 +205,10 @@ class Assembly (object):
         del self._components[component_name]
         return True
 
+    def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
+        self.add_instruction(InternalInstruction.build_connect(comp1_name, dep1_name, comp2_name, dep2_name))
 
-    def connect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
-        self.add_instruction(InternalInstruction.build_connect(comp1_name,dep1_name,comp2_name,dep2_name))
-
-    def _connect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str) -> bool:
+    def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
 
@@ -222,27 +217,28 @@ class Assembly (object):
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-        
+
         comp1 = self.get_component(comp1_name)
         comp2 = self.get_component(comp2_name)
-        
+
         dep1 = comp1.get_dependency(dep1_name)
         dep2 = comp2.get_dependency(dep2_name)
-        
+
         if DepType.valid_types(dep1.get_type(),
-                              dep2.get_type()):
+                               dep2.get_type()):
             # multiple connections are possible within MAD, so we do not
             # check if a dependency is already connected
 
             # create connection
             new_connection = Connection(dep1, dep2)
-            
+
             provide_dep = new_connection.get_provide_dep()
             use_dep = new_connection.get_use_dep()
-            
+
             if (provide_dep, use_dep) in self._connections:
-                raise Exception("Trying to add already existing connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
-            
+                raise Exception("Trying to add already existing connection from %s.%s to %s.%s" % (
+                    comp1_name, dep1_name, comp2_name, dep2_name))
+
             self._connections[(provide_dep, use_dep)] = new_connection
             self.component_connections[comp1_name].add(new_connection)
             self.component_connections[comp2_name].add(new_connection)
@@ -250,13 +246,13 @@ class Assembly (object):
             return True
 
         else:
-            raise Exception("Trying to connect uncompatible dependencies %s.%s and %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
+            raise Exception("Trying to connect uncompatible dependencies %s.%s and %s.%s" % (
+                comp1_name, dep1_name, comp2_name, dep2_name))
 
+    def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
+        self.add_instruction(InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name))
 
-    def disconnect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str):
-        self.add_instruction(InternalInstruction.build_disconnect(comp1_name,dep1_name,comp2_name,dep2_name))
-
-    def _disconnect(self, comp1_name : str, dep1_name : str, comp2_name : str, dep2_name : str) -> bool:
+    def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
 
@@ -265,13 +261,13 @@ class Assembly (object):
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-        
+
         comp1 = self.get_component(comp1_name)
         comp2 = self.get_component(comp2_name)
-        
+
         dep1 = comp1.get_dependency(dep1_name)
         dep2 = comp2.get_dependency(dep2_name)
-        
+
         dep1type = dep1.get_type()
         if dep1type == DepType.PROVIDE or dep1type == DepType.DATA_PROVIDE:
             provide_dep = dep1
@@ -279,11 +275,12 @@ class Assembly (object):
         else:
             provide_dep = dep2
             use_dep = dep1
-            
+
         if (provide_dep, use_dep) not in self._connections:
-            raise Exception("Trying to remove unexisting connection from %s.%s to %s.%s"%(comp1_name, dep1_name, comp2_name, dep2_name))
-        
-        connection : Connection = self._connections[(provide_dep, use_dep)]
+            raise Exception("Trying to remove unexisting connection from %s.%s to %s.%s" % (
+                comp1_name, dep1_name, comp2_name, dep2_name))
+
+        connection: Connection = self._connections[(provide_dep, use_dep)]
         if connection.can_remove():
             connection.disconnect()
             self.component_connections[comp1_name].discard(connection)
@@ -292,40 +289,36 @@ class Assembly (object):
             return True
         else:
             return False
-        
-    
-    def push_b(self, component_name : str, behavior : str):
+
+    def push_b(self, component_name: str, behavior: str):
         self.add_instruction(InternalInstruction.build_push_b(component_name, behavior))
-            
-    def _push_b(self, component_name : str, behavior : str):
+
+    def _push_b(self, component_name: str, behavior: str):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
         if component_name not in self.act_components:
             self.act_components.add(component_name)
         return True
-        
-    
-    def wait(self, component_name : str):
+
+    def wait(self, component_name: str):
         self.add_instruction(InternalInstruction.build_wait(component_name))
-    
-    def _wait(self, component_name : str):
+
+    def _wait(self, component_name: str):
         return self.is_component_idle(component_name)
-        
-    
+
     def wait_all(self):
         self.add_instruction(InternalInstruction.build_wait_all())
-    
+
     def _wait_all(self):
         return len(self.act_components) is 0
 
-
     def synchronize(self, debug=False):
         if debug:
-            #TODO Remove access to internal queue of instructions_queue (not part of API)
-            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n"%(
-        self.instructions_queue.unfinished_tasks, str(self.current_instruction), "\n".join(["- %s"%str(ins) for ins in self.instructions_queue.queue])))
+            # TODO Remove access to internal queue of instructions_queue (not part of API)
+            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n" % (
+                self.instructions_queue.unfinished_tasks, str(self.current_instruction),
+                "\n".join(["- %s" % str(ins) for ins in self.instructions_queue.queue])))
         self.instructions_queue.join()
-
 
     def synchronize_timeout(self, time):
         from concerto.utility import timeout
@@ -338,18 +331,15 @@ class Assembly (object):
             return True, None
         else:
             return False, self.get_debug_info()
-    
-    
-    def is_component_idle(self, component_name : str) -> bool:
-        return (not component_name in self.act_components)
-        
 
-    def get_component(self, name : str) -> Component:
+    def is_component_idle(self, component_name: str) -> bool:
+        return component_name not in self.act_components
+
+    def get_component(self, name: str) -> Component:
         if name in self._components:
             return self._components[name]
         else:
-            raise(Exception("ERROR - Unknown component %s"%name))
-
+            raise (Exception("ERROR - Unknown component %s" % name))
 
     def get_components(self) -> List[Component]:
         return list(self._components.values())
@@ -374,16 +364,16 @@ class Assembly (object):
 
         if not check:
             print(Messages.warning() + "WARNING - some WARNINGS have been "
-                                     "detected in your components, please "
-                                     "check them so as to not get unwilling "
-                                     "behaviors in your deployment cordination"
+                                       "detected in your components, please "
+                                       "check them so as to not get unwilling "
+                                       "behaviors in your deployment cordination"
                   + Messages.endc())
 
         if not check_dep:
             print(Messages.warning() + "WARNING - some dependencies are not "
-                                     "connected within the assembly. This "
-                                     "could lead to unwilling behaviors in "
-                                     "your deployment coordination."
+                                       "connected within the assembly. This "
+                                       "could lead to unwilling behaviors in "
+                                       "your deployment coordination."
                   + Messages.endc())
 
         return check and check_dep
@@ -391,11 +381,10 @@ class Assembly (object):
     """
     OPERATIONAL SEMANTICS
     """
-    
+
     def loop_smeantics(self):
         while self.alive:
             self.semantics()
-
 
     def semantics(self):
         """
@@ -403,33 +392,31 @@ class Assembly (object):
         of assembly instructions and then by running semantics of each component
         of the assembly.
         """
-        
+
         if self.current_instruction is not None:
             finished = self.current_instruction.apply_to(self)
             if finished:
                 self.current_instruction = None
                 self.instructions_queue.task_done()
-            
+
         # Consume instructions queue
         while (not self.instructions_queue.empty()) and (self.current_instruction is None):
-            instruction : InternalInstruction = self.instructions_queue.get()
+            instruction: InternalInstruction = self.instructions_queue.get()
             finished = instruction.apply_to(self)
             if finished:
                 self.instructions_queue.task_done()
             else:
                 self.current_instruction = instruction
-        
 
         # semantics for each component
-        idle_components : Set[str] = set()
-        
+        idle_components: Set[str] = set()
+
         for c in self.act_components:
             is_idle = self._components[c].semantics()
             if is_idle:
                 idle_components.add(c)
-        
+
         self.act_components.difference_update(idle_components)
-        
 
     def is_idle(self) -> bool:
         """
@@ -441,4 +428,3 @@ class Assembly (object):
         # the deployment cannot be finished if at least all components have
         # not reached a place
         return len(self.act_components) == 0
-

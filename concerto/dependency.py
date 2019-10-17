@@ -6,7 +6,8 @@
 """
 
 from enum import Enum
-from typing import Dict, Tuple, List, Set
+from typing import Set
+
 
 class DepMandatory(Enum):
     """
@@ -16,6 +17,7 @@ class DepMandatory(Enum):
 
     MANDATORY = 0
     OPTIONAL = 1
+
 
 class DepType(Enum):
     """
@@ -50,19 +52,19 @@ class DepType(Enum):
         return validity
 
 
-class Dependency (object):
+class Dependency(object):
     """
     This class represents a dependency.
     """
 
-    def __init__(self, component, name : str, type : DepType):
+    def __init__(self, component, name: str, dep_type: DepType):
         self.component = component
         self.name = name
-        self.type = type
-        self.connections : Set = set()
+        self.type = dep_type
+        self.connections: Set = set()
         self.nb_users = 0
         self.data = None
-    
+
     def get_component(self):
         """
         This method returns the component of the dependency
@@ -86,23 +88,24 @@ class Dependency (object):
         :return: type
         """
         return self.type
-    
+
     def get_data(self):
         if self.get_type() is not DepType.DATA_PROVIDE:
-            raise Exception("Trying to get data from dependency '%s' which is not of type data provide"%self.get_name())
+            raise Exception(
+                "Trying to get data from dependency '%s' which is not of type data provide" % self.get_name())
         return self.data
-    
+
     def read(self):
         if self.get_type() is not DepType.DATA_USE:
-            raise Exception("Trying to read from dependency '%s' which is not of type data use"%self.get_name())
+            raise Exception("Trying to read from dependency '%s' which is not of type data use" % self.get_name())
         for c in self.connections:
             if c.is_active():
                 return c.get_provide_dep().get_data()
-        raise Exception("Trying to read from dependency '%s' which is not served"%self.get_name())
-    
+        raise Exception("Trying to read from dependency '%s' which is not served" % self.get_name())
+
     def write(self, data):
         if self.get_type() is not DepType.DATA_PROVIDE:
-            raise Exception("Trying to write to dependency '%s' which is not of type data provide"%self.get_name())
+            raise Exception("Trying to write to dependency '%s' which is not of type data provide" % self.get_name())
         self.data = data
 
     def is_connected(self) -> bool:
@@ -124,19 +127,19 @@ class Dependency (object):
         :return: self.free
         """
         self.connections.add(c)
-    
+
     def disconnect(self, c):
         self.connections.remove(c)
-    
+
     def is_in_use(self) -> bool:
         return self.nb_users > 0
-    
+
     def start_using(self):
         self.nb_users += 1
-    
+
     def stop_using(self):
         self.nb_users -= 1
-        
+
     def is_served(self):
         if self.type != DepType.DATA_USE and self.type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")
@@ -144,7 +147,7 @@ class Dependency (object):
             if c.is_active():
                 return True
         return False
-    
+
     def is_locked(self):
         if self.type != DepType.DATA_PROVIDE and self.type != DepType.PROVIDE:
             raise Exception("Trying to check if a (data) use port is active")

@@ -9,7 +9,7 @@
 import threading
 
 
-class Transition (object):
+class Transition:
     """This Transition class is used to create a transition.
 
         A transition is an action, represented by the 'run' function. This
@@ -38,6 +38,7 @@ class Transition (object):
         if src is not None:
             self.src_dock = src.create_output_dock(self)
         self.dst_dock = dst.create_input_dock(self)
+        self.thread = None
 
     def set_name(self, name):
         """
@@ -91,7 +92,7 @@ class Transition (object):
         if not dryrun:
             self.thread = threading.Thread(target=self.code, args=self.args)
             if gantt_tuple is not None:
-                (gantt_chart,args) = gantt_tuple
+                (gantt_chart, args) = gantt_tuple
                 gantt_chart.start_transition(*args)
             self.thread.start()
         else:
@@ -108,7 +109,7 @@ class Transition (object):
             if not self.thread.is_alive():
                 self.thread.join()
                 if gantt_tuple is not None:
-                    (gantt_chart,args) = gantt_tuple
+                    (gantt_chart, args) = gantt_tuple
                     gantt_chart.stop_transition(*args)
                 return True
             else:

@@ -318,6 +318,9 @@ class ComponentPerfAnalyzer:
         self.bindings = self.component.get_bindings()  # dict(element, [port])
 
         self.treated_elements = set()
+        self.treated_during_behavior = dict()
+        self.active_places = set()
+        self.old_places = set()
 
         self.graph = WeightedGraph()
 
@@ -462,7 +465,7 @@ class ComponentPerfAnalyzer:
         use_port_stop_vertices = self.get_use_port_stop_vertices(transition_name)
         self.graph.add_arcs([(end_vertex, upsv, 0) for upsv in use_port_stop_vertices])
 
-    def initialize(self, initial_places=[]):
+    def initialize(self, initial_places=()):
         self.active_places = set(initial_places)
         self.treated_during_behavior = dict()
         if not self.active_places:
@@ -653,14 +656,15 @@ class ReconfigurationPerfAnalyzer:
                         if not is_number(weight):
                             (c, t) = weight
                             if weight not in transitions_durations:
-                                raise Exception("Error: weight not given for transition %s.%s (key: %s)" % (c, t, weight))
+                                raise Exception("Error: weight not given for transition %s.%s (key: %s)" % (c, t,
+                                                                                                            weight))
                             weight = transitions_durations[weight]
                         gc.add_transition(component_name,
                                           "?",
                                           transition_name,
                                           vertices_distances[source],
                                           vertices_distances[source]+weight)
-            except ValueError as e:
+            except ValueError:
                 pass
 
         return gc

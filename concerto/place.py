@@ -8,17 +8,16 @@
 
 from concerto.transition import Transition
 
+
 class Dock(object):
     """This Dock class is used to create a dock.
 
         A dock is an input or an output of a place.
     """
 
-    DOCK_TYPE = 0
-
-    def __init__(self, place, type, transition : Transition):
+    def __init__(self, place, dock_type, transition: Transition):
         self.place = place
-        self.DOCK_TYPE = type
+        self.dock_type = dock_type
         self.transition = transition
 
     def get_place(self):
@@ -35,30 +34,30 @@ class Dock(object):
 
         :return: self.DOCK_TYPE
         """
-        return self.DOCK_TYPE
+        return self.dock_type
 
     def get_transition(self) -> Transition:
         return self.transition
-    
+
     def get_behavior(self) -> str:
         return self.get_transition().get_behavior()
 
 
-class Place (object):
+class Place(object):
     """This Place class is used to create a place of a component.
 
         A place represents an evolution state in the deployment of a component.
     """
 
-    def __init__(self,name,override_get_output_docks=None,cp=None):  # TODO remove cp
+    def __init__(self, name, override_get_output_docks=None, cp=None):  # TODO remove cp
         self.name = name
         self.override_get_output_docks = override_get_output_docks
         self.input_docks = {}  # dictionary behavior -> docks[]
-        self.output_docks = {} # dictionary behavior -> docks[]
+        self.output_docks = {}  # dictionary behavior -> docks[]
         self.provides = []
-        self.cp=cp # TODO remove cp
+        self.cp = cp  # TODO remove cp
 
-    def create_input_dock(self, transition : Transition):
+    def create_input_dock(self, transition: Transition):
         """
         This method creates an additional input dock to the current place.
         This method is called by Transition. An input dock of a place
