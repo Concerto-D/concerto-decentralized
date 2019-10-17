@@ -104,7 +104,9 @@ if __name__ == '__main__':
     sca.set_print_time(True)
     sca.set_record_gantt(True)
     sca.run()
-    print("Errors:", sca.get_error_reports())
+    errors = sca.get_error_reports()
+    if errors:
+        print("Errors:\n- %s" % '\n- '.join(errors))
 
     # Gantt chart
     gc = sca.get_gantt_record().get_gantt_chart()
