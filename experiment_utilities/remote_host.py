@@ -101,5 +101,5 @@ class RemoteHost:
             self.write_jinja2(f.read(), parameters, remote_file_location)
 
     def wait_for_port(self, port, sleep=1., timeout=300):
-        from exepriment_utilities.wait_for import wait_for_port
+        from experiment_utilities.wait_for import wait_for_port
         wait_for_port(port, self._remote_address, sleep=sleep, timeout=timeout)

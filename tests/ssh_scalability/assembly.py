@@ -5,7 +5,7 @@ from concerto.utility import empty_transition
 
 class SSHCaller(Component):
     def __init__(self, remote_address, sleep_time):
-        from exepriment_utilities.remote_host import RemoteHost
+        from experiment_utilities.remote_host import RemoteHost
         self._remote_host = RemoteHost(remote_address)
         self._sleep_time = sleep_time
         super().__init__()

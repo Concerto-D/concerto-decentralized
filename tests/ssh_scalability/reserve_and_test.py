@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import logging
 
-from exepriment_utilities.remote_host import RemoteHost
-from exepriment_utilities.reserve_g5k import G5kReservation
+from experiment_utilities.remote_host import RemoteHost
+from experiment_utilities.reserve_g5k import G5kReservation
 
 CONCERTO_GIT = 'https://gitlab.inria.fr/mchardet/madpp.git'
 CONCERTO_DIR_IN_GIT = 'madpp'
