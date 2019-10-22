@@ -10,7 +10,7 @@ g5k:
       - roles:
           - remote
         cluster: ecotype
-        nodes: 20
+        nodes: 10
         primary_network: n1
         secondary_networks: []
       - roles:
