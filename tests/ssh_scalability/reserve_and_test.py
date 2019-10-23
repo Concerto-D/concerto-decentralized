@@ -16,7 +16,7 @@ EXP_DIR = '%s/%s' % (ROOT_DIR, EXP_DIR_IN_GIT)
 DEFAULT_WORKING_DIRECTORY = '.'
 
 
-def run_experiment(list_nb_remote_ssh, nb_repeat, conf, working_directory=DEFAULT_WORKING_DIRECTORY,
+def run_experiment(list_nb_remote_ssh, nb_repeats, conf, working_directory=DEFAULT_WORKING_DIRECTORY,
                    force_deployment=True, destroy=False):
     from json import dump
 
@@ -29,7 +29,7 @@ def run_experiment(list_nb_remote_ssh, nb_repeat, conf, working_directory=DEFAUL
             "remote_hosts": remote_machines,
             "concerto_host": concerto_machine,
             "list_nb_remote_ssh": list_nb_remote_ssh,
-            "nb_repeat": nb_repeat
+            "nb_repeats": nb_repeats
         }
         with open(working_directory + "/concerto_config.json", "w") as concerto_config_file:
             dump(concerto_config, concerto_config_file)
@@ -62,7 +62,7 @@ def run_experiment(list_nb_remote_ssh, nb_repeat, conf, working_directory=DEFAUL
             )
 
 
-def perform_experiment(list_nb_remote_ssh, nb_repeat):
+def perform_experiment(list_nb_remote_ssh, nb_repeats):
     import yaml
     from os import makedirs
 
@@ -76,7 +76,7 @@ def perform_experiment(list_nb_remote_ssh, nb_repeat):
     with open(wd + '/g5k_config.yaml', 'w') as g5k_config_file:
         yaml.dump(conf, g5k_config_file)
 
-    run_experiment(list_nb_remote_ssh, nb_repeat, conf, wd)
+    run_experiment(list_nb_remote_ssh, nb_repeats, conf, wd)
 
 
 if __name__ == '__main__':
