@@ -35,8 +35,8 @@ class SSHAssembly(Assembly):
 
     def prepare(self, remote_addresses, sleep_time):
         self._current_nb = len(remote_addresses)
-        for i, address in enumerate(remote_addresses, sleep_time):
-            self.add_component("caller%d" % i, address)
+        for i, address in enumerate(remote_addresses):
+            self.add_component("caller%d" % i, SSHCaller(address, sleep_time))
         self.synchronize()
 
     def call(self, nb_calls):
