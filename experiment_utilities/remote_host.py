@@ -67,6 +67,8 @@ class RemoteHost:
 
     def __init__(self, remote_address, remote_user='root', backend=Backend.EXECO):
         self._remote_address = remote_address
+        self._remote_user = remote_user
+        self._backend = backend
         if backend is RemoteHost.Backend.EXECO:
             self._backend = self._ExecoBackend(remote_address, remote_user)
         else:
@@ -77,6 +79,10 @@ class RemoteHost:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+    def __str__(self):
+        return "RemoteHost(address=%s, user=%s, backend=%s)" % (self._remote_address, self._remote_user,
+                                                                str(self._backend))
 
     def run(self, command, **kwargs):
         self._backend.run(command, **kwargs)

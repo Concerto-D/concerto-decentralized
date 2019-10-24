@@ -25,6 +25,7 @@ class SSHCaller(Component):
 
     def call_function(self):
         self.print_color("Waiting for %f seconds" % self._sleep_time)
+        self.print_color(str(self._remote_host))
         self._remote_host.run("sleep %f" % self._sleep_time)
 
 
