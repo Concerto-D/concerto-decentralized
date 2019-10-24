@@ -4,7 +4,8 @@ g5k:
   walltime: "01:00:00"
   dhcp: true
   job_name: concerto_ssh_scalability
-  env_name: debian9-x64-nfs-madpp
+  env_name: debian10-x64-base
+  # env_name: debian9-x64-nfs-madpp
   resources:
     machines:
       - roles:

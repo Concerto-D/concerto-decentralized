@@ -34,6 +34,10 @@ def run_experiment(list_nb_remote_ssh, nb_repeats, conf, working_directory=DEFAU
         with open(working_directory + "/concerto_config.json", "w") as concerto_config_file:
             dump(concerto_config, concerto_config_file)
 
+        with g5k.ansible_to("concerto") as ansible_to_concerto:
+            ansible_to_concerto.apt(name=["python3"], state="present")
+            ansible_to_concerto.pip(name=["enoslib"], executable="pip3")
+
         with RemoteHost(concerto_machine["address"], remote_user="root") as concerto_host:
             run_cmd = "mkdir -p %s;" % ROOT_DIR + \
                       "cd %s;" % ROOT_DIR + \
