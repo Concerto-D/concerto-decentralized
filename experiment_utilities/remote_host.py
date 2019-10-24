@@ -16,7 +16,7 @@ class RemoteHost:
             self._remote_user = remote_user
             self._host = Host(remote_address, user=remote_user)
 
-        def run(self, command, wait=True):
+        def run(self, command, wait=True, **kwargs):
             act = Remote(
                 cmd=command,
                 hosts=[self._host]
@@ -48,7 +48,7 @@ class RemoteHost:
             self._remote_user = remote_user
             self._ssh_adr = '%s@%s' % (remote_user, remote_address)
 
-        def run(self, command):
+        def run(self, command, **kwargs):
             cproc = subprocess.run(['ssh', self._ssh_adr, command], check=True)
 
         def send_files(self, local_files, remote_location):
@@ -78,8 +78,8 @@ class RemoteHost:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def run(self, command):
-        self._backend.run(command)
+    def run(self, command, **kwargs):
+        self._backend.run(command, **kwargs)
 
     def send_files(self, local_files, remote_location='.'):
         self._backend.send_files(local_files, remote_location)
@@ -88,7 +88,8 @@ class RemoteHost:
         self._backend.get_files(remote_files, local_location)
 
     def write_file(self, text, remote_file_location):
-        import tempfile, os
+        import tempfile
+        import os
         (fd, fpath) = tempfile.mkstemp(text=True)
         b = str.encode(text)
         os.write(fd, b)
