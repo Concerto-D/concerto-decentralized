@@ -16,25 +16,31 @@ class RemoteHost:
             self._remote_user = remote_user
             self._host = Host(remote_address, user=remote_user)
 
-        def run(self, command):
+        def run(self, command, wait=True):
             act = Remote(
                 cmd=command,
                 hosts=[self._host]
             ).run()
+            if wait:
+                act.wait()
 
-        def send_files(self, local_files, remote_location):
+        def send_files(self, local_files, remote_location, wait=True):
             act = Put(
                 hosts=[self._host],
                 local_files=local_files,
                 remote_location=remote_location
             ).run()
+            if wait:
+                act.wait()
 
-        def get_files(self, remote_files, local_location):
+        def get_files(self, remote_files, local_location, wait=True):
             act = Get(
                 hosts=[self._host],
                 remote_files=remote_files,
                 local_location=local_location
             ).run()
+            if wait:
+                act.wait()
 
     class _SSHBackend:
         def __init__(self, remote_address, remote_user):
