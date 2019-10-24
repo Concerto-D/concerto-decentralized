@@ -107,7 +107,7 @@ def run_experiments(remote_hosts, list_nb_remote_ssh, nb_repeats,
 
     gc = assembly.get_gantt_record()
     gc.export_gnuplot("results.gpl")
-    gc.export_json("results.json")
+    gc.get_gantt_chart().export_json("results.json")
 
 
 def load_config(conf_file_location):
