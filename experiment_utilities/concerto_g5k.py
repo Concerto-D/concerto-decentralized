@@ -33,9 +33,9 @@ class ConcertoG5k:
         self.full_concerto_dir = '%s/%s' % (remote_wd, concerto_dir_in_git)
         self.full_remote_exp_dir = '%s/%s' % (remote_wd, remote_exp_dir)
         self.concerto_host: RemoteHost = remote_host
-        self.local_wd: str = local_wd,
-        self.remote_wd: str = remote_wd,
-        self.concerto_git: str = concerto_git,
+        self.local_wd: str = local_wd
+        self.remote_wd: str = remote_wd
+        self.concerto_git: str = concerto_git
         self.concerto_config = concerto_config
         self.send_ssh_keys: bool = send_ssh_keys
         self.print_commands: bool = print_commands
