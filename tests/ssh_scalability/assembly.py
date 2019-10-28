@@ -1,4 +1,5 @@
 import time
+from typing import List
 from concerto.all import Component, Assembly
 from concerto.utility import empty_transition
 
@@ -16,16 +17,15 @@ class SSHCaller(Component):
             'end'
         ]
 
+        self.initial_place = "beginning"
+
         self.transitions = {
             'call': ('beginning', 'end', 'call', 0, self.call_function),
             'reset': ('end', 'beginning', 'reset', 0, empty_transition)
         }
 
-        self.initial_place = "beginning"
-
     def call_function(self):
         self.print_color("Waiting for %f seconds" % self._sleep_time)
-        self.print_color(str(self._remote_host))
         self._remote_host.run("sleep %f" % self._sleep_time)
 
 
@@ -59,8 +59,8 @@ class SSHAssembly(Assembly):
         self.synchronize()
 
 
-def run_experiments(remote_hosts, list_nb_remote_ssh, nb_repeats,
-                    verbosity: int = 0, printing: bool = False, print_time: bool = False, dryrun: bool = False):
+def run_experiments(remote_hosts: List, list_nb_remote_ssh: List[int], nb_repeats: int,
+                    verbosity: int = -1, printing: bool = False, print_time: bool = False, dryrun: bool = False):
     import json
     from statistics import mean, stdev
     from typing import Dict, Any
@@ -99,7 +99,7 @@ def run_experiments(remote_hosts, list_nb_remote_ssh, nb_repeats,
             if printing:
                 Printer.st_tprint("- std: %f" % running_times[nb_remote_ssh]["std"])
     with open("times.json", "w") as f:
-        json.dump(running_times, f)
+        json.dump(running_times, f, indent='\t')
 
     if printing:
         Printer.st_tprint("Terminating assembly")
@@ -125,7 +125,7 @@ def main():
 
     run_experiments(
         remote_hosts, list_nb_remote_ssh, nb_repeats,
-        verbosity=1,
+        verbosity=-1,
         printing=True,
         print_time=True,
     )

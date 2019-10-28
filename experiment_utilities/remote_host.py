@@ -1,5 +1,6 @@
 from enum import Enum
 import subprocess
+from typing import List
 
 from execo.action import Put, Get, Remote
 from execo.host import Host
@@ -84,16 +85,16 @@ class RemoteHost:
         return "RemoteHost(address=%s, user=%s, backend=%s)" % (self._remote_address, self._remote_user,
                                                                 str(self._backend))
 
-    def run(self, command, **kwargs):
+    def run(self, command: str, **kwargs):
         self._backend.run(command, **kwargs)
 
-    def send_files(self, local_files, remote_location='.'):
+    def send_files(self, local_files: List[str], remote_location: str = '.'):
         self._backend.send_files(local_files, remote_location)
 
-    def get_files(self, remote_files, local_location='.'):
+    def get_files(self, remote_files: List[str], local_location: str = '.'):
         self._backend.get_files(remote_files, local_location)
 
-    def write_file(self, text, remote_file_location):
+    def write_file(self, text: str, remote_file_location: str):
         import tempfile
         import os
         (fd, fpath) = tempfile.mkstemp(text=True)
