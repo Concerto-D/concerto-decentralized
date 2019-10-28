@@ -36,7 +36,10 @@ def run_experiment(list_nb_components, list_nb_parallel_transitions, nb_repeats,
                     send_ssh_keys=True
             ) as concerto_g5k:
                 concerto_g5k.execute(timeout="45m")
-                concerto_g5k.get_files(['stdout', 'stderr', 'results.gpl', 'results.json', 'times.json'])
+                files_to_get = ['stdout', 'stderr', 'times.json']
+                for i in range(list_nb_parallel_transitions):
+                    files_to_get += ['results_%d_transitions.gpl' % i, 'results_%d_transitions.json' % i]
+                concerto_g5k.get_files(files_to_get)
 
 
 def perform_experiment(list_nb_components: List[int], list_nb_parallel_transitions: List[int], nb_repeats: int,
