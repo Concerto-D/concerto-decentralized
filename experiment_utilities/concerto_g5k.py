@@ -3,18 +3,18 @@ from experiment_utilities.remote_host import RemoteHost
 
 
 class ConcertoG5k:
-    DEFAULT_LOCAL_WD = '.'
-    DEFAULT_REMOTE_WD = '~/concertonode'
-    DEFAULT_CONCERTO_GIT = 'https://gitlab.inria.fr/mchardet/madpp.git'
-    DEFAULT_CONCERTO_DIR_IN_GIT = 'madpp'
+    DEFAULT_LOCAL_WD: str = '.'
+    DEFAULT_REMOTE_WD: str = '~/concertonode'
+    DEFAULT_CONCERTO_GIT: str = 'https://gitlab.inria.fr/mchardet/madpp.git'
+    DEFAULT_CONCERTO_DIR_IN_GIT: str = 'madpp'
 
     def __init__(self, remote_host: RemoteHost, remote_exp_dir: str, python_file: str, concerto_config,
                  local_wd: str = DEFAULT_LOCAL_WD,
                  remote_wd: str = DEFAULT_REMOTE_WD,
                  concerto_git: str = DEFAULT_CONCERTO_GIT,
                  concerto_dir_in_git: str = DEFAULT_CONCERTO_DIR_IN_GIT,
-                 additional_git_clone: List[str] = (),
-                 send_ssh_keys: bool = False):
+                 send_ssh_keys: bool = False,
+                 print_commands: bool = True):
         """
 
         :param remote_host: RemoteHost object for the remote machine which is going to run Concerto
@@ -33,24 +33,47 @@ class ConcertoG5k:
         self.full_concerto_dir = '%s/%s' % (remote_wd, concerto_dir_in_git)
         self.full_remote_exp_dir = '%s/%s' % (remote_wd, remote_exp_dir)
         self.concerto_host: RemoteHost = remote_host
-        self.local_wd = local_wd
+        self.local_wd: str = local_wd,
+        self.remote_wd: str = remote_wd,
+        self.concerto_git: str = concerto_git,
         self.concerto_config = concerto_config
-        self.send_ssh_keys = send_ssh_keys
-        self.python_file = python_file
+        self.send_ssh_keys: bool = send_ssh_keys
+        self.print_commands: bool = print_commands
+        self.python_file: str = python_file
 
         self.remote_exp_dir_created = False
-
-        self.git_clone_cmd = "cd %s;" % remote_wd +\
-                             "git clone %s;" % concerto_git
-        for git_repo in additional_git_clone:
-            self.git_clone_cmd += "git clone %s;" % git_repo
+        self.concerto_cloned = False
 
     def _ensure_exp_dir_exists(self):
         if not self.remote_exp_dir_created:
             command = "mkdir -p %s" % self.full_remote_exp_dir
             with self.concerto_host as concerto_host:
-                concerto_host.run(command, wait=True)
+                self.run_command(command)
             self.remote_exp_dir_created = True
+
+    def _ensure_concerto_cloned(self):
+        if not self.concerto_cloned:
+            self.clone_git(self.concerto_git)
+        self.concerto_cloned = True
+
+    def clone_git(self, git_url: str, location: Optional[str] = None):
+        if not location:
+            location = self.remote_wd
+        git_clone_cmd = "mkdir -p %s; cd %s; " % (location, location) +\
+                        "git clone %s;" % git_url
+        self.run_command(git_clone_cmd)
+
+    def run_command(self, command: str, override_print_command: Optional[bool] = None):
+        print_command = self.print_commands
+        if override_print_command is not None:
+            print_command = override_print_command
+        if print_command:
+            print("Running command: %s" % command)
+        with self.concerto_host as concerto_host:
+            concerto_host.run(command, wait=True)
+
+    def get_concerto(self):
+        self._ensure_concerto_cloned()
 
     def send_files(self, files_list: List[str]):
         """
@@ -84,10 +107,9 @@ class ConcertoG5k:
         :param timeout_graceful_exit_time: String in the timeout shell command format giving the time given by timeout
         to the Concerto process to exit gracefully before being killed (only relevant if timeout is not None)
         """
+        self._ensure_concerto_cloned()
         self._ensure_exp_dir_exists()
         with self.concerto_host as concerto_host:
-            print("Executing commands: %s" % self.git_clone_cmd)
-            concerto_host.run(self.git_clone_cmd)
             with open(self.local_wd + "/concerto_config.json", "w") as concerto_config_file:
                 from json import dump
                 dump(self.concerto_config, concerto_config_file)
@@ -109,8 +131,7 @@ class ConcertoG5k:
                                                                              self.python_file)
             else:
                 run_cmd += "python3 %s >stdout 2>stderr" % self.python_file
-            print("Executing commands: %s" % run_cmd)
-            concerto_host.run(run_cmd, wait=True)
+            self.run_command(run_cmd)
 
     def __enter__(self):
         return self
