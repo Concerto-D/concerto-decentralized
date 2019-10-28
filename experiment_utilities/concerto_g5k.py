@@ -112,7 +112,7 @@ class ConcertoG5k:
         with self.concerto_host as concerto_host:
             with open(self.local_wd + "/concerto_config.json", "w") as concerto_config_file:
                 from json import dump
-                dump(self.concerto_config, concerto_config_file)
+                dump(self.concerto_config, concerto_config_file, indent='\t')
             concerto_host.send_files(
                 local_files=[self.local_wd + "/concerto_config.json"],
                 remote_location=self.full_remote_exp_dir
