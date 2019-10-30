@@ -6,6 +6,7 @@ if __name__ == '__main__':
     perform_experiment(
         list_nb_components=[1, 3],
         list_nb_parallel_transitions=[1, 5, 10, 20],
+        sleep_time=10,
         nb_repeats=5,
         working_directory="small_exp_ssh",
         ssh_test=True

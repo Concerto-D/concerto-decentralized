@@ -19,8 +19,9 @@ def run_experiment(list_nb_components, list_nb_parallel_transitions, sleep_time,
             "concerto_host": concerto_machine if concerto_machine else None,
             "list_nb_components": list_nb_components,
             "list_nb_parallel_transitions": list_nb_parallel_transitions,
-            "nb_repeats": nb_repeats
-            "sleep_time": sleep_time
+            "sleep_time": sleep_time,
+            "nb_repeats": nb_repeats,
+
         }
 
         with g5k.ansible_to("concerto") as ansible_to_concerto:
