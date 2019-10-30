@@ -7,7 +7,7 @@ from experiment_utilities.reserve_g5k import G5kReservation
 from experiment_utilities.concerto_g5k import ConcertoG5k
 
 
-def run_experiment(list_nb_components, list_nb_parallel_transitions, nb_repeats, conf, working_directory,
+def run_experiment(list_nb_components, list_nb_parallel_transitions, sleep_time, nb_repeats, conf, working_directory,
                    force_deployment=True, destroy=False):
     with G5kReservation(conf, force_deployment, destroy) as g5k:
         remote_machines = g5k.get_hosts_info(role='remote')
@@ -20,6 +20,7 @@ def run_experiment(list_nb_components, list_nb_parallel_transitions, nb_repeats,
             "list_nb_components": list_nb_components,
             "list_nb_parallel_transitions": list_nb_parallel_transitions,
             "nb_repeats": nb_repeats
+            "sleep_time": sleep_time
         }
 
         with g5k.ansible_to("concerto") as ansible_to_concerto:
@@ -42,7 +43,7 @@ def run_experiment(list_nb_components, list_nb_parallel_transitions, nb_repeats,
                 concerto_g5k.get_files(files_to_get)
 
 
-def perform_experiment(list_nb_components: List[int], list_nb_parallel_transitions: List[int], nb_repeats: int,
+def perform_experiment(list_nb_components: List[int], list_nb_parallel_transitions: List[int], sleep_time: float, nb_repeats: int,
                        working_directory: str = 'exp', ssh_test=True):
     import yaml
     from os import makedirs
@@ -56,7 +57,7 @@ def perform_experiment(list_nb_components: List[int], list_nb_parallel_transitio
     with open(working_directory + '/g5k_config.yaml', 'w') as g5k_config_file:
         yaml.dump(conf, g5k_config_file)
 
-    run_experiment(list_nb_components, list_nb_parallel_transitions, nb_repeats, conf, working_directory)
+    run_experiment(list_nb_components, list_nb_parallel_transitions, sleep_time, nb_repeats, conf, working_directory)
 
 
 if __name__ == '__main__':
@@ -64,6 +65,7 @@ if __name__ == '__main__':
     perform_experiment(
         list_nb_components=[1, 5, 10, 15, 20],
         list_nb_parallel_transitions=[1, 5, 10, 20],
+        sleep_time=10,
         nb_repeats=5,
         working_directory="exp_ssh",
         ssh_test=True
@@ -71,6 +73,7 @@ if __name__ == '__main__':
     perform_experiment(
         list_nb_components=[1, 5, 10, 15, 20, 50],
         list_nb_parallel_transitions=[1, 5, 10, 20],
+        sleep_time=1,
         nb_repeats=5,
         working_directory="exp_no_ssh",
         ssh_test=False

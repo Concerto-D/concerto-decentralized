@@ -174,6 +174,7 @@ def main():
     list_nb_parallel_transitions = config['list_nb_parallel_transitions']
     nb_repeats = config['nb_repeats']
     remote_hosts = config['remote_hosts']
+    sleep_time = config['sleep_time']
 
     run_experiments(
         list_nb_components,
@@ -183,6 +184,7 @@ def main():
         verbosity=-1,
         printing=True,
         print_time=True,
+        sleep_time=sleep_time
     )
 
 
