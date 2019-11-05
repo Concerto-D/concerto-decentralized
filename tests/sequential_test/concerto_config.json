@@ -1,4 +1,4 @@
 {
-  "list_chain_length": [1, 5, 25, 100],
+  "list_chain_length": [1, 5],
   "nb_repeats": 5
 }

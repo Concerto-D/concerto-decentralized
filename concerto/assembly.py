@@ -324,7 +324,7 @@ class Assembly(object):
                 "\n".join(["- %s" % str(ins) for ins in self.instructions_queue.queue])))
         self.instructions_queue.join()
 
-    def synchronize_timeout(self, time):
+    def synchronize_timeout(self, time: int):
         from concerto.utility import timeout
         finished = False
         with timeout(time):

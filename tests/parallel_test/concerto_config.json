@@ -1,6 +1,7 @@
 {
-  "list_nb_components": [1, 5, 25, 100],
-  "list_nb_parallel_transitions": [1, 5, 25, 100],
+  "list_nb_components": [1, 5],
+  "list_nb_parallel_transitions": [1, 5],
   "nb_repeats": 5,
-  "remote_hosts": []
+  "remote_hosts": [],
+  "sleep_time": 1
 }
