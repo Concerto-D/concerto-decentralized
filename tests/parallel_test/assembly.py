@@ -173,7 +173,7 @@ def main():
     list_nb_components = config['list_nb_components']
     list_nb_parallel_transitions = config['list_nb_parallel_transitions']
     nb_repeats = config['nb_repeats']
-    remote_hosts = config['remote_hosts']
+    remote_hosts = [h["ip"] for h in config['remote_hosts']]
     sleep_time = config['sleep_time']
 
     run_experiments(
