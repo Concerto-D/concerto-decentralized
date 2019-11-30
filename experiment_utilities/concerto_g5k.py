@@ -5,8 +5,8 @@ from experiment_utilities.remote_host import RemoteHost
 class ConcertoG5k:
     DEFAULT_LOCAL_WD: str = '.'
     DEFAULT_REMOTE_WD: str = '~/concertonode'
-    DEFAULT_CONCERTO_GIT: str = 'https://gitlab.inria.fr/mchardet/madpp.git'
-    DEFAULT_CONCERTO_DIR_IN_GIT: str = 'madpp'
+    DEFAULT_CONCERTO_GIT: str = 'https://gitlab.inria.fr/VeRDi-project/concerto'
+    DEFAULT_CONCERTO_DIR_IN_GIT: str = 'concerto'
 
     def __init__(self, remote_host: RemoteHost, remote_exp_dir: str, python_file: str, concerto_config,
                  local_wd: str = DEFAULT_LOCAL_WD,
