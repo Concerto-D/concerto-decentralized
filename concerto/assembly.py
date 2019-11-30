@@ -104,7 +104,7 @@ class Assembly(object):
     def set_dump_program(self, value: bool):
         self.dump_program = value
 
-    def get_program_deump(self):
+    def get_program_dump(self):
         return self.program_str
 
     def clear_program_dump(self):
