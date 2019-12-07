@@ -76,6 +76,26 @@ class G5kReservation:
         from enoslib.api import play_on
         return play_on(roles=self._roles, pattern_hosts=pattern_hosts)
 
+    def run_ansible(
+            self,
+            playbooks,
+            inventory_path=None,
+            extra_vars=None,
+            tags=None,
+            on_error_continue=False,
+            basedir="."
+    ):
+        from enoslib.api import run_ansible as enoslib_run_ansible
+        enoslib_run_ansible(
+            playbooks,
+            inventory_path=inventory_path,
+            roles=self._roles,
+            extra_vars=extra_vars,
+            tags=tags,
+            on_error_continue=on_error_continue,
+            basedir=basedir
+        )
+
     def __enter__(self):
         return self
 
