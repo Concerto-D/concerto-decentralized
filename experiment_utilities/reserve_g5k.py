@@ -33,7 +33,12 @@ class G5kReservation:
 
     def generate_inventory(self, path):
         from enoslib.api import generate_inventory as el_generate_inventory
-        el_generate_inventory(self._roles, self._networks, path)
+        from copy import deepcopy
+        roles_no_concerto = deepcopy(self._roles)
+        concerto_machine = roles_no_concerto["concerto"][0]
+        del roles_no_concerto["concerto"]
+        roles_no_concerto["all"] = filter(lambda x: x != concerto_machine, roles_no_concerto["all"])
+        el_generate_inventory(roles_no_concerto, self._networks, path)
         self._inventory_path = path
 
     @staticmethod
