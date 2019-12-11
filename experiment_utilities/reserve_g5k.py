@@ -31,6 +31,11 @@ class G5kReservation:
             raise Exception("'g5k' key missing in configuration!")
         self._g5k_deploy(config['g5k'], force_deploy=force_deployment, discover=discover_networks)
 
+    def generate_inventory(self, path):
+        from enoslib.api import generate_inventory as el_generate_inventory
+        el_generate_inventory(self._roles, self._networks, path)
+        self._inventory_path = path
+
     @staticmethod
     def _get_ip(g5k_address):
         from subprocess import run, PIPE
@@ -41,7 +46,7 @@ class G5kReservation:
     def _get_host_dict(g5k_address):
         return {"address": g5k_address, "ip": G5kReservation._get_ip(g5k_address)}
 
-    def __init__(self, conf, force_deployment=True, destroy=False, discover_networks=True):
+    def __init__(self, conf, force_deployment=True, destroy=False, discover_networks=True, inventory_path=None):
         self._config = None
         self._g5k_job = None
         self._roles = None
@@ -49,6 +54,7 @@ class G5kReservation:
         self._destroy = destroy
         self._allocate(conf, force_deployment, discover_networks)
         self._alive = True
+        self._inventory_path = inventory_path
 
     def get_roles(self):
         if not self._alive:
@@ -79,13 +85,14 @@ class G5kReservation:
     def run_ansible(
             self,
             playbooks,
-            inventory_path=None,
+            inventory_path_override=None,
             extra_vars=None,
             tags=None,
             on_error_continue=False,
             basedir="."
     ):
         from enoslib.api import run_ansible as enoslib_run_ansible
+        inventory_path = inventory_path_override if inventory_path_override else self._inventory_path
         enoslib_run_ansible(
             playbooks,
             inventory_path=inventory_path,
