@@ -90,22 +90,22 @@ class Dependency(object):
         return self.type
 
     def get_data(self):
-        if self.get_type() is not DepType.DATA_PROVIDE:
+        if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
             raise Exception(
-                "Trying to get data from dependency '%s' which is not of type data provide" % self.get_name())
+                "Trying to get data from dependency '%s' which is not of type provide or data provide" % self.get_name())
         return self.data
 
     def read(self):
-        if self.get_type() is not DepType.DATA_USE:
-            raise Exception("Trying to read from dependency '%s' which is not of type data use" % self.get_name())
+        if self.get_type() is not DepType.DATA_USE and self.get_type() is not DepType.USE:
+            raise Exception("Trying to read from dependency '%s' which is not of type use or data use" % self.get_name())
         for c in self.connections:
             if c.is_active():
                 return c.get_provide_dep().get_data()
         raise Exception("Trying to read from dependency '%s' which is not served" % self.get_name())
 
     def write(self, data):
-        if self.get_type() is not DepType.DATA_PROVIDE:
-            raise Exception("Trying to write to dependency '%s' which is not of type data provide" % self.get_name())
+        if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
+            raise Exception("Trying to write to dependency '%s' which is not of type provide or data provide" % self.get_name())
         self.data = data
 
     def is_connected(self) -> bool:

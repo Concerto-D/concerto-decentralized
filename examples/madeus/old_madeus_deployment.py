@@ -1,17 +1,15 @@
-from concerto.madeus.madeus_component import MadeusComponent
-from concerto.madeus.madeus_assembly import MadeusAssembly
-from concerto.dependency import DepType
+from concerto.madeus.all import *
 from concerto.meta import ReconfigurationPerfAnalyzer
     
     
-def sleep_print(component: MadeusComponent, start_message: str, time: float, end_message: str):
+def sleep_print(component: OldMadeusComponent, start_message: str, time: float, end_message: str):
     from time import sleep
     component.print_color(start_message)
     sleep(time)
     component.print_color(end_message)
 
 
-class Server(MadeusComponent):
+class Server(OldMadeusComponent):
     def create(self):
         self.places = ['undeployed', 'vm_started', 'downloaded', 'configured', 'running', 'running_checked']
         self.initial_place = "undeployed"
@@ -23,9 +21,12 @@ class Server(MadeusComponent):
             'run': ('configured', 'running', self.run),
             'check': ('running', 'running_checked', self.check),
         }
+        self.groups = {
+            'providing_service': ['running', 'running_checked']
+        }
         self.dependencies = {
-            'ip': (DepType.PROVIDE, [['vm_started']]),
-            'service': (DepType.PROVIDE, [['running']])
+            'ip': (DepType.DATA_PROVIDE, ['vm_started']),
+            'service': (DepType.PROVIDE, ['providing_service'])
         }
         
     def start_vm(self):
@@ -46,10 +47,10 @@ class Server(MadeusComponent):
 
     def check(self):
         sleep_print(self, "Checking...", 5, "Checked!")
-        print(self._concerto_component.groups)
+        raise Exception("Check went wrong!!!")
         
 
-class Client(MadeusComponent):
+class Client(OldMadeusComponent):
     def create(self):
         self.places = ['undeployed', 'downloaded', 'configured', 'running']
         self.initial_place = "undeployed"
@@ -60,7 +61,7 @@ class Client(MadeusComponent):
             'run': ('configured', 'running', self.run),
         }
         self.dependencies = {
-            'server_ip': (DepType.USE, ['configure1']),
+            'server_ip': (DepType.DATA_USE, ['configure1']),
             'server_service': (DepType.USE, ['run'])
         }
 
@@ -78,7 +79,7 @@ class Client(MadeusComponent):
         sleep_print(self, "Running...", 1, "Running!")
 
 
-class ServerClientAssembly(MadeusAssembly):
+class ServerClientAssembly(OldMadeusAssembly):
     def create(self):
         self.components = {
             'server': Server(),

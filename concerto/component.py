@@ -966,3 +966,22 @@ class Component(object, metaclass=ABCMeta):
 
     def get_initial_places(self):
         return [self.initial_place]
+
+    def get_accessible_places_from(self, origin_places: List[str], behavior_list: List[str]):
+        from copy import deepcopy
+        for place in origin_places:
+            assert(place in self.places)
+        accessible_places = set(origin_places)
+        old_accessible_places = set()
+        while accessible_places != old_accessible_places:
+            diff_places = accessible_places - old_accessible_places
+            old_accessible_places = deepcopy(accessible_places)
+            for place in diff_places:
+                for transition in self.transitions.values():
+                    if len(transition) == 6:
+                        src_name, dst_name, bhv, _, _, _ = transition
+                    else:  # len = 5
+                        src_name, dst_name, bhv, _, _ = transition
+                    if bhv in behavior_list and src_name == place:
+                        accessible_places.add(dst_name)
+        return accessible_places
