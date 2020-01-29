@@ -56,6 +56,8 @@ class _MadeusConcertoComponent(Component):
         group_id = 0
         for dep_name, dep_details in self.mc.dependencies.items():
             dep_type, bindings = dep_details
+            if dep_type == DepType.DATA_PROVIDE or dep_type == DepType.DATA_USE:
+                raise Exception("Port %s has type DATA_USE or DATA_PROVIDE which does not make sense!")
             if dep_type == DepType.USE:
                 self.dependencies[dep_name] = (DepType.USE, bindings)
             else:
