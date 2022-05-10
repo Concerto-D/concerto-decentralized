@@ -404,6 +404,7 @@ class Assembly(object):
         of the assembly.
         """
 
+        # On commence par exécuter les instructions non bloquantes
         if self.current_instruction is not None:
             finished = self.current_instruction.apply_to(self)
             if finished:
@@ -414,12 +415,15 @@ class Assembly(object):
         while (not self.instructions_queue.empty()) and (self.current_instruction is None):
             instruction: InternalInstruction = self.instructions_queue.get()
             finished = instruction.apply_to(self)
+            # Instruction pas finie: wait, waitall
             if finished:
                 self.instructions_queue.task_done()
             else:
                 self.current_instruction = instruction
 
         # semantics for each component
+        # Dès qu'une instruction est bloquante (e.g. wait, waitall) on exécute
+        # les behaviors des composants
         idle_components: Set[str] = set()
 
         for c in self.act_components:

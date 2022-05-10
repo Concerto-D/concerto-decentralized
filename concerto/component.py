@@ -670,6 +670,7 @@ class Component(object, metaclass=ABCMeta):
         Returns whether the component is IDLE.
         """
 
+        # Ajout d'une transition de départ vers la place initiale (donc sans source)
         if not self.initialized:
             self.init()
 
@@ -686,6 +687,8 @@ class Component(object, metaclass=ABCMeta):
 
         # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
         #  provide is not stable it doesn't get activated)
+
+        # Exécution des transitions
         if self.act_idocks:
             self._idocks_to_place()
         if self.act_places:
@@ -697,17 +700,19 @@ class Component(object, metaclass=ABCMeta):
 
         # Checks if the component is IDLE
         idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
+        # Check s'il y a des output docks associés au behavior actif (s'il y a une place à atteindre)
         if idle:
             for place in self.act_places:
                 if place not in self.visited_places and len(place.get_output_docks(self.act_behavior)) > 0:
                     idle = False
                     break
-
+        # Check s'il reste des behaviors à exécuter
         if idle:
             if not self.queued_behaviors.empty():
                 idle = False
                 self.set_behavior(self.queued_behaviors.get())
 
+        # Ajoute un behavior "de fin" (?) si c'est le cas
         if idle:
             self.set_behavior(None)
             if self.get_verbosity() >= 1:
@@ -864,11 +869,14 @@ class Component(object, metaclass=ABCMeta):
             if place in self.act_places:
                 continue
 
+            # On récupère tous les input docks associés au behavior actif de la fin des transitions
+            # allant vers cette place
             grp_inp_docks = place.get_groups_of_input_docks(self.act_behavior)
             for inp_docks in grp_inp_docks:
                 if len(inp_docks) is 0:
                     continue
 
+                # On regarde si tous les input docks on reçu le jeton
                 ready = True
                 for dock2 in inp_docks:
                     if dock2 not in self.act_idocks:
@@ -886,11 +894,13 @@ class Component(object, metaclass=ABCMeta):
                 if not ready:
                     continue
 
+                # TODO: mieux comprendre cette partie (e.g. meaning Operation ?)
                 # Checking group dependencies
                 activating_groups_operation: Dict[Group, Group.Operation] = {}
                 for group in self.place_groups[place.get_name()]:
                     if not ready:
                         break
+                    # A vérifier: on regarde combien de input dock manquants n'ont pas le jeton
                     group_operation = group.enter_place_operation(inp_docks)
                     if group.is_activating(group_operation):
                         for dep in self.group_dependencies[group.get_name()]:
