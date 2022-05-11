@@ -36,16 +36,21 @@ class Assembly(object):
         self._components: Dict[str, Component] = {}
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
+        # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
+        # d'en face.
         self._connections: Dict[Tuple[Dependency, Dependency], Connection] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
         # this is used to improve performance of the semantics
+        # TODO [con] Pas utilisé
         self.places_connections: Dict[str, List[Connection]] = {}
 
         # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
         # this is used to improve performance of the semantics
+        # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
+        # d'en face.
         self.component_connections: Dict[str, Set[Connection]] = {}
 
         # Operational semantics
@@ -225,6 +230,13 @@ class Assembly(object):
         comp1 = self.get_component(comp1_name)
         comp2 = self.get_component(comp2_name)
 
+        # TODO [con] On n'aura pas accès à comp2 à moins de faire un échange de messages
+        # en plus:
+        # - Remove la vérification
+        # - Faire une vérification à partir du type de composant (si on part du principe
+        # que les assemblies connaissent tous les types de composants possibles)
+        # - Ajouter un échange de message avec les informations du composant d'en face
+
         dep1 = comp1.get_dependency(dep1_name)
         dep2 = comp2.get_dependency(dep2_name)
 
@@ -242,6 +254,8 @@ class Assembly(object):
             if (provide_dep, use_dep) in self._connections:
                 raise Exception("Trying to add already existing connection from %s.%s to %s.%s" % (
                     comp1_name, dep1_name, comp2_name, dep2_name))
+
+            # TODO [con] Ajouter la synchronization avec le composant d'en face
 
             self._connections[(provide_dep, use_dep)] = new_connection
             self.component_connections[comp1_name].add(new_connection)
@@ -308,6 +322,10 @@ class Assembly(object):
         self.add_instruction(InternalInstruction.build_wait(component_name))
 
     def _wait(self, component_name: str):
+        # TODO [wait] Si on doit wait un component remote:
+        # - Soit on remplace la fonction par des zenoh.get successifs
+        # - Soit on met en place un subscribe (à voir comment et où)
+        # - Soit on change le fonctionnement de la fonction semantics()
         return self.is_component_idle(component_name)
 
     def wait_all(self):
@@ -403,7 +421,6 @@ class Assembly(object):
         of assembly instructions and then by running semantics of each component
         of the assembly.
         """
-
         # On commence par exécuter les instructions non bloquantes
         if self.current_instruction is not None:
             finished = self.current_instruction.apply_to(self)
