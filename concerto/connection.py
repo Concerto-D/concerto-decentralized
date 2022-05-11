@@ -51,3 +51,6 @@ class Connection:
 
     def is_locked(self) -> bool:
         return self.use_dep.is_in_use()
+
+    def get_opposite_dependency(self, dep):
+        return self.use_dep if dep == self.provide_dep else self.provide_dep

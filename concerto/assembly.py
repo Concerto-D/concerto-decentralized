@@ -10,8 +10,12 @@ import sys
 from typing import Dict, Tuple, List, Set, Optional
 from threading import Thread
 from queue import Queue
+
+from concerto import communication_handler
+from concerto.communication_handler import CONN, DECONN
 from concerto.dependency import DepType, Dependency
 from concerto.component import Component
+from concerto.proxy_dependency import ProxyDependency
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
@@ -220,25 +224,28 @@ class Assembly(object):
     def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
-
+        Assumption: comp1_name and dep1_name are NOT remote
         :param comp1_name: The name of the first component to connect
         :param dep1_name:  The name of the dependency of the first component to connect
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-
-        comp1 = self.get_component(comp1_name)
-        comp2 = self.get_component(comp2_name)
-
-        # TODO [con] On n'aura pas accès à comp2 à moins de faire un échange de messages
-        # en plus:
+        # [con] On n'aura pas accès à comp2 à moins de faire un échange de messages en plus:
         # - Remove la vérification
         # - Faire une vérification à partir du type de composant (si on part du principe
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
 
+        comp1 = self.get_component(comp1_name)
         dep1 = comp1.get_dependency(dep1_name)
-        dep2 = comp2.get_dependency(dep2_name)
+
+        remote_connection = comp2_name not in self._components.keys()
+        if remote_connection:
+            dep2_type = DepType.compute_opposite_type(dep1.get_type()) # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
+            dep2 = ProxyDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
+        else:
+            comp2 = self.get_component(comp2_name)
+            dep2 = comp2.get_dependency(dep2_name)
 
         if DepType.valid_types(dep1.get_type(),
                                dep2.get_type()):
@@ -255,11 +262,25 @@ class Assembly(object):
                 raise Exception("Trying to add already existing connection from %s.%s to %s.%s" % (
                     comp1_name, dep1_name, comp2_name, dep2_name))
 
-            # TODO [con] Ajouter la synchronization avec le composant d'en face
-
             self._connections[(provide_dep, use_dep)] = new_connection
             self.component_connections[comp1_name].add(new_connection)
-            self.component_connections[comp2_name].add(new_connection)
+
+            # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote
+            # ne pourra jamais être del par l'assembly, donc ne pas l'ajouter à la liste est possible
+            if not remote_connection:
+                self.component_connections[comp2_name].add(new_connection)
+
+            # [con] Ajouter la synchronization avec le composant d'en face
+            # TODO: réfléchir sur le besoin de la synchronization pour le con
+            if remote_connection:
+                # Need d'initialiser le nombre de user sur la dépendance à 0 car si on veut déconnecter tout de suite,
+                # un check est fait sur le nb d'utilisateur
+                # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
+                communication_handler.send_nb_dependency_users(0, comp1_name, dep1_name)
+                Printer.st_tprint("Sending CONN message")
+                communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
+                Printer.st_tprint("Waiting CONN message")
+                communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
 
             return True
 
@@ -273,18 +294,22 @@ class Assembly(object):
     def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
-
+        Assumption: comp1_name and dep1_name are NOT remote
         :param comp1_name: The name of the first component to connect
         :param dep1_name:  The name of the dependency of the first component to connect
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-
         comp1 = self.get_component(comp1_name)
-        comp2 = self.get_component(comp2_name)
-
         dep1 = comp1.get_dependency(dep1_name)
-        dep2 = comp2.get_dependency(dep2_name)
+
+        remote_disconnection = comp2_name not in self._components.keys()
+        if remote_disconnection:
+            dep2_type = DepType.compute_opposite_type(dep1.get_type())
+            dep2 = ProxyDependency(comp2_name, dep2_name, dep2_type)
+        else:
+            comp2 = self.get_component(comp2_name)
+            dep2 = comp2.get_dependency(dep2_name)
 
         dep1type = dep1.get_type()
         if dep1type == DepType.PROVIDE or dep1type == DepType.DATA_PROVIDE:
@@ -300,10 +325,23 @@ class Assembly(object):
 
         connection: Connection = self._connections[(provide_dep, use_dep)]
         if connection.can_remove():
-            connection.disconnect()
+            connection.disconnect()  # TODO [dcon] pertinence ajouter une liste de connexions au ProxyDependency ?
             self.component_connections[comp1_name].discard(connection)
-            self.component_connections[comp2_name].discard(connection)
+
+            # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote
+            # ne pourra jamais être del par l'assembly, donc ne pas l'ajouter à la liste est possible
+            if not remote_disconnection:
+                self.component_connections[comp2_name].discard(connection)
             del self._connections[(provide_dep, use_dep)]
+
+            # [dcon] Ajouter la synchronization avec le composant d'en face
+            # TODO: réfléchir sur le besoin de la synchronization pour le dcon
+            if remote_disconnection:
+                Printer.st_tprint("Sending DECONN message")
+                communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
+                Printer.st_tprint("Waiting DECONN message")
+                communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
+
             return True
         else:
             return False

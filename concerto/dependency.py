@@ -8,6 +8,8 @@
 from enum import Enum
 from typing import Set
 
+from concerto import communication_handler
+
 
 class DepMandatory(Enum):
     """
@@ -50,6 +52,17 @@ class DepType(Enum):
         if type1 == DepType.DATA_PROVIDE and type2 != DepType.DATA_USE:
             validity = False
         return validity
+
+    @staticmethod
+    def compute_opposite_type(type):
+        if type == DepType.USE:
+            return DepType.PROVIDE
+        if type == DepType.DATA_USE:
+            return DepType.DATA_PROVIDE
+        if type == DepType.PROVIDE:
+            return DepType.USE
+        if type == DepType.DATA_PROVIDE:
+            return DepType.DATA_USE
 
 
 class Dependency(object):
@@ -96,6 +109,8 @@ class Dependency(object):
         return self.data
 
     def read(self):
+        # TODO: à comprendre, pk on récupère les data de seulement la première connection active ?
+        # Pk on fait un get_provide_dep alors qu'on fait déjà la vérification dans le premier if ?
         if self.get_type() is not DepType.DATA_USE and self.get_type() is not DepType.USE:
             raise Exception("Trying to read from dependency '%s' which is not of type use or data use" % self.get_name())
         for c in self.connections:
@@ -137,10 +152,26 @@ class Dependency(object):
     def start_using(self):
         self.nb_users += 1
 
+        # Si l'une des dépendance d'en face associée à la même connection est remote,
+        # alors il faut la prévenir de la mise à jour du nb_users
+        for conn in self.connections:
+            if type(conn.get_opposite_dependency(self)).__name__ == 'ProxyDependency':
+                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
+
     def stop_using(self):
         self.nb_users -= 1
 
+        # Si l'une des dépendance d'en face associée à la même connection est remote,
+        # alors il faut la prévenir de la mise à jour du nb_users
+        for conn in self.connections:
+            if type(conn.get_opposite_dependency(self)).__name__ == 'ProxyDependency':
+                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
+
     def is_served(self):
+        """
+        Est ce que le use port est provisionné ?
+        TODO à comprendre: pk un use port aurait plusieurs connections ?
+        """
         if self.type != DepType.DATA_USE and self.type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")
         for c in self.connections:
@@ -149,9 +180,19 @@ class Dependency(object):
         return False
 
     def is_locked(self):
+        """
+        Est que le provide port est utilisé par au moins un use port ?
+        """
         if self.type != DepType.DATA_PROVIDE and self.type != DepType.PROVIDE:
             raise Exception("Trying to check if a (data) use port is active")
         for c in self.connections:
             if c.is_locked():
                 return True
         return False
+
+    # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
+    def __eq__(self, other):
+        return self.name == other.name and self.component == other.component
+
+    def __hash__(self):
+        return hash((self.name, self.component))
