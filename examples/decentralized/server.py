@@ -14,7 +14,8 @@ class Server(Component):
             'allocate': ('undeployed', 'allocated', 'deploy', 0, self.allocate),
             'run': ('allocated', 'running', 'deploy', 0, self.run),
             'update': ('running', 'allocated', 'stop', 0, self.update),
-            'cleanup': ('running', 'allocated', 'stop', 0, self.cleanup)
+            'cleanup': ('running', 'allocated', 'stop', 0, self.cleanup),
+            'undeploy': ('allocated', 'undeployed', 'undeploy', 0, self.undeploy)
         }
 
         self.dependencies = {
@@ -49,3 +50,8 @@ class Server(Component):
         self.print_color("cleaning up")
         time.sleep(2.) 
         self.print_color("cleaned up")
+
+    def undeploy(self):
+        self.print_color("undeploying")
+        time.sleep(2.)
+        self.print_color("undeployed")

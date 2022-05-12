@@ -22,7 +22,9 @@ class Client(Component):
             'configure': ('installed', 'configured', 'install_start', 0, self.configure),
             'start': ('configured', 'running', 'install_start', 0, self.start),
             'suspend1': ('running', 'paused', 'stop', 0, self.suspend1),
-            'suspend2': ('paused', 'configured', 'stop', 0, self.suspend2)
+            'suspend2': ('paused', 'configured', 'stop', 0, self.suspend2),
+            'unconfigure': ('configured', 'installed', 'uninstall', 0, self.unconfigure),
+            'uninstall': ('installed', 'off', 'uninstall', 0, self.uninstall)
         }
 
         self.dependencies = {
@@ -64,4 +66,12 @@ class Client(Component):
     def suspend2(self):
         time.sleep(1.)
         self.print_color("suspended")
+
+    def unconfigure(self):
+        time.sleep(1.)
+        self.print_color("unconfigured")
+
+    def uninstall(self):
+        time.sleep(1.)
+        self.print_color("uninstalled")
 
