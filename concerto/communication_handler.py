@@ -6,7 +6,9 @@ config = {}
 
 CONN = "CONN"
 DECONN = "DECONN"
-SLEEPING_TIME = 1
+ACTIVE = "ACTIVE"
+INACTIVE = "INACTIVE"
+WAITING_DELAY = 1
 
 
 class _ZenohSession:
@@ -35,6 +37,8 @@ def zenoh_session(func):
 @zenoh_session
 def get_nb_dependency_users(component_name: str, dependency_name: str, workspace=None) -> int:
     res = workspace.get(f"/{component_name}/{dependency_name}")
+
+    # The result always exists as the nb_users is set when the connection is created
     return int(res[0].value.get_content())
 
 
@@ -55,4 +59,21 @@ def wait_conn_to_sync(syncing_component: str, component_to_sync: str,  dep_provi
     result = []
     while len(result) <= 0 or result[0].value.get_content() != action:
         result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
-        time.sleep(SLEEPING_TIME)
+        time.sleep(WAITING_DELAY)
+
+
+@zenoh_session
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, workspace=None):
+    workspace.put(f"/wait/{component_name}", state)
+
+
+@zenoh_session
+def get_remote_component_state(component_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
+    result = workspace.get(f"/wait/{component_name}")
+    if len(result) <= 0:
+        return INACTIVE
+    else:
+        time.sleep(WAITING_DELAY + 2)
+        return result[0].value.get_content()
+
+

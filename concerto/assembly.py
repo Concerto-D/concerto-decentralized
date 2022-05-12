@@ -12,7 +12,7 @@ from threading import Thread
 from queue import Queue
 
 from concerto import communication_handler
-from concerto.communication_handler import CONN, DECONN
+from concerto.communication_handler import CONN, DECONN, ACTIVE, INACTIVE
 from concerto.dependency import DepType, Dependency
 from concerto.component import Component
 from concerto.proxy_dependency import ProxyDependency
@@ -43,6 +43,8 @@ class Assembly(object):
         # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
         # d'en face.
         self._connections: Dict[Tuple[Dependency, Dependency], Connection] = {}
+
+        self._remote_components_names: Set[str] = set()
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
@@ -137,6 +139,7 @@ class Assembly(object):
         return debug_info
 
     def terminate(self, debug=False):
+        # TODO Est censé attendre également les autres assemblies ?
         if debug:
             Printer.st_err_tprint("DEBUG terminate:\n%s" % self.get_debug_info())
         for component_name in self.act_components:
@@ -183,6 +186,16 @@ class Assembly(object):
         for instr in reconfiguration._get_instructions():
             self.add_instruction(instr)
 
+    def add_to_active_components(self, component_name: str):
+        # TODO: voir si on ajoute TOUS les components ou seulement une partie
+        self.act_components.add(component_name)
+        communication_handler.set_component_state(ACTIVE, component_name)
+
+    def remove_from_active_components(self, idle_components: Set[str]):
+        self.act_components.difference_update(idle_components)
+        for component_name in idle_components:
+            communication_handler.set_component_state(INACTIVE, component_name)
+
     def add_component(self, name: str, comp: Component):
         self.add_instruction(InternalInstruction.build_add(name, comp))
 
@@ -203,7 +216,7 @@ class Assembly(object):
         comp.set_assembly(self)
         self._components[name] = comp
         self.component_connections[name] = set()
-        self.act_components.add(name)  # _init
+        self.add_to_active_components(name)  # _init
         return True
 
     def del_component(self, component_name: str):
@@ -273,6 +286,10 @@ class Assembly(object):
             # [con] Ajouter la synchronization avec le composant d'en face
             # TODO: réfléchir sur le besoin de la synchronization pour le con
             if remote_connection:
+                # TODO A discuter: ajouter les remotes components moins tardivement qu'au moment de la connexion
+                # Et quand les enlever
+                self._remote_components_names.add(comp2_name)
+
                 # Need d'initialiser le nombre de user sur la dépendance à 0 car si on veut déconnecter tout de suite,
                 # un check est fait sur le nb d'utilisateur
                 # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
@@ -325,7 +342,7 @@ class Assembly(object):
 
         connection: Connection = self._connections[(provide_dep, use_dep)]
         if connection.can_remove():
-            connection.disconnect()  # TODO [dcon] pertinence ajouter une liste de connexions au ProxyDependency ?
+            connection.disconnect()  # TODO [dcon] pertinent d'ajouter une liste de connexions au ProxyDependency ?
             self.component_connections[comp1_name].discard(connection)
 
             # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote
@@ -353,7 +370,7 @@ class Assembly(object):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
         if component_name not in self.act_components:
-            self.act_components.add(component_name)
+            self.add_to_active_components(component_name)
         return True
 
     def wait(self, component_name: str):
@@ -370,9 +387,16 @@ class Assembly(object):
         self.add_instruction(InternalInstruction.build_wait_all())
 
     def _wait_all(self):
-        return len(self.act_components) is 0
+        # Wait remotes
+        all_remotes_are_idles = True
+        for comp_name in self._remote_components_names:
+            if not self.is_component_idle(comp_name):
+                all_remotes_are_idles = False
+
+        return len(self.act_components) is 0 and all_remotes_are_idles
 
     def synchronize(self, debug=False):
+        # TODO: aims to also synchronize with other assemblies ?
         if debug:
             # TODO Remove access to internal queue of instructions_queue (not part of API)
             Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n" % (
@@ -393,7 +417,10 @@ class Assembly(object):
             return False, self.get_debug_info()
 
     def is_component_idle(self, component_name: str) -> bool:
-        return component_name not in self.act_components
+        if component_name in self._components.keys():
+            return component_name not in self.act_components
+        else:
+            return communication_handler.get_remote_component_state(component_name)
 
     def get_component(self, name: str) -> Component:
         if name in self._components:
@@ -486,7 +513,7 @@ class Assembly(object):
             if is_idle:
                 idle_components.add(c)
 
-        self.act_components.difference_update(idle_components)
+        self.remove_from_active_components(idle_components)
 
     def is_idle(self) -> bool:
         """
