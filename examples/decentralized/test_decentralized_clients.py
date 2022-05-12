@@ -9,8 +9,11 @@ sc.set_print_time(True)
 
 sc.add_component('client'+n, sc.client)
 sc.connect('client'+n, 'server_ip', 'server', 'ip')
-sc.disconnect('client'+n, 'server_ip', 'server', 'ip')
-sc.del_component('client'+n)
+sc.connect('client'+n, 'service', 'server', 'service')
+# sc.disconnect('client'+n, 'server_ip', 'server', 'ip')
+
+sc.push_b('client'+n, 'install_start')
+# sc.del_component('client'+n)
 sc.synchronize()
 sc.terminate()
 

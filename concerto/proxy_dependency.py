@@ -26,6 +26,8 @@ class ProxyDependency(Dependency):
 
     # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
     def __eq__(self, other):
+        if type(other) != type(self):
+            return False
         return self.name == other.name and self.remote_component_name == other.remote_component_name
 
     def __hash__(self):

@@ -730,6 +730,7 @@ class Component(object, metaclass=ABCMeta):
 
         for place in self.act_places:
             if place in self.visited_places:
+                # TODO à comprendre, visited_places ?
                 continue
             odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) is 0:
@@ -867,6 +868,7 @@ class Component(object, metaclass=ABCMeta):
         for dock in self.act_idocks:
             place: Place = dock.get_place()
             if place in self.act_places:
+                # TODO comprendre: comment ce cas peut arriver ?
                 continue
 
             # On récupère tous les input docks associés au behavior actif de la fin des transitions
@@ -882,6 +884,7 @@ class Component(object, metaclass=ABCMeta):
                     if dock2 not in self.act_idocks:
                         ready = False
                         break
+                # Si ce n'est pas le cas on attend
                 if not ready:
                     continue
 

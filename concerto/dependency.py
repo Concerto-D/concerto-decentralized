@@ -192,6 +192,8 @@ class Dependency(object):
 
     # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
     def __eq__(self, other):
+        if type(other) != type(self):
+            return False
         return self.name == other.name and self.component == other.component
 
     def __hash__(self):
