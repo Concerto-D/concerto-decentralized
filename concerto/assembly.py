@@ -15,7 +15,7 @@ from concerto import communication_handler
 from concerto.communication_handler import CONN, DECONN, ACTIVE, INACTIVE
 from concerto.dependency import DepType, Dependency
 from concerto.component import Component
-from concerto.proxy_dependency import ProxyDependency
+from concerto.remote_dependency import RemoteDependency
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
@@ -255,7 +255,7 @@ class Assembly(object):
         remote_connection = comp2_name not in self._components.keys()
         if remote_connection:
             dep2_type = DepType.compute_opposite_type(dep1.get_type()) # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
-            dep2 = ProxyDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
+            dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
         else:
             comp2 = self.get_component(comp2_name)
             dep2 = comp2.get_dependency(dep2_name)
@@ -323,7 +323,7 @@ class Assembly(object):
         remote_disconnection = comp2_name not in self._components.keys()
         if remote_disconnection:
             dep2_type = DepType.compute_opposite_type(dep1.get_type())
-            dep2 = ProxyDependency(comp2_name, dep2_name, dep2_type)
+            dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)
         else:
             comp2 = self.get_component(comp2_name)
             dep2 = comp2.get_dependency(dep2_name)
@@ -342,7 +342,7 @@ class Assembly(object):
 
         connection: Connection = self._connections[(provide_dep, use_dep)]
         if connection.can_remove():
-            connection.disconnect()  # TODO [dcon] pertinent d'ajouter une liste de connexions au ProxyDependency ?
+            connection.disconnect()  # TODO [dcon] pertinent d'ajouter une liste de connexions au RemoteDependency ?
             self.component_connections[comp1_name].discard(connection)
 
             # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote

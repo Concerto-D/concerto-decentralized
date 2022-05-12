@@ -155,7 +155,7 @@ class Dependency(object):
         # Si l'une des dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self.connections:
-            if type(conn.get_opposite_dependency(self)).__name__ == 'ProxyDependency':
+            if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
                 communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
 
     def stop_using(self):
@@ -164,7 +164,7 @@ class Dependency(object):
         # Si l'une des dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self.connections:
-            if type(conn.get_opposite_dependency(self)).__name__ == 'ProxyDependency':
+            if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
                 communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
 
     def is_served(self):

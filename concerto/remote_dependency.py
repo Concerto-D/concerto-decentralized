@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """
-.. module:: proxy_dependency
-   :synopsis: this file contains the ProxyDependency class.
+.. module:: remote_dependency
+   :synopsis: this file contains the RemoteDependency class.
 """
 from concerto import communication_handler
 from concerto.dependency import Dependency, DepType
 
 
-class ProxyDependency(Dependency):
+class RemoteDependency(Dependency):
     """
-    This class represents a proxy_dependency, meaning that it serves as an intermediary between this
+    This class represents a remote_dependency, it serves as an intermediary between this
     assembly an the one that host the real dependency.
     """
 
