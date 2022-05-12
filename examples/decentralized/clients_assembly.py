@@ -3,7 +3,8 @@ from examples.decentralized.client import Client
 
 
 class Clients(Assembly):
-    def __init__(self):
+    def __init__(self, n):
         Assembly.__init__(self)
         self.client = Client()
-        self.client.set_color('\33[34m')
+        self.name = "client"+n
+

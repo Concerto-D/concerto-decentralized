@@ -277,10 +277,10 @@ class Assembly(object):
                 # un check est fait sur le nb d'utilisateur
                 # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
                 communication_handler.send_nb_dependency_users(0, comp1_name, dep1_name)
-                Printer.st_tprint("Sending CONN message")
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
-                Printer.st_tprint("Waiting CONN message")
+                Printer.st_tprint(f"{self.name} : Waiting CONN message from {comp2_name}")
                 communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
+                Printer.st_tprint(f"{self.name} : RECEIVED CONN message from {comp2_name}")
 
             return True
 
@@ -337,10 +337,10 @@ class Assembly(object):
             # [dcon] Ajouter la synchronization avec le composant d'en face
             # TODO: réfléchir sur le besoin de la synchronization pour le dcon
             if remote_disconnection:
-                Printer.st_tprint("Sending DECONN message")
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
-                Printer.st_tprint("Waiting DECONN message")
+                Printer.st_tprint(f"{self.name} : Waiting DECONN message from {comp2_name}")
                 communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
+                Printer.st_tprint(f"{self.name} : RECEIVED DECONN message from {comp2_name}")
 
             return True
         else:
