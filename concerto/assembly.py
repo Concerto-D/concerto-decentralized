@@ -420,7 +420,7 @@ class Assembly(object):
         if component_name in self._components.keys():
             return component_name not in self.act_components
         else:
-            return communication_handler.get_remote_component_state(component_name)
+            return communication_handler.get_remote_component_state(component_name) == INACTIVE
 
     def get_component(self, name: str) -> Component:
         if name in self._components:
