@@ -42,6 +42,9 @@ class Dock(object):
     def get_behavior(self) -> str:
         return self.get_transition().get_behavior()
 
+    def __str__(self):
+        return "Docker place: " + str(self.get_place())
+
 
 class Place(object):
     """This Place class is used to create a place of a component.
@@ -125,3 +128,6 @@ class Place(object):
                 return [self.output_docks[behavior][i] for i in self.override_get_output_docks(self.cp, behavior)]
             else:
                 return self.output_docks[behavior]
+
+    def __str__(self):
+        return self.name

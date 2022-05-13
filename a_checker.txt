@@ -15,6 +15,8 @@ pyo3_runtime.PanicException: called `Result::unwrap()` on an `Err` value: ZError
 - Comment Zenoh peut prendre 16GB de RAM quand on créer plein de sessions ? (i.e. qu'est ce qui fait qu'une session prend autant de RAM ?)
 - Les messages Zenohs restent dans le router à la fin d'une reconf, donc il faudrait les supprimer à chaque fois
 - Le nb user des uses ports ne change jamais => pas utile ?
+- Faire un test avec des dépendances dans les transitions ?
+- Revoir le fonctionnement du waitall, voir si effectivement tous les composants sont bien tous attendus
 
 Tests connection, deconnection, del: 1 server et 13 clients ça passe, mais avec 1 server et 21 clients certains messages ne sont pas présents dans le routeur, donc soit
 pas envoyés, soit pas reçus, soit pas stockés par le router

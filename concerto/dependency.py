@@ -152,7 +152,7 @@ class Dependency(object):
     def start_using(self):
         self.nb_users += 1
 
-        # Si l'une des dépendance d'en face associée à la même connection est remote,
+        # Si la dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self.connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
@@ -161,7 +161,7 @@ class Dependency(object):
     def stop_using(self):
         self.nb_users -= 1
 
-        # Si l'une des dépendance d'en face associée à la même connection est remote,
+        # Si la dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self.connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':

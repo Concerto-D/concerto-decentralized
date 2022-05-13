@@ -688,12 +688,20 @@ class Component(object, metaclass=ABCMeta):
         # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
         #  provide is not stable it doesn't get activated)
 
+        Printer.st_tprint(self.get_debug_info())
+        time.sleep(0.2)
         # Exécution des transitions
         if self.act_idocks:
+            # Printer.st_tprint("Doing idocks_to_place")
+            # Printer.st_tprint("Active idocks: " + "".join([str(s) for s in self.act_idocks]))
             self._idocks_to_place()
         if self.act_places:
+            # Printer.st_tprint("Doing place_to_odocks")
+            # Printer.st_tprint("Active places: " + "".join([str(s) for s in self.act_places]))
             self._place_to_odocks()
         if self.act_odocks:
+            # Printer.st_tprint("Doing start_transition")
+            # Printer.st_tprint("Active odocks: " + "".join([str(s) for s in self.act_odocks]))
             self._start_transition()
         if self.act_transitions:
             self._end_transition()
@@ -730,7 +738,7 @@ class Component(object, metaclass=ABCMeta):
 
         for place in self.act_places:
             if place in self.visited_places:
-                # TODO à comprendre, visited_places ?
+                # TODO à comprendre, visited_places ? Pour ne pas boucler à l'infini? Dans quel scénario ?
                 continue
             odocks = place.get_output_docks(self.act_behavior)
             if len(odocks) is 0:

@@ -24,6 +24,15 @@ class ServerClient(Assembly):
         self.push_b('server', 'deploy')
         self.wait_all()
         self.synchronize()
+
+    def suspend_restart(self):
+        self.print("### SUSPENDING ###")
+        self.push_b('client', 'stop')
+        self.push_b('client', 'install_start')
+        self.push_b('server', 'stop')
+        self.push_b('server', 'deploy')
+        self.wait_all()
+        self.synchronize()
         
     def suspend(self):
         self.print("### SUSPENDING ###")
