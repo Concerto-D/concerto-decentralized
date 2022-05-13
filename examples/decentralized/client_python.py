@@ -13,7 +13,8 @@ class ClientPython(Component):
         ]
         
         self.groups = {
-            'using_service': ['running', 'paused']
+            'using_service': ['running', 'paused'],
+            'python_group': ['running', 'paused', 'configured', 'installed']
         }
 
         self.transitions = {
@@ -28,7 +29,7 @@ class ClientPython(Component):
         }
 
         self.dependencies = {
-            'python': (DepType.USE, ['installed']),
+            'python': (DepType.USE, ['python_group']),
             'server_ip': (DepType.DATA_USE, ['configure']),
             'service': (DepType.USE, ['using_service'])
         }

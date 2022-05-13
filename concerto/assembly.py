@@ -72,6 +72,9 @@ class Assembly(object):
         # set of active components
         self.act_components: Set[str] = set()
 
+        # Identifiant permettant de synchronizer les wait et waitall
+        self.id_sync = 0
+
         self.verbosity: int = 0
         self.print_time: bool = False
         self.dryrun: bool = False
@@ -189,12 +192,12 @@ class Assembly(object):
     def add_to_active_components(self, component_name: str):
         # TODO: voir si on ajoute TOUS les components ou seulement une partie
         self.act_components.add(component_name)
-        communication_handler.set_component_state(ACTIVE, component_name)
+        communication_handler.set_component_state(ACTIVE, component_name, self.id_sync)
 
     def remove_from_active_components(self, idle_components: Set[str]):
         self.act_components.difference_update(idle_components)
         for component_name in idle_components:
-            communication_handler.set_component_state(INACTIVE, component_name)
+            communication_handler.set_component_state(INACTIVE, component_name, self.id_sync)
 
     def add_component(self, name: str, comp: Component):
         self.add_instruction(InternalInstruction.build_add(name, comp))
@@ -420,7 +423,7 @@ class Assembly(object):
         if component_name in self._components.keys():
             return component_name not in self.act_components
         else:
-            return communication_handler.get_remote_component_state(component_name) == INACTIVE
+            return communication_handler.get_remote_component_state(component_name, self.id_sync) == INACTIVE
 
     def get_component(self, name: str) -> Component:
         if name in self._components:

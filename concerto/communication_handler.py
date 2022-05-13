@@ -61,22 +61,22 @@ def wait_conn_to_sync(syncing_component: str, component_to_sync: str,  dep_provi
     result = []
     while len(result) <= 0 or result[0].value.get_content() != action:
         result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
-        Printer.st_tprint(f"Wait conn {dep_provide}-{dep_use} to be done by {component_to_sync}")
+        Printer.st_tprint(f"Wait {action} {dep_provide}-{dep_use} to be done by {component_to_sync}")
         time.sleep(WAITING_DELAY)
 
 
 @zenoh_session
-def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, workspace=None):
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, id_sync: int, workspace=None):
     Printer.st_tprint(f"{component_name} is now {state}")
-    workspace.put(f"/wait/{component_name}", state)
+    workspace.put(f"/wait/{id_sync}/{component_name}", state)
 
 
 @zenoh_session
-def get_remote_component_state(component_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
-    result = workspace.get(f"/wait/{component_name}")
+def get_remote_component_state(component_name: str, id_sync: int, workspace=None) -> [ACTIVE, INACTIVE]:
+    result = workspace.get(f"/wait/{id_sync}/{component_name}")
+    Printer.st_tprint(f"Checking /wait/{id_sync}/{component_name}: " + (result[0].value.get_content() if result else "NONE (considered ACTIVE)"))
+    time.sleep(WAITING_DELAY)
     if len(result) <= 0:
-        return INACTIVE
+        return ACTIVE
     else:
-        time.sleep(WAITING_DELAY)
-        Printer.st_tprint(f"Waiting for {component_name} -_-")
         return result[0].value.get_content()

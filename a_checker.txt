@@ -17,6 +17,7 @@ pyo3_runtime.PanicException: called `Result::unwrap()` on an `Err` value: ZError
 - Le nb user des uses ports ne change jamais => pas utile ?
 - Faire un test avec des dépendances dans les transitions ?
 - Revoir le fonctionnement du waitall, voir si effectivement tous les composants sont bien tous attendus
+- Si Exception levée à del_component dans reconf server avec mysql, le client se bloque au moment de faire les déconnexions
 
 Tests connection, deconnection, del: 1 server et 13 clients ça passe, mais avec 1 server et 21 clients certains messages ne sont pas présents dans le routeur, donc soit
 pas envoyés, soit pas reçus, soit pas stockés par le router

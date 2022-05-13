@@ -688,8 +688,6 @@ class Component(object, metaclass=ABCMeta):
         # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
         #  provide is not stable it doesn't get activated)
 
-        Printer.st_tprint(self.get_debug_info())
-        time.sleep(0.2)
         # Exécution des transitions
         if self.act_idocks:
             # Printer.st_tprint("Doing idocks_to_place")
