@@ -170,7 +170,7 @@ class Dependency(object):
     def is_served(self):
         """
         Est ce que le use port est provisionné ?
-        TODO à comprendre: pk un use port aurait plusieurs connections ?
+        TODO à comprendre: pk un use port aurait plusieurs connections ? **Pour être générique**
         """
         if self.type != DepType.DATA_USE and self.type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")

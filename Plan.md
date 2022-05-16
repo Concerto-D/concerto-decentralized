@@ -1,0 +1,10 @@
+- fin implémentation
+  - Concerto asynchrone = Concerto qui se rendort
+  - Mettre en place de la persistence
+    - Identifier les choses à persister
+  - Voir pour la notion d'actif, voir s'il faut rajouter un autre actif que celui utilisé dans le code
+  - Voir si le nb_users des dépendances est lié au fait qu'un groupe contient autant de port que de places dans le groupe
+- design des cas d'étude - 1 semaine
+- coder les cas d'étude en Concerto et Muse - 2 semaines
+- expérimentations sur Grid'5000 - 1 semaine
+- écriture du papier - 2 semaines

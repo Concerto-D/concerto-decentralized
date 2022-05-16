@@ -359,6 +359,7 @@ class Assembly(object):
             if remote_disconnection:
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
                 Printer.st_tprint(f"{self.name} : Waiting DECONN message from {comp2_name}")
+                # Ici: communication synchrone
                 communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
                 Printer.st_tprint(f"{self.name} : RECEIVED DECONN message from {comp2_name}")
 
