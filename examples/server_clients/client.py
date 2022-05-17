@@ -37,6 +37,7 @@ class Client(Component):
     def __init__(self):
         self.server_ip = None
         Component.__init__(self)
+        self.name = "prout"
 
     def install1(self):
         self.print_color("installing (1/2)")

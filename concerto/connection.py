@@ -9,20 +9,24 @@ class Connection:
     def __init__(self, dep1: Dependency, dep2: Dependency):
         dep1type = dep1.get_type()
         if dep1type == DepType.PROVIDE or dep1type == DepType.DATA_PROVIDE:
-            self.provide_dep = dep1
-            self.use_dep = dep2
+            self._provide_dep = dep1
+            self._use_dep = dep2
         else:
-            self.provide_dep = dep2
-            self.use_dep = dep1
-        self.provide_dep.connect(self)
-        self.use_dep.connect(self)
+            self._provide_dep = dep2
+            self._use_dep = dep1
+        self._provide_dep.connect(self)
+        self._use_dep.connect(self)
+
+    @property
+    def _p_id(self):
+        return f"{self._use_dep._p_id}_{self._provide_dep._p_id}"
 
     def can_remove(self) -> bool:
         return not self.is_locked()
 
     def disconnect(self):
-        self.provide_dep.disconnect(self)
-        self.use_dep.disconnect(self)
+        self._provide_dep.disconnect(self)
+        self._use_dep.disconnect(self)
 
     def get_tuple(self) -> Tuple[Component, Dependency, Component, Dependency]:
         return self.get_provide_comp(), self.get_provide_dep(), self.get_use_comp(), self.get_use_dep()
@@ -35,22 +39,22 @@ class Connection:
             self.get_use_dep().get_name())
 
     def get_provide_comp(self) -> Component:
-        return self.provide_dep.get_component()
+        return self._provide_dep.get_component()
 
     def get_provide_dep(self) -> Dependency:
-        return self.provide_dep
+        return self._provide_dep
 
     def get_use_comp(self) -> Component:
-        return self.use_dep.get_component()
+        return self._use_dep.get_component()
 
     def get_use_dep(self) -> Dependency:
-        return self.use_dep
+        return self._use_dep
 
     def is_active(self) -> bool:
-        return self.provide_dep.is_in_use()
+        return self._provide_dep.is_in_use()
 
     def is_locked(self) -> bool:
-        return self.use_dep.is_in_use()
+        return self._use_dep.is_in_use()
 
     def get_opposite_dependency(self, dep):
-        return self.use_dep if dep == self.provide_dep else self.provide_dep
+        return self._use_dep if dep == self._provide_dep else self._provide_dep

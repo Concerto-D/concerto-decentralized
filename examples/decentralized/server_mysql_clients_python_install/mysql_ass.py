@@ -39,4 +39,4 @@ sa.synchronize()
 
 sa.terminate()
 
-print("---------------END SERVER-----------------")
+print("---------------END MYSQL-----------------")

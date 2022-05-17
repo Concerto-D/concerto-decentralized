@@ -71,12 +71,16 @@ class Dependency(object):
     """
 
     def __init__(self, component, name: str, dep_type: DepType):
-        self.component = component
-        self.name = name
-        self.type = dep_type
-        self.connections: Set = set()
-        self.nb_users = 0
-        self.data = None
+        self._component = component
+        self._p_name = name
+        self._p_type = dep_type
+        self._p_connections: Set = set()
+        self._p_nb_users = 0
+        self._p_data = None
+
+    @property
+    def _p_id(self):
+        return f"{self._component.name}_{self._p_name}"
 
     def get_component(self):
         """
@@ -84,7 +88,7 @@ class Dependency(object):
 
         :return: component
         """
-        return self.component
+        return self._component
 
     def get_name(self) -> str:
         """
@@ -92,7 +96,7 @@ class Dependency(object):
 
         :return: name
         """
-        return self.name
+        return self._p_name
 
     def get_type(self) -> DepType:
         """
@@ -100,20 +104,20 @@ class Dependency(object):
 
         :return: type
         """
-        return self.type
+        return self._p_type
 
     def get_data(self):
         if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
             raise Exception(
                 "Trying to get data from dependency '%s' which is not of type provide or data provide" % self.get_name())
-        return self.data
+        return self._p_data
 
     def read(self):
         # TODO: à comprendre, pk on récupère les data de seulement la première connection active ?
         # Pk on fait un get_provide_dep alors qu'on fait déjà la vérification dans le premier if ?
         if self.get_type() is not DepType.DATA_USE and self.get_type() is not DepType.USE:
             raise Exception("Trying to read from dependency '%s' which is not of type use or data use" % self.get_name())
-        for c in self.connections:
+        for c in self._p_connections:
             if c.is_active():
                 return c.get_provide_dep().get_data()
         raise Exception("Trying to read from dependency '%s' which is not served" % self.get_name())
@@ -121,7 +125,7 @@ class Dependency(object):
     def write(self, data):
         if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
             raise Exception("Trying to write to dependency '%s' which is not of type provide or data provide" % self.get_name())
-        self.data = data
+        self._p_data = data
 
     def is_connected(self) -> bool:
         """
@@ -130,7 +134,7 @@ class Dependency(object):
 
         :return: True if connected, False otherwise
         """
-        return len(self.connections) > 0
+        return len(self._p_connections) > 0
 
     def connect(self, c):
         """
@@ -141,40 +145,40 @@ class Dependency(object):
 
         :return: self.free
         """
-        self.connections.add(c)
+        self._p_connections.add(c)
 
     def disconnect(self, c):
-        self.connections.remove(c)
+        self._p_connections.remove(c)
 
     def is_in_use(self) -> bool:
-        return self.nb_users > 0
+        return self._p_nb_users > 0
 
     def start_using(self):
-        self.nb_users += 1
+        self._p_nb_users += 1
 
         # Si la dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
-        for conn in self.connections:
+        for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
+                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component()._p_name, self._p_name)
 
     def stop_using(self):
-        self.nb_users -= 1
+        self._p_nb_users -= 1
 
         # Si la dépendance d'en face associée à la même connection est remote,
         # alors il faut la prévenir de la mise à jour du nb_users
-        for conn in self.connections:
+        for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component().name, self.name)
+                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component()._p_name, self._p_name)
 
     def is_served(self):
         """
         Est ce que le use port est provisionné ?
         TODO à comprendre: pk un use port aurait plusieurs connections ? **Pour être générique**
         """
-        if self.type != DepType.DATA_USE and self.type != DepType.USE:
+        if self._p_type != DepType.DATA_USE and self._p_type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")
-        for c in self.connections:
+        for c in self._p_connections:
             if c.is_active():
                 return True
         return False
@@ -183,9 +187,9 @@ class Dependency(object):
         """
         Est que le provide port est utilisé par au moins un use port ?
         """
-        if self.type != DepType.DATA_PROVIDE and self.type != DepType.PROVIDE:
+        if self._p_type != DepType.DATA_PROVIDE and self._p_type != DepType.PROVIDE:
             raise Exception("Trying to check if a (data) use port is active")
-        for c in self.connections:
+        for c in self._p_connections:
             if c.is_locked():
                 return True
         return False
@@ -194,7 +198,7 @@ class Dependency(object):
     def __eq__(self, other):
         if type(other) != type(self):
             return False
-        return self.name == other.name and self.component == other.component
+        return self._p_name == other._p_name and self._component == other._component
 
     def __hash__(self):
-        return hash((self.name, self.component))
+        return hash((self._p_name, self._component))

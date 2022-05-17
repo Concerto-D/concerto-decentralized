@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
 from concerto.all import *
-
-from client import Client
-from server import Server
+from examples.server_clients.client import Client
+from examples.server_clients.server import Server
 
 
 class ServerClient(Assembly):

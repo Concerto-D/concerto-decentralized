@@ -37,6 +37,10 @@ class InternalInstruction:
         self.type = instr_type
         self.args = args
 
+    @property
+    def _p_id(self):
+        return self.type
+
     def get_type(self):
         return self.type
 

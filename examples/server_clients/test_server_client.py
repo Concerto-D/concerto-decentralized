@@ -1,19 +1,24 @@
 #!/usr/bin/python3
+import queue
 
 from concerto.all import *
 from concerto.utility import Printer
 import time, datetime
 
 from server_client_assembly import ServerClient
-        
+import json
+
 # Creating an instance of the ServerClient assembly and setting some parameters
 sca = ServerClient()
+# res = json.dumps(sca, cls=FixedEncoder, indent=4)
+# print(res)
 sca.set_record_gantt(True)
 sca.set_verbosity(1)
 sca.set_print_time(True)
 
 Printer.st_tprint("Main: deploying the assembly")
 sca.deploy() # First reconfiguration
+exit()
 
 Printer.st_tprint("Main: waiting a little before reconfiguring")
 time.sleep(3)

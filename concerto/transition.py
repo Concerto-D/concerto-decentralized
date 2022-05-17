@@ -41,6 +41,10 @@ class Transition:
         self.dst_dock = dst.create_input_dock(self)
         self.thread = None
 
+    @property
+    def _p_id(self):
+        return f"{self._component.name}_{self.name}"
+
     def set_name(self, name):
         """
         This method set the name of the transition
