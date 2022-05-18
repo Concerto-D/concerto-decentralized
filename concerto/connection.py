@@ -19,7 +19,7 @@ class Connection:
 
     @property
     def _p_id(self):
-        return f"{self._use_dep._p_id}_{self._provide_dep._p_id}"
+        return self.build_id_from_dependencies(self._use_dep, self._provide_dep)
 
     def can_remove(self) -> bool:
         return not self.is_locked()
@@ -58,3 +58,7 @@ class Connection:
 
     def get_opposite_dependency(self, dep):
         return self._use_dep if dep == self._provide_dep else self._provide_dep
+
+    @staticmethod
+    def build_id_from_dependencies(use_dep: Dependency, provide_dep: Dependency):
+        return f"{use_dep._p_id}-{provide_dep._p_id}"

@@ -32,9 +32,9 @@ class FixedEncoder(json.JSONEncoder):
             identifier = obj._p_id
             d = obj.__dict__
             output = {}
+            output["_p_id"] = identifier
             for k, v in d.items():
                 if k.startswith("_p_"):
-                    output["_p_id"] = identifier
                     output[k] = v
             return output
         elif isinstance(obj, DepType):
@@ -65,7 +65,7 @@ class Assembly(object):
         # component2, dependency2)
         # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
         # d'en face.
-        self._connections: Dict[Tuple[Dependency, Dependency], Connection] = {}
+        self._p_connections: Dict[str, Connection] = {}
 
         self._remote_components_names: Set[str] = set()
 
@@ -80,12 +80,12 @@ class Assembly(object):
         # this is used to improve performance of the semantics
         # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
         # d'en face.
-        self.component_connections: Dict[str, Set[Connection]] = {}
+        self._p_component_connections: Dict[str, Set[Connection]] = {}
 
         # Operational semantics
 
         # thread running the semantics of the assembly in a loop
-        self.semantics_thread: Thread = Thread(target=self.loop_smeantics)
+        self.semantics_thread: Thread = Thread(name="semantic_thread", target=self.loop_smeantics)
         self.alive: bool = True
 
         # queue of instructions (synchronized with semantics thread)
@@ -245,7 +245,7 @@ class Assembly(object):
         comp.set_gantt_record(self.gantt)
         comp.set_assembly(self)
         self._p_components[name] = comp
-        self.component_connections[name] = set()
+        self._p_component_connections[name] = set()
         self.add_to_active_components(name)  # _init
         return True
 
@@ -255,9 +255,9 @@ class Assembly(object):
     def _del(self, component_name: str) -> bool:
         if component_name in self._p_act_components:
             return False
-        if len(self.component_connections[component_name]) > 0:
+        if len(self._p_component_connections[component_name]) > 0:
             return False
-        del self.component_connections[component_name]
+        del self._p_component_connections[component_name]
         del self._p_components[component_name]
         return True
 
@@ -298,20 +298,17 @@ class Assembly(object):
             # create connection
             new_connection = Connection(dep1, dep2)
 
-            provide_dep = new_connection.get_provide_dep()
-            use_dep = new_connection.get_use_dep()
-
-            if (provide_dep, use_dep) in self._connections:
+            if new_connection._p_id in self._p_connections.keys():
                 raise Exception("Trying to add already existing connection from %s.%s to %s.%s" % (
                     comp1_name, dep1_name, comp2_name, dep2_name))
 
-            self._connections[(provide_dep, use_dep)] = new_connection
-            self.component_connections[comp1_name].add(new_connection)
+            self._p_connections[new_connection._p_id] = new_connection
+            self._p_component_connections[comp1_name].add(new_connection)
 
-            # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote
+            # self._p_component_connections ne sert qu'à faire une vérification au moment du del, un component remote
             # ne pourra jamais être del par l'assembly, donc ne pas l'ajouter à la liste est possible
             if not remote_connection:
-                self.component_connections[comp2_name].add(new_connection)
+                self._p_component_connections[comp2_name].add(new_connection)
 
             # [con] Ajouter la synchronization avec le composant d'en face
             # TODO: réfléchir sur le besoin de la synchronization pour le con
@@ -350,8 +347,8 @@ class Assembly(object):
         comp1 = self.get_component(comp1_name)
         dep1 = comp1.get_dependency(dep1_name)
 
-        remote_disconnection = comp2_name not in self._p_components.keys()
-        if remote_disconnection:
+        is_remote_disconnection = comp2_name not in self._p_components.keys()
+        if is_remote_disconnection:
             dep2_type = DepType.compute_opposite_type(dep1.get_type())
             dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)
         else:
@@ -366,24 +363,26 @@ class Assembly(object):
             provide_dep = dep2
             use_dep = dep1
 
-        if (provide_dep, use_dep) not in self._connections:
+        id_connection_to_remove = Connection.build_id_from_dependencies(use_dep, provide_dep)
+
+        if id_connection_to_remove not in self._p_connections.keys():
             raise Exception("Trying to remove unexisting connection from %s.%s to %s.%s" % (
                 comp1_name, dep1_name, comp2_name, dep2_name))
 
-        connection: Connection = self._connections[(provide_dep, use_dep)]
+        connection: Connection = self._p_connections[id_connection_to_remove]
         if connection.can_remove():
             connection.disconnect()  # TODO [dcon] pertinent d'ajouter une liste de connexions au RemoteDependency ?
-            self.component_connections[comp1_name].discard(connection)
+            self._p_component_connections[comp1_name].discard(connection)
 
-            # self.component_connections ne sert qu'à faire une vérification au moment du del, un component remote
+            # self._p_component_connections ne sert qu'à faire une vérification au moment du del, un component remote
             # ne pourra jamais être del par l'assembly, donc ne pas l'ajouter à la liste est possible
-            if not remote_disconnection:
-                self.component_connections[comp2_name].discard(connection)
-            del self._connections[(provide_dep, use_dep)]
+            if not is_remote_disconnection:
+                self._p_component_connections[comp2_name].discard(connection)
+            del self._p_connections[id_connection_to_remove]
 
             # [dcon] Ajouter la synchronization avec le composant d'en face
             # TODO: réfléchir sur le besoin de la synchronization pour le dcon
-            if remote_disconnection:
+            if is_remote_disconnection:
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
                 Printer.st_tprint(f"{self.name} : Waiting DECONN message from {comp2_name}")
                 # Ici: communication synchrone
@@ -424,9 +423,10 @@ class Assembly(object):
             if not self.is_component_idle(comp_name):
                 all_remotes_are_idles = False
 
-        with open("dump.json", "w") as outfile:
-            json.dump(self, outfile, cls=FixedEncoder, indent=4)
-        exit()
+        if self._p_instructions_queue.empty():
+            with open("dump.json", "w") as outfile:
+                json.dump(self, outfile, cls=FixedEncoder, indent=4)
+            exit()
 
         return len(self._p_act_components) is 0 and all_remotes_are_idles
 
