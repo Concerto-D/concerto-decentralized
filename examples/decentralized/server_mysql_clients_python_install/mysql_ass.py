@@ -5,7 +5,7 @@ import sys
 sa = MysqlAssembly()
 sa.set_verbosity(2)
 sa.set_print_time(True)
-sa.id_sync = 0
+sa._p_id_sync = 0
 
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
@@ -15,19 +15,19 @@ sa.connect('mysql', 'service', 'server', 'bdd')
 sa.push_b('mysql', 'install_start')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- 2nd reconf ----------------")
 sa.push_b('mysql', 'uninstall')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- 3rd reconf")
 sa.push_b('mysql', 'install_start')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- Final reconf ----------------")
 sa.push_b('mysql', 'uninstall')

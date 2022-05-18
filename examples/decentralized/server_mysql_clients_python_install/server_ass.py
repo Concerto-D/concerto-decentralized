@@ -5,7 +5,7 @@ from examples.decentralized.servers_mysql_assembly import ServerMysql, ServerMys
 sa = ServerMysqlAssembly()
 sa.set_verbosity(2)
 sa.set_print_time(True)
-sa.id_sync = 0
+sa._p_id_sync = 0
 
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
@@ -22,21 +22,21 @@ sa.push_b('server', 'deploy')
 sa.push_b('client_server', 'install_start')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- 2nd reconf ----------------")
 sa.push_b('server', 'stop')
 sa.push_b('client_server', 'stop')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- 3rd reconf ----------------")
 sa.push_b('server', 'deploy')
 sa.push_b('client_server', 'install_start')
 sa.wait_all()
 sa.synchronize()
-sa.id_sync += 1
+sa._p_id_sync += 1
 
 print("-------- Final reconf ----------------")
 sa.push_b('server', 'stop')

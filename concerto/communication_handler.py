@@ -56,13 +56,11 @@ def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provi
 
 
 @zenoh_session
-def wait_conn_to_sync(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
+def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
     # TODO Un seul topic pour conn et decon
-    result = []
-    while len(result) <= 0 or result[0].value.get_content() != action:
-        result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
-        Printer.st_tprint(f"Wait {action} {dep_provide}-{dep_use} to be done by {component_to_sync}")
-        time.sleep(WAITING_DELAY)
+    result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
+    Printer.st_tprint(f"Wait {action} {dep_provide}-{dep_use} to be done by {component_to_sync}")
+    return len(result) > 0 and result[0].value.get_content() == action
 
 
 @zenoh_session

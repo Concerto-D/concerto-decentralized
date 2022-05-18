@@ -18,7 +18,6 @@ sca.set_print_time(True)
 
 Printer.st_tprint("Main: deploying the assembly")
 sca.deploy() # First reconfiguration
-exit()
 
 Printer.st_tprint("Main: waiting a little before reconfiguring")
 time.sleep(3)

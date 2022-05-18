@@ -22,13 +22,20 @@ class RemoteDependency(Dependency):
         """
         On fait dans le topic plutôt qu'en local car la dépendance est remote
         """
-        return communication_handler.get_nb_dependency_users(self.remote_component_name, self.name) > 0
+        return communication_handler.get_nb_dependency_users(self.remote_component_name, self._p_name) > 0
+
+    @property
+    def _p_id(self):
+        return f"{self.remote_component_name}_{self._p_name}"
+
+    def get_component_name(self):
+        return self.remote_component_name
 
     # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
     def __eq__(self, other):
         if type(other) != type(self):
             return False
-        return self.name == other.name and self.remote_component_name == other.remote_component_name
+        return self._p_name == other._p_name and self.remote_component_name == other.remote_component_name
 
     def __hash__(self):
-        return hash((self.name, self.remote_component_name))
+        return hash((self._p_name, self.remote_component_name))

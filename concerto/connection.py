@@ -28,24 +28,25 @@ class Connection:
         self._provide_dep.disconnect(self)
         self._use_dep.disconnect(self)
 
-    def get_tuple(self) -> Tuple[Component, Dependency, Component, Dependency]:
-        return self.get_provide_comp(), self.get_provide_dep(), self.get_use_comp(), self.get_use_dep()
+    # TODO: never used
+    # def get_tuple(self) -> Tuple[Component, Dependency, Component, Dependency]:
+    #     return self.get_provide_comp(), self.get_provide_dep(), self.get_use_comp(), self.get_use_dep()
 
-    def get_names(self) -> Tuple[str, str, str, str]:
-        return (
-            self.get_provide_comp().get_name(),
-            self.get_provide_dep().get_name(),
-            self.get_use_comp().get_name(),
-            self.get_use_dep().get_name())
+    # def get_names(self) -> Tuple[str, str, str, str]:
+    #     return (
+    #         self.get_provide_comp().get_name(),
+    #         self.get_provide_dep().get_name(),
+    #         self.get_use_comp().get_name(),
+    #         self.get_use_dep().get_name())
 
-    def get_provide_comp(self) -> Component:
-        return self._provide_dep.get_component()
+    # def get_provide_comp(self) -> Component:
+    #     return self._provide_dep.get_component()
+
+    # def get_use_comp(self) -> Component:
+    #     return self._use_dep.get_component()
 
     def get_provide_dep(self) -> Dependency:
         return self._provide_dep
-
-    def get_use_comp(self) -> Component:
-        return self._use_dep.get_component()
 
     def get_use_dep(self) -> Dependency:
         return self._use_dep

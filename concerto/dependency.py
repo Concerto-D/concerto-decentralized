@@ -82,13 +82,13 @@ class Dependency(object):
     def _p_id(self):
         return f"{self._component.name}_{self._p_name}"
 
-    def get_component(self):
+    def get_component_name(self):
         """
         This method returns the component of the dependency
 
         :return: component
         """
-        return self._component
+        return self._component.name
 
     def get_name(self) -> str:
         """
@@ -160,7 +160,7 @@ class Dependency(object):
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component()._p_name, self._p_name)
+                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
 
     def stop_using(self):
         self._p_nb_users -= 1
@@ -169,7 +169,7 @@ class Dependency(object):
         # alors il faut la prévenir de la mise à jour du nb_users
         for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component()._p_name, self._p_name)
+                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
 
     def is_served(self):
         """

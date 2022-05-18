@@ -4,13 +4,10 @@ from examples.decentralized.clients_python_assembly import ClientsPython
 
 n = sys.argv[1] if len(sys.argv) > 1 else "1"
 sc = ClientsPython(n)
-sc._add('client', sc.client)
 sc.set_verbosity(2)
 sc.set_print_time(True)
-sc.id_sync = 0
+sc._p_id_sync = 0
 
-
-exit()
 print("-------- 1st reconf ----------------")
 sc.add_component('client'+n, sc.client)
 sc.add_component('python_install', sc.python_install)
@@ -21,19 +18,19 @@ sc.push_b('client'+n, 'install_start')
 sc.push_b('python_install', 'install')
 sc.wait_all()
 sc.synchronize()
-sc.id_sync += 1
+sc._p_id_sync += 1
 
 print("-------- 2nd reconf ----------------")
 sc.push_b('client'+n, 'stop')
 sc.wait_all()
 sc.synchronize()
-sc.id_sync += 1
+sc._p_id_sync += 1
 
 print("-------- 3rd reconf ----------------")
 sc.push_b('client'+n, 'install_start')
 sc.wait_all()
 sc.synchronize()
-sc.id_sync += 1
+sc._p_id_sync += 1
 
 print("-------- Final reconf ----------------")
 sc.push_b('client'+n, 'stop')

@@ -6,18 +6,17 @@
    :synopsis: this file contains the Assembly class.
 """
 import json
-import queue
-import sys
-from typing import Dict, Tuple, List, Set, Optional
+import os
+from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
 
 from concerto import communication_handler
 from concerto.communication_handler import CONN, DECONN, ACTIVE, INACTIVE
-from concerto.dependency import DepType, Dependency
-from concerto.component import Component, Group
-from concerto.place import Dock, Place
+from concerto.dependency import DepType
+from concerto.component import Component
 from concerto.remote_dependency import RemoteDependency
+from concerto.remote_synchronization import RemoteSynchronization, FixedEncoder
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
@@ -26,25 +25,7 @@ from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer
 
 
-class FixedEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if any(isinstance(obj, k) for k in [Assembly, Component, Dependency, Dock, Connection, Place, Transition, InternalInstruction, Group]):
-            identifier = obj._p_id
-            d = obj.__dict__
-            output = {}
-            output["_p_id"] = identifier
-            for k, v in d.items():
-                if k.startswith("_p_"):
-                    output[k] = v
-            return output
-        elif isinstance(obj, DepType):
-            return obj.name
-        elif isinstance(obj, set):
-            return list(obj)
-        elif isinstance(obj, queue.Queue):
-            return list(obj.queue)
-        else:
-            return obj
+SAVED_CONFIG_PATH = "./saved_config.json"
 
 
 class Assembly(object):
@@ -98,6 +79,9 @@ class Assembly(object):
         # Identifiant permettant de synchronizer les wait et waitall
         self._p_id_sync = 0  #PERSIST
 
+        # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
+        self._p_nb_instructions_done = 0
+
         self.verbosity: int = 0
         self.print_time: bool = False
         self.dryrun: bool = False
@@ -108,6 +92,8 @@ class Assembly(object):
         self.program_str: str = ""
 
         self.error_reports: List[str] = []
+        self.loaded_config = None
+        self.load_config()
 
     @property
     def _p_id(self):
@@ -157,6 +143,13 @@ class Assembly(object):
     def get_name(self) -> str:
         return self.name
 
+    def load_config(self):
+        Printer.st_tprint("Restoring conf ...")
+        with open(f"/home/aomond/implementations/concerto-decentralized/{SAVED_CONFIG_PATH}", "r") as infile:
+            result = json.load(infile)
+            print(json.dumps(result, indent=4))
+            exit()
+
     def get_debug_info(self) -> str:
         debug_info = "Inactive components:\n"
         for component_name in self._p_components:
@@ -205,6 +198,15 @@ class Assembly(object):
             print(message)
 
     def add_instruction(self, instruction: InternalInstruction):
+        # Check if instruction has been done already
+        # Do not add it to the queue if its the case
+        if instruction.num < self._p_nb_instructions_done:
+            return
+
+        # Check if the program stopped and reloaded
+        reprise = self._p_nb_instructions_done > 0 and (instruction.num == self._p_nb_instructions_done)
+        instruction.args["reprise"] = reprise
+
         if self.dump_program:
             self.program_str += (str(instruction) + "\n")
 
@@ -264,7 +266,7 @@ class Assembly(object):
     def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         self.add_instruction(InternalInstruction.build_connect(comp1_name, dep1_name, comp2_name, dep2_name))
 
-    def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
+    def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str, reprise: bool) -> bool:
         """
         This method adds a connection between two components dependencies.
         Assumption: comp1_name and dep1_name are NOT remote
@@ -278,13 +280,21 @@ class Assembly(object):
         # - Faire une vérification à partir du type de composant (si on part du principe
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
+        if reprise:
+            RemoteSynchronization.synchronize_connection(
+                self, comp1_name, dep1_name, comp2_name, dep2_name, RemoteSynchronization.exit_reconf
+            )
+        else:
+            self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
 
+    def _create_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         comp1 = self.get_component(comp1_name)
         dep1 = comp1.get_dependency(dep1_name)
 
         remote_connection = comp2_name not in self._p_components.keys()
         if remote_connection:
-            dep2_type = DepType.compute_opposite_type(dep1.get_type()) # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
+            dep2_type = DepType.compute_opposite_type(
+                dep1.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
             dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
         else:
             comp2 = self.get_component(comp2_name)
@@ -322,17 +332,16 @@ class Assembly(object):
                 # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
                 communication_handler.send_nb_dependency_users(0, comp1_name, dep1_name)
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
-                Printer.st_tprint(f"{self.name} : Waiting CONN message from {comp2_name}")
-                communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
-                Printer.st_tprint(f"{self.name} : RECEIVED CONN message from {comp2_name}")
-
+                RemoteSynchronization.synchronize_connection(
+                    self, comp1_name, dep1_name, comp2_name, dep2_name, RemoteSynchronization.exit_reconf
+                )
             return True
 
         else:
             raise Exception("Trying to connect uncompatible dependencies %s.%s and %s.%s" % (
                 comp1_name, dep1_name, comp2_name, dep2_name))
 
-    def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
+    def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str, reprise: bool):
         self.add_instruction(InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name))
 
     def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
@@ -386,7 +395,7 @@ class Assembly(object):
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
                 Printer.st_tprint(f"{self.name} : Waiting DECONN message from {comp2_name}")
                 # Ici: communication synchrone
-                communication_handler.wait_conn_to_sync(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
+                communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
                 Printer.st_tprint(f"{self.name} : RECEIVED DECONN message from {comp2_name}")
 
             return True
@@ -406,7 +415,7 @@ class Assembly(object):
     def wait(self, component_name: str):
         self.add_instruction(InternalInstruction.build_wait(component_name))
 
-    def _wait(self, component_name: str):
+    def _wait(self, component_name: str, reprise: bool):
         # TODO [wait] Si on doit wait un component remote:
         # - Soit on remplace la fonction par des zenoh.get successifs
         # - Soit on met en place un subscribe (à voir comment et où)
@@ -416,17 +425,12 @@ class Assembly(object):
     def wait_all(self):
         self.add_instruction(InternalInstruction.build_wait_all())
 
-    def _wait_all(self):
+    def _wait_all(self, reprise: bool):
         # Wait remotes
         all_remotes_are_idles = True
         for comp_name in self._remote_components_names:
             if not self.is_component_idle(comp_name):
                 all_remotes_are_idles = False
-
-        if self._p_instructions_queue.empty():
-            with open("dump.json", "w") as outfile:
-                json.dump(self, outfile, cls=FixedEncoder, indent=4)
-            exit()
 
         return len(self._p_act_components) is 0 and all_remotes_are_idles
 
@@ -527,6 +531,7 @@ class Assembly(object):
             if finished:
                 self._p_current_instruction = None
                 self._p_instructions_queue.task_done()
+                self._p_nb_instructions_done += 1
 
         # Consume instructions queue
         while (not self._p_instructions_queue.empty()) and (self._p_current_instruction is None):
@@ -535,6 +540,7 @@ class Assembly(object):
             # Instruction pas finie: wait, waitall
             if finished:
                 self._p_instructions_queue.task_done()
+                self._p_nb_instructions_done += 1
             else:
                 self._p_current_instruction = instruction
 
