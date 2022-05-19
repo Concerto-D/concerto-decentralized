@@ -25,13 +25,13 @@ class Transition:
     """
 
     def __init__(self, name, src, dst, bhv, idset, func, args, component):
-        self.name = name
+        self._p_name = name
         self.src_place = None
         if src is not None:
             self.src_place = src.get_name()
         self.dst_place = dst.get_name()
         self.behavior = bhv
-        self.dst_idset = idset
+        self.dst_idset = idset  # TODO: what is it
         self.code = func
         self.args = args
         self._component = component
@@ -43,7 +43,7 @@ class Transition:
 
     @property
     def _p_id(self):
-        return f"{self._component.name}_{self.name}"
+        return f"{self._component.name}_{self._p_name}"
 
     def set_name(self, name):
         """
@@ -51,7 +51,7 @@ class Transition:
 
         :param name: tha name (string) to set
         """
-        self.name = name
+        self._p_name = name
 
     def get_name(self):
         """
@@ -59,7 +59,7 @@ class Transition:
 
         :return: name (string)
         """
-        return self.name
+        return self._p_name
     
     def get_dst_idset(self):
         return self.dst_idset

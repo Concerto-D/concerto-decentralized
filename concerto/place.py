@@ -22,7 +22,7 @@ class Dock(object):
 
     @property
     def _p_id(self):
-        return f"{self.place._p_id}_{self.transition.name}"
+        return f"{self.place._p_id}_{self.transition._p_name}"
 
     def get_place(self):
         """

@@ -26,7 +26,7 @@ class RemoteDependency(Dependency):
 
     @property
     def _p_id(self):
-        return f"{self.remote_component_name}_{self._p_name}"
+        return f"{self.remote_component_name}-{self._p_name}"
 
     def get_component_name(self):
         return self.remote_component_name

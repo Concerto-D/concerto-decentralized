@@ -5,27 +5,23 @@
 .. module:: assembly
    :synopsis: this file contains the Assembly class.
 """
-import json
-import os
+from os.path import exists
 from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
 
-from concerto import communication_handler
+from concerto import communication_handler, assembly_config
 from concerto.communication_handler import CONN, DECONN, ACTIVE, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
 from concerto.remote_dependency import RemoteDependency
-from concerto.remote_synchronization import RemoteSynchronization, FixedEncoder
+from concerto.remote_synchronization import RemoteSynchronization
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
 from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer
-
-
-SAVED_CONFIG_PATH = "./saved_config.json"
 
 
 class Assembly(object):
@@ -39,7 +35,8 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self):
+    def __init__(self, name, components_types, remote_component_names):
+        self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
@@ -48,7 +45,7 @@ class Assembly(object):
         # d'en face.
         self._p_connections: Dict[str, Connection] = {}
 
-        self._remote_components_names: Set[str] = set()
+        self._remote_components_names: Set[str] = remote_component_names
 
         # a dictionary to store at the assembly level a list of connections for
         # each place (name) of the assembly (ie provide dependencies)
@@ -86,18 +83,26 @@ class Assembly(object):
         self.print_time: bool = False
         self.dryrun: bool = False
         self.gantt: Optional[GanttRecord] = None
-        self.name: Optional[str] = None
+        self.name: str = name
 
         self.dump_program: bool = False
         self.program_str: str = ""
 
         self.error_reports: List[str] = []
-        self.loaded_config = None
-        self.load_config()
+        self._reprise_previous_config()
 
     @property
     def _p_id(self):
-        return "assembly"
+        return self.name
+
+    def _reprise_previous_config(self):
+        """
+        Check if the previous programm went to sleep (i.e. if a saved config file exists)
+        and restore the previous config if so
+        """
+        if exists(assembly_config.build_saved_config_file_path(self.name)):
+            previous_config = assembly_config.load_previous_config(self)
+            assembly_config.restore_previous_config(self, previous_config)
 
     def set_verbosity(self, level: int):
         self.verbosity = level
@@ -143,13 +148,6 @@ class Assembly(object):
     def get_name(self) -> str:
         return self.name
 
-    def load_config(self):
-        Printer.st_tprint("Restoring conf ...")
-        with open(f"/home/aomond/implementations/concerto-decentralized/{SAVED_CONFIG_PATH}", "r") as infile:
-            result = json.load(infile)
-            print(json.dumps(result, indent=4))
-            exit()
-
     def get_debug_info(self) -> str:
         debug_info = "Inactive components:\n"
         for component_name in self._p_components:
@@ -182,7 +180,7 @@ class Assembly(object):
         """Warning: use only as last resort, anything run by the assembly will be killed, not exiting properly code
         run by the transitions """
         self.alive = False
-        self.semantics_thread.join()
+        # self.semantics_thread.join()
 
     def print(self, string: str):
         if self.verbosity < 0:
@@ -281,11 +279,13 @@ class Assembly(object):
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
         if reprise:
-            RemoteSynchronization.synchronize_connection(
+            result = RemoteSynchronization.synchronize_connection(
                 self, comp1_name, dep1_name, comp2_name, dep2_name, RemoteSynchronization.exit_reconf
             )
         else:
-            self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
+            result = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
+
+        return result
 
     def _create_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         comp1 = self.get_component(comp1_name)
@@ -323,10 +323,6 @@ class Assembly(object):
             # [con] Ajouter la synchronization avec le composant d'en face
             # TODO: réfléchir sur le besoin de la synchronization pour le con
             if remote_connection:
-                # TODO A discuter: ajouter les remotes components moins tardivement qu'au moment de la connexion
-                # Et quand les enlever
-                self._remote_components_names.add(comp2_name)
-
                 # Need d'initialiser le nombre de user sur la dépendance à 0 car si on veut déconnecter tout de suite,
                 # un check est fait sur le nb d'utilisateur
                 # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
@@ -341,7 +337,7 @@ class Assembly(object):
             raise Exception("Trying to connect uncompatible dependencies %s.%s and %s.%s" % (
                 comp1_name, dep1_name, comp2_name, dep2_name))
 
-    def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str, reprise: bool):
+    def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         self.add_instruction(InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name))
 
     def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
@@ -420,7 +416,12 @@ class Assembly(object):
         # - Soit on remplace la fonction par des zenoh.get successifs
         # - Soit on met en place un subscribe (à voir comment et où)
         # - Soit on change le fonctionnement de la fonction semantics()
-        return self.is_component_idle(component_name)
+        is_component_idle = self.is_component_idle(component_name)
+        if not is_component_idle:
+            return RemoteSynchronization.synchronize_wait(
+                self, RemoteSynchronization.exit_reconf
+            )
+        return is_component_idle
 
     def wait_all(self):
         self.add_instruction(InternalInstruction.build_wait_all())
@@ -432,7 +433,12 @@ class Assembly(object):
             if not self.is_component_idle(comp_name):
                 all_remotes_are_idles = False
 
-        return len(self._p_act_components) is 0 and all_remotes_are_idles
+        all_idle = len(self._p_act_components) is 0 and all_remotes_are_idles
+        if not all_idle:
+            return RemoteSynchronization.synchronize_wait(
+                self, RemoteSynchronization.exit_reconf
+            )
+        return all_idle
 
     def synchronize(self, debug=False):
         # TODO: aims to also synchronize with other assemblies ?

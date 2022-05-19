@@ -139,6 +139,7 @@ class Component(object, metaclass=ABCMeta):
         self.groups: Dict[str, List[str]] = {}
         self.dependencies: Dict[str, Tuple] = {}
         self.initial_place: Optional[str] = None
+        self._p_component_type: str = type(self).__name__  # In order to reinstanciate it later
 
         self._p_st_places: Dict[str, Place] = {}
         self._p_st_transitions: Dict[str, Transition] = {}

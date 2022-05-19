@@ -5,9 +5,16 @@ from examples.decentralized.server import Server
 
 
 class ClientsPython(Assembly):
+    components_types = {
+        "ClientPython": ClientPython,
+        "Server": Server,
+        "PythonInstall": PythonInstall
+    }
+
+    remote_component_names = {"server", "client_server", "mysql"}
+
     def __init__(self, n):
-        Assembly.__init__(self)
+        Assembly.__init__(self, "client_assembly"+n, self.components_types, self.remote_component_names)
         self.client = ClientPython()
         self.server = Server()
         self.python_install = PythonInstall()
-        self.name = "client_assembly"+n

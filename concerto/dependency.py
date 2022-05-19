@@ -68,6 +68,7 @@ class DepType(Enum):
 class Dependency(object):
     """
     This class represents a dependency.
+    TODO: refacto les fields non utilisés par RemoteDependency
     """
 
     def __init__(self, component, name: str, dep_type: DepType):
@@ -80,7 +81,7 @@ class Dependency(object):
 
     @property
     def _p_id(self):
-        return f"{self._component.name}_{self._p_name}"
+        return f"{self._component.name}-{self._p_name}"
 
     def get_component_name(self):
         """

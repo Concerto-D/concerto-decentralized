@@ -62,4 +62,4 @@ class Connection:
 
     @staticmethod
     def build_id_from_dependencies(use_dep: Dependency, provide_dep: Dependency):
-        return f"{use_dep._p_id}-{provide_dep._p_id}"
+        return f"{use_dep._p_id}/{provide_dep._p_id}"
