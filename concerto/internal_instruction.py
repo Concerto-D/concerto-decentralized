@@ -104,18 +104,21 @@ class InternalInstruction:
             })
 
     @staticmethod
-    def build_wait(component_name: str):
+    def build_wait(component_name: str, id_sync: int):
         return InternalInstruction(
             InternalInstruction.Type.WAIT,
             {
-                "component_name": component_name
+                "component_name": component_name,
+                "id_sync": id_sync
             })
 
     @staticmethod
-    def build_wait_all():
+    def build_wait_all(id_sync: int):
         return InternalInstruction(
             InternalInstruction.Type.WAIT_ALL,
-            {})
+            {
+                "id_sync": id_sync
+            })
 
     def apply_to(self, assembly) -> bool:
         import time
@@ -132,8 +135,8 @@ class InternalInstruction:
         elif self.type is InternalInstruction.Type.PUSH_B:
             return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
-            return assembly._wait(self.args['component_name'], self.args['reprise'])
+            return assembly._wait(self.args['component_name'], self.args['reprise'], self.args['id_sync'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
-            return assembly._wait_all(self.args['reprise'])
+            return assembly._wait_all(self.args['reprise'], self.args['id_sync'])
         else:
             raise Exception("Invalid internal instruction type")

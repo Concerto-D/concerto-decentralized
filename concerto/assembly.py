@@ -63,6 +63,7 @@ class Assembly(object):
         # Operational semantics
 
         # thread running the semantics of the assembly in a loop
+        # TODO: checker pk le debug crash au bout d'un temps (timeout ?)
         self.semantics_thread: Thread = Thread(name="semantic_thread", target=self.loop_smeantics)
         self.alive: bool = True
 
@@ -164,7 +165,7 @@ class Assembly(object):
         if debug:
             Printer.st_err_tprint("DEBUG terminate:\n%s" % self.get_debug_info())
         for component_name in self._p_act_components:
-            self.wait(component_name)
+            self.wait(component_name, self._p_id_sync)
             if debug:
                 Printer.st_err_tprint("DEBUG terminate: waiting component '%s'" % component_name)
         self.synchronize()
@@ -180,7 +181,7 @@ class Assembly(object):
         """Warning: use only as last resort, anything run by the assembly will be killed, not exiting properly code
         run by the transitions """
         self.alive = False
-        # self.semantics_thread.join()
+        self.semantics_thread.join()
 
     def print(self, string: str):
         if self.verbosity < 0:
@@ -408,29 +409,29 @@ class Assembly(object):
             self.add_to_active_components(component_name)
         return True
 
-    def wait(self, component_name: str):
-        self.add_instruction(InternalInstruction.build_wait(component_name))
+    def wait(self, component_name: str, id_sync: int):
+        self.add_instruction(InternalInstruction.build_wait(component_name, id_sync))
 
-    def _wait(self, component_name: str, reprise: bool):
+    def _wait(self, component_name: str, reprise: bool, id_sync: int):
         # TODO [wait] Si on doit wait un component remote:
         # - Soit on remplace la fonction par des zenoh.get successifs
         # - Soit on met en place un subscribe (à voir comment et où)
         # - Soit on change le fonctionnement de la fonction semantics()
-        is_component_idle = self.is_component_idle(component_name)
+        is_component_idle = self.is_component_idle(component_name, id_sync)
         if not is_component_idle:
             return RemoteSynchronization.synchronize_wait(
                 self, RemoteSynchronization.exit_reconf
             )
         return is_component_idle
 
-    def wait_all(self):
-        self.add_instruction(InternalInstruction.build_wait_all())
+    def wait_all(self, id_sync: int):
+        self.add_instruction(InternalInstruction.build_wait_all(id_sync))
 
-    def _wait_all(self, reprise: bool):
+    def _wait_all(self, reprise: bool, id_sync: int):
         # Wait remotes
         all_remotes_are_idles = True
         for comp_name in self._remote_components_names:
-            if not self.is_component_idle(comp_name):
+            if not self.is_component_idle(comp_name, id_sync):
                 all_remotes_are_idles = False
 
         all_idle = len(self._p_act_components) is 0 and all_remotes_are_idles
@@ -461,11 +462,11 @@ class Assembly(object):
         else:
             return False, self.get_debug_info()
 
-    def is_component_idle(self, component_name: str) -> bool:
+    def is_component_idle(self, component_name: str, id_sync: int) -> bool:
         if component_name in self._p_components.keys():
             return component_name not in self._p_act_components
         else:
-            return communication_handler.get_remote_component_state(component_name, self._p_id_sync) == INACTIVE
+            return communication_handler.get_remote_component_state(component_name, id_sync) == INACTIVE
 
     def get_component(self, name: str) -> Component:
         if name in self._p_components:

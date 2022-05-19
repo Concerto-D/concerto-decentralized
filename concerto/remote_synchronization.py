@@ -5,7 +5,7 @@ from concerto import communication_handler, assembly_config
 from concerto.communication_handler import CONN, DECONN
 from concerto.utility import Printer
 
-WAITING_DELAY = 1
+WAITING_DELAY = 0.5
 
 
 class RemoteSynchronization:
@@ -19,7 +19,7 @@ class RemoteSynchronization:
     def exit_reconf(assembly):
         assembly_config.save_config(assembly)
         Printer.st_tprint("Going sleeping bye")
-        assembly.kill()
+        exit()
 
     @staticmethod
     def synchronize_connection(assembly, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str, async_func: Callable):

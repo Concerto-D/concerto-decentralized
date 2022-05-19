@@ -18,6 +18,7 @@ ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
 
 
+# TODO: fixer le id_sync qui est toujours au max
 class FixedEncoder(json.JSONEncoder):
     def default(self, obj):
         if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, InternalInstruction, Group]):
@@ -74,8 +75,9 @@ def restore_previous_config(assembly, previous_config):
     # Restore components
     components_dicts = previous_config['_p_components']
     components_names = components_dicts.keys()
+    components = _instanciate_components(assembly, previous_config)
     for comp_values in components_dicts.values():
-        component = _restore_component(assembly, comp_values, components_names)
+        component = _restore_component(assembly, comp_values, components_names, components)
         assembly._p_components[component._p_id] = component
 
     # TODO: to remove from serialization:
@@ -86,11 +88,22 @@ def restore_previous_config(assembly, previous_config):
     assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']
 
 
-def _restore_component(assembly, comp_values, components_names):
+def _instanciate_components(assembly, previous_config):
+    components_dicts = previous_config['_p_components']
+    components = {}
+    for comp_values in components_dicts.values():
+        comp_id = comp_values['_p_id']
+        comp_type = comp_values['_p_component_type']
+        component = assembly.components_types[comp_type]()
+        component.set_name(comp_id)
+        components[comp_id] = component
+
+    return components
+
+
+def _restore_component(assembly, comp_values, components_names, components):
     comp_id = comp_values['_p_id']
-    comp_type = comp_values['_p_component_type']
-    component = assembly.components_types[comp_type]()
-    component.set_name(comp_id)
+    component = components[comp_id]
     assembly._p_component_connections[comp_id] = set()
 
     # Restore dependencies
@@ -115,7 +128,8 @@ def _restore_component(assembly, comp_values, components_names):
                     dep1.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
                 dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
             else:
-                dep2 = component._p_st_dependencies[dep2_name]
+                comp2 = components[comp2_name]
+                dep2 = comp2._p_st_dependencies[dep2_name]
 
             # Checking remote comp1
             remote_connection_comp1 = comp1_name not in components_names
@@ -124,7 +138,8 @@ def _restore_component(assembly, comp_values, components_names):
                     dep2.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
                 dep1 = RemoteDependency(comp1_name, dep1_name, dep1_type)  # TODO [con, dcon]: la stocker pour le dcon ?
             else:
-                dep1 = component._p_st_dependencies[dep1_name]
+                comp1 = components[comp1_name]
+                dep1 = comp1._p_st_dependencies[dep1_name]
 
             conn = Connection(dep1, dep2)
             dep_comp._p_connections.add(conn)
@@ -139,12 +154,12 @@ def _restore_component(assembly, comp_values, components_names):
     # Restore active places
     for place_dict in comp_values['_p_act_places']:
         place_comp = component._p_st_places[place_dict['_p_name']]
-        component._p_act_places = place_comp
+        component._p_act_places.add(place_comp)
 
     # Restore active transitions
     for transitions_dict in comp_values['_p_act_transitions']:
         transitions_comp = component._p_st_transitions[transitions_dict['_p_name']]
-        component._p_act_transitions = transitions_comp
+        component._p_act_transitions.add(transitions_comp)
 
     # Restore active odocks
     for odock_id in comp_values['_p_act_odocks']:
@@ -152,7 +167,7 @@ def _restore_component(assembly, comp_values, components_names):
         # Finding corresponding odock
         for transition in component._p_st_transitions.values():
             if transition.src_dock._p_id == odock_id:
-                component._p_act_odocks = transition.src_dock
+                component._p_act_odocks.add(transition.src_dock)
 
     # Restore active idocks
     for idock_id in comp_values['_p_act_idocks']:
@@ -160,7 +175,7 @@ def _restore_component(assembly, comp_values, components_names):
         # Finding corresponding idock
         for transition in component._p_st_transitions.values():
             if transition.dst_dock._p_id == idock_id:
-                component._p_act_idocks = transition.dst_dock
+                component._p_act_idocks.add(transition.dst_dock)
 
 
     # Restore active behavior
@@ -173,6 +188,6 @@ def _restore_component(assembly, comp_values, components_names):
     # Restore visited places
     for place_dict in comp_values['_p_visited_places']:
         place_comp = component._p_st_places[place_dict['_p_name']]
-        component._p_visited_places = place_comp
+        component._p_visited_places.add(place_comp)
 
     return component

@@ -1,6 +1,6 @@
 import sys
 
-from examples.decentralized.servers_mysql_assembly import ServerMysql, ServerMysqlAssembly
+from examples.decentralized.servers_mysql_assembly import ServerMysqlAssembly
 
 sa = ServerMysqlAssembly()
 sa.set_verbosity(2)
@@ -9,7 +9,7 @@ sa._p_id_sync = 0
 
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
-print("-------- 1st reconf ----------------")
+# print("-------- 1st reconf ----------------")
 sa.add_component('server', sa.server)
 sa.add_component('client_server', sa.client_server)
 sa.connect('server', 'bdd', 'mysql', 'service')
@@ -20,31 +20,31 @@ for i in range(1, n+1):
     sa.connect('server', 'service', 'client'+str(i), 'service')
 sa.push_b('server', 'deploy')
 sa.push_b('client_server', 'install_start')
-sa.wait_all()
-sa.synchronize()
+sa.wait_all(sa._p_id_sync)
+# sa.synchronize()
 sa._p_id_sync += 1
 
-print("-------- 2nd reconf ----------------")
+# print("-------- 2nd reconf ----------------")
 sa.push_b('server', 'stop')
 sa.push_b('client_server', 'stop')
-sa.wait_all()
-sa.synchronize()
+sa.wait_all(sa._p_id_sync)
+# sa.synchronize()
 sa._p_id_sync += 1
 
-print("-------- 3rd reconf ----------------")
+# print("-------- 3rd reconf ----------------")
 sa.push_b('server', 'deploy')
 sa.push_b('client_server', 'install_start')
-sa.wait_all()
-sa.synchronize()
+sa.wait_all(sa._p_id_sync)
+# sa.synchronize()
 sa._p_id_sync += 1
 
-print("-------- Final reconf ----------------")
+# print("-------- Final reconf ----------------")
 sa.push_b('server', 'stop')
 sa.push_b('server', 'undeploy')
 sa.push_b('client_server', 'stop')
 sa.push_b('client_server', 'uninstall')
-sa.wait('server')
-sa.wait('client_server')
+sa.wait('server', sa._p_id_sync)
+sa.wait('client_server', sa._p_id_sync)
 for i in range(1, n+1):
     sa.disconnect('server', 'ip', 'client'+str(i), 'server_ip')
     sa.disconnect('server', 'service', 'client'+str(i), 'service')
@@ -53,8 +53,8 @@ sa.disconnect('server', 'service', 'client_server', 'service')
 sa.disconnect('server', 'bdd', 'mysql', 'service')
 sa.del_component('server')
 sa.del_component('client_server')
-sa.synchronize()
-
-sa.terminate()
+# sa.synchronize()
+sa.semantics_thread.join()
+# sa.terminate()
 
 print("---------------END SERVER-----------------")
