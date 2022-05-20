@@ -19,6 +19,8 @@ class RemoteSynchronization:
     def exit_reconf(assembly):
         assembly_config.save_config(assembly)
         Printer.st_tprint("Going sleeping bye")
+        # Printer.st_tprint("doing async stuff (i.e. waiting 1 sec)")
+        # time.sleep(1)
         exit()
 
     @staticmethod
@@ -29,12 +31,13 @@ class RemoteSynchronization:
         Printer.st_tprint(f"{assembly.name} : Waiting CONN message from {comp2_name}")
         is_conn_synced = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
         time.sleep(WAITING_DELAY)
-        Printer.st_tprint("Executing async func while waiting:" + async_func.__name__)
         if not is_conn_synced:
+            Printer.st_tprint("Executing async func while waiting:" + async_func.__name__)
             async_func(assembly)
             return False
-        Printer.st_tprint(f"{assembly.name} : RECEIVED CONN message from {comp2_name}")
-        return True
+        else:
+            Printer.st_tprint(f"{assembly.name} : RECEIVED CONN message from {comp2_name}")
+            return True
 
     @staticmethod
     def synchronize_disconnection(assembly, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str, async_func: Callable):

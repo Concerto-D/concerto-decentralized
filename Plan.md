@@ -1,4 +1,5 @@
 - I - fin implémentation - 1 semaine
+
   - Concerto asynchrone = Concerto qui se rendort
   - Mettre en place de la persistence
     - Identifier les choses à persister
@@ -9,10 +10,16 @@
   - Rajouter l'id_sync en paramètre optionnel du wait_all
     - Valeur par défaut modifiable
 
-- II - design des cas d'étude - 0.5 semaine
+- II - design des cas d'étude - 1.5 semaine
+  - Cas synthétique qui représentent tout ce qu'on veut montrer et qui traite tous les cas
+  - Cas réel (déploiement du CNN, scaling genre ajouter plusieurs CNN, plusieurs OU qui prennent des photos, etc)
+  - Comment simuler des machines proches des OUs (setup expérimental)
+  - Scénarios d'expérimentation (simulation d'une durée de 10h)
+  - Comment déployer tout ça, dire que les nodes dorment etc
 - III - coder les cas d'étude en Concerto et Muse - 1.5 semaines
-- IV - expérimentations sur Grid'5000 - 0.5 semaine
-- V - écriture du papier - 2.5 semaines
+- IV - expérimentations sur Grid'5000 - 1.5 semaine
+- V - écriture du papier - tout le long
+  - Focus sur la partie Expérimentation et Solution
 
 - Questions
   - Zenoh est thread-safe ?

@@ -11,6 +11,10 @@ class ServerMysql(Component):
             'running'
         ]
 
+        self.groups = {
+            'using_bdd': ['running', 'configured']
+        }
+
         self.transitions = {
             'allocate': ('undeployed', 'allocated', 'deploy', 0, self.allocate),
             'configure': ('allocated', 'configured', 'deploy', 0, self.configure),
@@ -22,7 +26,7 @@ class ServerMysql(Component):
 
         self.dependencies = {
             'ip': (DepType.DATA_PROVIDE, ['allocated']),
-            'bdd': (DepType.USE, ['configured']),
+            'bdd': (DepType.USE, ['using_bdd']),
             'service': (DepType.PROVIDE, ['running'])
         }
         

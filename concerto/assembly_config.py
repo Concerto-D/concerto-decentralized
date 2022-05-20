@@ -65,9 +65,9 @@ def load_previous_config(assembly):
         file_path,
         build_saved_config_file_path(assembly.name, is_archive=True)
     )
-    Printer.st_tprint(f"Removing previous conf ...")
-    os.remove(file_path)
-    Printer.st_tprint("done")
+    # Printer.st_tprint(f"Removing previous conf ...")
+    # os.remove(file_path)
+    # Printer.st_tprint("done")
     return result
 
 

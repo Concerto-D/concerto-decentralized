@@ -6,7 +6,6 @@ n = sys.argv[1] if len(sys.argv) > 1 else "1"
 sc = ClientsPython(n)
 sc.set_verbosity(2)
 sc.set_print_time(True)
-sc._p_id_sync = 0
 
 # print("-------- 1st reconf ----------------")
 sc.add_component('client'+n, sc.client)
@@ -16,28 +15,25 @@ sc.connect('client'+n, 'service', 'server', 'service')
 sc.connect('client'+n, 'python', 'python_install', 'installation')
 sc.push_b('client'+n, 'install_start')
 sc.push_b('python_install', 'install')
-sc.wait_all(sc._p_id_sync)
+sc.wait_all()
 # sc.synchronize()
-sc._p_id_sync += 1
 
 # print("-------- 2nd reconf ----------------")
 sc.push_b('client'+n, 'stop')
-sc.wait_all(sc._p_id_sync)
+sc.wait_all()
 # sc.synchronize()
-sc._p_id_sync += 1
 
 # print("-------- 3rd reconf ----------------")
 sc.push_b('client'+n, 'install_start')
-sc.wait_all(sc._p_id_sync)
+sc.wait_all()
 # sc.synchronize()
-sc._p_id_sync += 1
 
 # print("-------- Final reconf ----------------")
 sc.push_b('client'+n, 'stop')
 sc.push_b('client'+n, 'uninstall')
 sc.push_b('python_install', 'uninstall')
-sc.wait('server', sc._p_id_sync)
-sc.wait('client_server', sc._p_id_sync)
+sc.wait('server')
+sc.wait('client_server')
 sc.disconnect('client'+n, 'server_ip', 'server', 'ip')
 sc.disconnect('client'+n, 'service', 'server', 'service')
 sc.disconnect('client'+n, 'python', 'python_install', 'installation')
