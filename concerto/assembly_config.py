@@ -42,7 +42,7 @@ class FixedEncoder(json.JSONEncoder):
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
     if is_archive:
-        return f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}_old.json"
+        return f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
     else:
         return f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
 
@@ -80,6 +80,43 @@ def restore_previous_config(assembly, previous_config):
         component = _restore_component(assembly, comp_values, components_names, components)
         assembly._p_components[component._p_id] = component
 
+    assembly._p_connections = {}
+    # Restore connections
+    for conn_data in previous_config['_p_connections'].keys():
+        # TODO: should only be dep2, dep1 is dep_comp
+        # TODO: refactor common code with _create_conn
+        dep1_id, dep2_id = conn_data.split("/")
+        comp1_name, dep1_name = dep1_id.split("-")
+        comp2_name, dep2_name = dep2_id.split("-")
+
+        # Checking remote comp2
+        remote_connection_comp2 = comp2_name not in components_names
+        if remote_connection_comp2:
+            dep1 = components[comp1_name]._p_st_dependencies[dep1_name]
+            dep2_type = DepType.compute_opposite_type(
+                dep1.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
+            dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
+        else:
+            comp2 = components[comp2_name]
+            dep2 = comp2._p_st_dependencies[dep2_name]
+
+        # Checking remote comp1
+        remote_connection_comp1 = comp1_name not in components_names
+        if remote_connection_comp1:
+            dep1_type = DepType.compute_opposite_type(
+                dep2.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
+            dep1 = RemoteDependency(comp1_name, dep1_name, dep1_type)  # TODO [con, dcon]: la stocker pour le dcon ?
+        else:
+            comp1 = components[comp1_name]
+            dep1 = comp1._p_st_dependencies[dep1_name]
+
+        conn = Connection(dep1, dep2)
+        if not remote_connection_comp1:
+            assembly._p_component_connections[comp1_name].add(conn)
+        if not remote_connection_comp2:
+            assembly._p_component_connections[comp2_name].add(conn)
+        assembly._p_connections[conn._p_id] = conn
+
     # TODO: to remove from serialization:
     # - _p_component_connections
     # - _p_instructions_queue
@@ -105,45 +142,13 @@ def _restore_component(assembly, comp_values, components_names, components):
     comp_id = comp_values['_p_id']
     component = components[comp_id]
     assembly._p_component_connections[comp_id] = set()
+    component._p_initialized = comp_values['_p_initialized']
 
     # Restore dependencies
     for dep_values in comp_values['_p_st_dependencies'].values():
         dep_comp = component._p_st_dependencies[dep_values['_p_name']]
         dep_comp._p_nb_users = dep_values['_p_nb_users']
         dep_comp._p_data = dep_values['_p_data']
-
-        # Restore dependency connections
-        for conn_data in dep_values['_p_connections']:
-            # TODO: should only be dep2, dep1 is dep_comp
-            # TODO: refactor common code with _create_conn
-            dep1_id, dep2_id = conn_data['_p_id'].split("/")
-            comp1_name, dep1_name = dep1_id.split("-")
-            comp2_name, dep2_name = dep2_id.split("-")
-
-            # Checking remote comp2
-            remote_connection_comp2 = comp2_name not in components_names
-            if remote_connection_comp2:
-                dep1 = component._p_st_dependencies[dep1_name]
-                dep2_type = DepType.compute_opposite_type(
-                    dep1.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
-                dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
-            else:
-                comp2 = components[comp2_name]
-                dep2 = comp2._p_st_dependencies[dep2_name]
-
-            # Checking remote comp1
-            remote_connection_comp1 = comp1_name not in components_names
-            if remote_connection_comp1:
-                dep1_type = DepType.compute_opposite_type(
-                    dep2.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
-                dep1 = RemoteDependency(comp1_name, dep1_name, dep1_type)  # TODO [con, dcon]: la stocker pour le dcon ?
-            else:
-                comp1 = components[comp1_name]
-                dep1 = comp1._p_st_dependencies[dep1_name]
-
-            conn = Connection(dep1, dep2)
-            dep_comp._p_connections.add(conn)
-            assembly._p_component_connections[comp_id].add(conn)
 
     # Restore groups
     for group_name in comp_values['_p_st_groups'].keys():

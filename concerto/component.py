@@ -163,7 +163,7 @@ class Component(object, metaclass=ABCMeta):
         self._p_visited_places: Set[Place] = set()
         ###
 
-        self.initialized: bool = False
+        self._p_initialized: bool = False
         self.create()
         self.add_places(self.places)
         self.add_switches(self.switches)
@@ -671,13 +671,13 @@ class Component(object, metaclass=ABCMeta):
         """
         This method initializes the component and returns the set of active places
         """
-        if self.initialized:
+        if self._p_initialized:
             raise Exception("Trying to initialize component '%s' a second time" % self.get_name())
 
         self._force_add_transition("_init", None, self.initial_place, "_init", 0, empty_transition)
         self._p_act_transitions.add(self._p_st_transitions["_init"])
 
-        self.initialized = True
+        self._p_initialized = True
 
     def semantics(self) -> bool:
         """
@@ -686,7 +686,7 @@ class Component(object, metaclass=ABCMeta):
         """
 
         # Ajout d'une transition de départ vers la place initiale (donc sans source)
-        if not self.initialized:
+        if not self._p_initialized:
             self.init()
 
         # done = False

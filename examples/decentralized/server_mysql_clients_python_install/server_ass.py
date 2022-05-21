@@ -1,7 +1,6 @@
 import sys
 
 from examples.decentralized.servers_mysql_assembly import ServerMysqlAssembly
-
 sa = ServerMysqlAssembly()
 sa.set_verbosity(2)
 sa.set_print_time(True)

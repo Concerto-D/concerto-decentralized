@@ -557,6 +557,9 @@ class Assembly(object):
     def loop_smeantics(self):
         while self.alive:
             self.semantics()
+            if self._p_instructions_queue.empty():
+                print("---------------------- END OF RECONFIGURATION GG -----------------------")
+                self.alive = False
 
     def semantics(self):
         """
