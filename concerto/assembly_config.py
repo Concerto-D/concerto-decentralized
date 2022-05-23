@@ -167,19 +167,19 @@ def _restore_component(assembly, comp_values, components_names, components):
         component._p_act_transitions.add(transitions_comp)
 
     # Restore active odocks
-    for odock_id in comp_values['_p_act_odocks']:
+    for odock in comp_values['_p_act_odocks']:
 
         # Finding corresponding odock
         for transition in component._p_st_transitions.values():
-            if transition.src_dock._p_id == odock_id:
+            if transition.src_dock._p_id == odock['_p_id']:
                 component._p_act_odocks.add(transition.src_dock)
 
     # Restore active idocks
-    for idock_id in comp_values['_p_act_idocks']:
+    for idock in comp_values['_p_act_idocks']:
 
         # Finding corresponding idock
         for transition in component._p_st_transitions.values():
-            if transition.dst_dock._p_id == idock_id:
+            if transition.dst_dock._p_id == idock['_p_id']:
                 component._p_act_idocks.add(transition.dst_dock)
 
 

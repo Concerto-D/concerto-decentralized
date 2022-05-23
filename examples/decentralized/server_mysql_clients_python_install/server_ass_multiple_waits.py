@@ -4,6 +4,7 @@ from examples.decentralized.servers_mysql_assembly import ServerMysqlAssembly
 sa = ServerMysqlAssembly()
 sa.set_verbosity(2)
 sa.set_print_time(True)
+
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
 # print("-------- 1st reconf ----------------")
@@ -39,7 +40,6 @@ sa.push_b('client_server', 'stop')
 sa.push_b('client_server', 'uninstall')
 sa.wait('server')
 sa.wait('client_server')
-sa.wait_all()
 for i in range(1, n+1):
     # sa.disconnect('server', 'ip', 'client'+str(i), 'server_ip')
     sa.disconnect('server', 'service', 'client'+str(i), 'service')
@@ -50,7 +50,7 @@ sa.del_component('server')
 sa.del_component('client_server')
 # sa.synchronize()
 # sa.wait_all()
-sa.execute_reconfiguration_program()
+sa.semantics_thread.join()
 # sa.terminate()
 
 print("---------------END SERVER-----------------")

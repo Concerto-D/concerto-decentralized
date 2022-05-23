@@ -679,7 +679,7 @@ class Component(object, metaclass=ABCMeta):
 
         self._p_initialized = True
 
-    def semantics(self) -> bool:
+    def semantics(self) -> Tuple[bool, bool]:
         """
         This method apply the operational semantics at the component level.
         Returns whether the component is IDLE.
@@ -702,23 +702,24 @@ class Component(object, metaclass=ABCMeta):
 
         # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
         #  provide is not stable it doesn't get activated)
-
+        did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans = False, False, False, False
         # Exécution des transitions
         if self._p_act_idocks:
             # Printer.st_tprint("Doing idocks_to_place")
             # Printer.st_tprint("Active idocks: " + "".join([str(s) for s in self._p_act_idocks]))
-            self._idocks_to_place()
+            did_smthg_idocks = self._idocks_to_place()
         if self._p_act_places:
             # Printer.st_tprint("Doing place_to_odocks")
             # Printer.st_tprint("Active places: " + "".join([str(s) for s in self._p_act_places]))
-            self._place_to_odocks()
+            did_smthg_places = self._place_to_odocks()
         if self._p_act_odocks:
             # Printer.st_tprint("Doing start_transition")
             # Printer.st_tprint("Active odocks: " + "".join([str(s) for s in self._p_act_odocks]))
-            self._start_transition()
+            did_smthg_odocks = self._start_transition()
         if self._p_act_transitions:
-            self._end_transition()
+            did_smthg_trans = self._end_transition()
 
+        did_something = any([did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans])
         # Checks if the component is IDLE
         idle = not self._p_act_transitions and not self._p_act_odocks and not self._p_act_idocks
         # Check s'il y a des output docks associés au behavior actif (s'il y a une place à atteindre)
@@ -732,6 +733,7 @@ class Component(object, metaclass=ABCMeta):
             if not self._p_queued_behaviors.empty():
                 idle = False
                 self.set_behavior(self._p_queued_behaviors.get())
+                did_something = True
 
         # Ajoute un behavior "de fin" (?) si c'est le cas
         if idle:
@@ -739,7 +741,8 @@ class Component(object, metaclass=ABCMeta):
             if self.get_verbosity() >= 1:
                 self.print_color("Going IDLE")
 
-        return idle
+        doing_something = did_something or (len(self._p_act_transitions) > 0)
+        return idle, doing_something
 
     def _place_to_odocks(self) -> bool:
         """
@@ -864,6 +867,7 @@ class Component(object, metaclass=ABCMeta):
                 if not joined:
                     continue
 
+            did_something = True
             for dep in self._p_trans_dependencies[trans.get_name()]:
                 dep.stop_using()
                 if self.get_verbosity() >= 2:
@@ -936,7 +940,6 @@ class Component(object, metaclass=ABCMeta):
                     continue
 
                 did_something = True
-
                 # Activation des dependances (start_using)
                 for group in activating_groups_operation:
                     if self.get_verbosity() >= 2:

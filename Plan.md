@@ -1,14 +1,12 @@
 - I - fin implémentation - 1 semaine
-
-  - Concerto asynchrone = Concerto qui se rendort
-  - Mettre en place de la persistence
-    - Identifier les choses à persister
-    - Tester le dump JSON et voir si on enlève des choses (déduit)
-    - Voir pour le pb des références
-  - Voir pour la notion d'actif, voir s'il faut rajouter un autre actif que celui utilisé dans le code
-  - Voir si le nb_users des dépendances est lié au fait qu'un groupe contient autant de port que de places dans le groupe
-  - Rajouter l'id_sync en paramètre optionnel du wait_all
-    - Valeur par défaut modifiable
+  - Revoir le connect et le disconnect + remote_connection
+  - Avoir un workflow unique pour tout le monde:
+    - Si la commande n'est pas terminée, elle return false
+    - Un tour de sémantique est joué
+    - S'il n'y a aucun token qui a bougé et qu'il n'y a aucune transition active,
+    on fait la commande asynchrone
+    - La commande mise en attente du début est reprise là où elle n'avait pas terminée
+  - Virer les data_provides et data_use
 
 - II - design des cas d'étude - 1.5 semaine
   - Cas synthétique qui représentent tout ce qu'on veut montrer et qui traite tous les cas

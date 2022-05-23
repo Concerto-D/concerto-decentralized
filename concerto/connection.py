@@ -7,13 +7,9 @@ class Connection:
     """
 
     def __init__(self, dep1: Dependency, dep2: Dependency):
-        dep1type = dep1.get_type()
-        if dep1type == DepType.PROVIDE or dep1type == DepType.DATA_PROVIDE:
-            self._provide_dep = dep1
-            self._use_dep = dep2
-        else:
-            self._provide_dep = dep2
-            self._use_dep = dep1
+        use_dep, provide_dep = self.compute_provide_use_deps(dep1, dep2)
+        self._use_dep = use_dep
+        self._provide_dep = provide_dep
         self._provide_dep.connect(self)
         self._use_dep.connect(self)
 
@@ -61,5 +57,18 @@ class Connection:
         return self._use_dep if dep == self._provide_dep else self._provide_dep
 
     @staticmethod
-    def build_id_from_dependencies(use_dep: Dependency, provide_dep: Dependency):
+    def build_id_from_dependencies(dep1: Dependency, dep2: Dependency):
+        use_dep, provide_dep = Connection.compute_provide_use_deps(dep1, dep2)
         return f"{use_dep._p_id}/{provide_dep._p_id}"
+
+
+    @staticmethod
+    def compute_provide_use_deps(dep1: Dependency, dep2: Dependency):
+        if dep1.get_type() in [DepType.PROVIDE, DepType.DATA_PROVIDE]:
+            provide_dep = dep1
+            use_dep = dep2
+        else:
+            provide_dep = dep2
+            use_dep = dep1
+
+        return use_dep, provide_dep

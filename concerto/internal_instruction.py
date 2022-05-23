@@ -125,15 +125,15 @@ class InternalInstruction:
             return assembly._del(self.args['component_name'])
         elif self.type is InternalInstruction.Type.CONNECT:
             return assembly._connect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
-                                     self.args['dep2_name'], self.args['reprise'])
+                                     self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.DISCONNECT:
             return assembly._disconnect(self.args['comp1_name'], self.args['dep1_name'], self.args['comp2_name'],
-                                        self.args['dep2_name'], self.args['reprise'])
+                                        self.args['dep2_name'])
         elif self.type is InternalInstruction.Type.PUSH_B:
             return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
-            return assembly._wait(self.args['component_name'], self.args['reprise'])
+            return assembly._wait(self.args['component_name'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
-            return assembly._wait_all(self.args['reprise'])
+            return assembly._wait_all()
         else:
             raise Exception("Invalid internal instruction type")
