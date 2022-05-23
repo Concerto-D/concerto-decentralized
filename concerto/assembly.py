@@ -23,6 +23,9 @@ from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer
 
+# In synchronous execution, how much interval (in seconds) to poll results
+FREQUENCE_POLLING = 1
+
 
 class Assembly(object):
     """This Assembly class is used to create a assembly.
@@ -573,6 +576,8 @@ class Assembly(object):
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
             exit()
+        else:
+            time.sleep(FREQUENCE_POLLING)
 
     def is_idle(self) -> bool:
         """

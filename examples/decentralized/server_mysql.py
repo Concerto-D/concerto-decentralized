@@ -25,7 +25,7 @@ class ServerMysql(Component):
         }
 
         self.dependencies = {
-            # 'ip': (DepType.DATA_PROVIDE, ['allocated']),
+            'ip': (DepType.DATA_PROVIDE, ['allocated']),
             'bdd': (DepType.USE, ['using_bdd']),
             'service': (DepType.PROVIDE, ['running'])
         }
@@ -39,9 +39,9 @@ class ServerMysql(Component):
     def allocate(self):
         self.print_color("allocating resources")
         time.sleep(6.)
-        # self.my_ip = "123.124.1.2"
-        # self.write('ip', self.my_ip)
-        # self.print_color("finished allocation (IP: %s)" % self.my_ip)
+        self.my_ip = "123.124.1.2"
+        self.write('ip', self.my_ip)
+        self.print_color("finished allocation (IP: %s)" % self.my_ip)
 
     def configure(self):
         self.print_color("configuring")

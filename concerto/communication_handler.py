@@ -10,7 +10,6 @@ CONN = "CONN"
 DECONN = "DECONN"
 ACTIVE = "ACTIVE"
 INACTIVE = "INACTIVE"
-WAITING_DELAY = 0.5
 
 
 class _ZenohSession:
@@ -38,13 +37,24 @@ def zenoh_session(func):
 
 @zenoh_session
 def get_nb_dependency_users(component_name: str, dependency_name: str, workspace=None) -> int:
-    res = workspace.get(f"/{component_name}/{dependency_name}")
+    res = workspace.get(f"/nb_users/{component_name}/{dependency_name}")
     return int(res[0].value.get_content()) if len(res) > 0 else 0
 
 
 @zenoh_session
 def send_nb_dependency_users(nb: int, component_name: str, dependency_name: str, workspace=None):
-    workspace.put(f"/{component_name}/{dependency_name}", str(nb))
+    workspace.put(f"/nb_users/{component_name}/{dependency_name}", str(nb))
+
+
+@zenoh_session
+def get_data_dependency(component_name: str, dependency_name: str, workspace=None):
+    res = workspace.get(f"/data/{component_name}/{dependency_name}")
+    return res[0].value.get_content() if len(res) > 0 else ""
+
+
+@zenoh_session
+def write_data_dependency(component_name: str, dependency_name: str, data, workspace=None):
+    workspace.put(f"/data/{component_name}/{dependency_name}", data)
 
 
 @zenoh_session
@@ -69,7 +79,6 @@ def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, id_sync:
 def get_remote_component_state(component_name: str, id_sync: int, workspace=None) -> [ACTIVE, INACTIVE]:
     result = workspace.get(f"/wait/{id_sync}/{component_name}")
     Printer.st_tprint(f"Checking /wait/{id_sync}/{component_name}: " + (result[0].value.get_content() if result else "NONE (considered ACTIVE)"))
-    time.sleep(WAITING_DELAY)
     if len(result) <= 0:
         return ACTIVE
     else:

@@ -106,10 +106,17 @@ class Dependency(object):
         """
         return self._p_type
 
-    def get_data(self):
+    def check_get_data_is_provide(self):
         if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
             raise Exception(
                 "Trying to get data from dependency '%s' which is not of type provide or data provide" % self.get_name())
+
+    def check_write_data_is_provide(self):
+        if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
+            raise Exception("Trying to write to dependency '%s' which is not of type provide or data provide" % self.get_name())
+
+    def get_data(self):
+        self.check_get_data_is_provide()
         return self._p_data
 
     def read(self):
@@ -121,8 +128,7 @@ class Dependency(object):
         raise Exception("Trying to read from dependency '%s' which is not served" % self.get_name())
 
     def write(self, data):
-        if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
-            raise Exception("Trying to write to dependency '%s' which is not of type provide or data provide" % self.get_name())
+        self.check_write_data_is_provide()
         self._p_data = data
 
     def is_connected(self) -> bool:

@@ -1,7 +1,7 @@
 from examples.decentralized.mysql_assembly import MysqlAssembly
 import sys
 
-sa = MysqlAssembly(is_asynchrone=True)
+sa = MysqlAssembly(is_asynchrone=False)
 sa.set_verbosity(2)
 sa.set_print_time(True)
 

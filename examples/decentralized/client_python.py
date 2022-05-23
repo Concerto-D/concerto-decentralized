@@ -30,14 +30,14 @@ class ClientPython(Component):
 
         self.dependencies = {
             'python': (DepType.USE, ['python_group']),
-            # 'server_ip': (DepType.DATA_USE, ['configure']),
+            'server_ip': (DepType.DATA_USE, ['configure']),
             'service': (DepType.USE, ['using_service'])
         }
         
         self.initial_place = 'off'
 
     def __init__(self):
-        # self.server_ip = None
+        self.server_ip = None
         Component.__init__(self)
 
     def install1(self):
@@ -51,8 +51,8 @@ class ClientPython(Component):
         self.print_color("installed (2/2)")
 
     def configure(self):
-        # self.server_ip = self.read('server_ip')
-        # self.print_color("configuring [server IP: %s]" % self.server_ip)
+        self.server_ip = self.read('server_ip')
+        self.print_color("configuring [server IP: %s]" % self.server_ip)
         time.sleep(1.)
         self.print_color("configured")
 

@@ -19,7 +19,7 @@ class Server(Component):
         }
 
         self.dependencies = {
-            # 'ip': (DepType.DATA_PROVIDE, ['allocated']),
+            'ip': (DepType.DATA_PROVIDE, ['allocated']),
             'service': (DepType.PROVIDE, ['running'])
         }
         
@@ -32,9 +32,9 @@ class Server(Component):
     def allocate(self):
         self.print_color("allocating resources")
         time.sleep(6.)
-        # self.my_ip = "123.124.1.2"
-        # self.write('ip', self.my_ip)
-        # self.print_color("finished allocation (IP: %s)" % self.my_ip)
+        self.my_ip = "123.124.1.2"
+        self.write('ip', self.my_ip)
+        self.print_color("finished allocation (IP: %s)" % self.my_ip)
 
     def run(self):
         self.print_color("preparing to run")

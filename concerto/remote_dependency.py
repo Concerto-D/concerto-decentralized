@@ -24,6 +24,14 @@ class RemoteDependency(Dependency):
         """
         return communication_handler.get_nb_dependency_users(self.remote_component_name, self._p_name) > 0
 
+    def get_data(self):
+        self.check_get_data_is_provide()
+        return communication_handler.get_data_dependency(self.get_name(), self.get_component_name())
+
+    def write(self, data):
+        self.check_get_data_is_provide()
+        return communication_handler.write_data_dependency(self.get_name(), self.get_component_name(), data)
+
     @property
     def _p_id(self):
         return f"{self.remote_component_name}-{self._p_name}"
