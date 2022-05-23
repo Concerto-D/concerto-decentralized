@@ -123,6 +123,7 @@ def restore_previous_config(assembly, previous_config):
     assembly._p_act_components = set(previous_config['_p_act_components'])
     assembly._p_id_sync = previous_config['_p_id_sync']
     assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']
+    assembly._p_is_asynchrone = previous_config['_p_is_asynchrone']
 
 
 def _instanciate_components(assembly, previous_config):

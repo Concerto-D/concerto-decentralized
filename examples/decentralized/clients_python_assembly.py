@@ -14,8 +14,9 @@ class ClientsPython(Assembly):
     remote_component_names = {"server", "client_server", "mysql"}
     remote_assemblies_names = {"mysql_assembly", "server_mysql_assembly"}
 
-    def __init__(self, n):
-        Assembly.__init__(self, "client_assembly"+n, self.components_types, self.remote_component_names, self.remote_assemblies_names)
+    def __init__(self, n, is_asynchrone=True):
+        Assembly.__init__(self, "client_assembly" + n, self.components_types, self.remote_component_names,
+                          self.remote_assemblies_names, is_asynchrone)
         self.client = ClientPython()
         self.server = Server()
         self.python_install = PythonInstall()

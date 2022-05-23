@@ -12,7 +12,7 @@ from threading import Thread
 from queue import Queue
 
 from concerto import communication_handler, assembly_config
-from concerto.communication_handler import CONN, DECONN, ACTIVE, INACTIVE
+from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
 from concerto.remote_dependency import RemoteDependency
@@ -35,7 +35,7 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names):
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, is_asynchrone=True):
         self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
@@ -80,6 +80,8 @@ class Assembly(object):
 
         # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
         self._p_nb_instructions_done = 0
+
+        self._p_is_asynchrone = is_asynchrone
 
         self.verbosity: int = 0
         self.print_time: bool = False
@@ -587,7 +589,7 @@ class Assembly(object):
             all_tokens_blocked = all_tokens_blocked and (not did_something)
 
         self.remove_from_active_components(idle_components)
-        if all_tokens_blocked:
+        if self._p_is_asynchrone and all_tokens_blocked:
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
