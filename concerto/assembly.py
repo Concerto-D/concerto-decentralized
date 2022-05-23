@@ -41,30 +41,20 @@ class Assembly(object):
         self._p_components: Dict[str, Component] = {}  # PERSIST
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
-        # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
-        # d'en face.
         self._p_connections: Dict[str, Connection] = {}
 
         self._remote_components_names: Set[str] = remote_component_names
         self._remote_assemblies_names: Set[str] = remote_assemblies_names
 
         # a dictionary to store at the assembly level a list of connections for
-        # each place (name) of the assembly (ie provide dependencies)
-        # this is used to improve performance of the semantics
-        # TODO [con] Pas utilisé
-        self.places_connections: Dict[str, List[Connection]] = {}
-
-        # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
         # this is used to improve performance of the semantics
-        # TODO [con] Uniquement pour la vérification, donc pas besoin des infos
-        # d'en face.
         self._p_component_connections: Dict[str, Set[Connection]] = {}
 
         # Operational semantics
 
         # thread running the semantics of the assembly in a loop
-        # TODO: checker pk le debug crash au bout d'un temps (timeout ?)
+        # TODO: checker pk le debug crash au bout d'un temps sur WSL (timeout ?)
         self.semantics_thread: Thread = Thread(name="semantic_thread", target=self.loop_smeantics)
         self.alive: bool = True
 
@@ -164,7 +154,6 @@ class Assembly(object):
         return debug_info
 
     def terminate(self, debug=False):
-        # TODO Est censé attendre également les autres assemblies ?
         if debug:
             Printer.st_err_tprint("DEBUG terminate:\n%s" % self.get_debug_info())
         for component_name in self._p_act_components:
@@ -221,14 +210,10 @@ class Assembly(object):
             self.add_instruction(instr)
 
     def add_to_active_components(self, component_name: str):
-        # TODO: voir si on ajoute TOUS les components ou seulement une partie
         self._p_act_components.add(component_name)
-        # communication_handler.set_component_state(ACTIVE, component_name, self._p_id_sync)
 
     def remove_from_active_components(self, idle_components: Set[str]):
         self._p_act_components.difference_update(idle_components)
-        # for component_name in idle_components:
-        #     communication_handler.set_component_state(INACTIVE, component_name, self._p_id_sync)
 
     def add_component(self, name: str, comp: Component):
         self.add_instruction(InternalInstruction.build_add(name, comp))
@@ -316,12 +301,12 @@ class Assembly(object):
                 self._p_component_connections[comp2_name].add(new_connection)
 
             # [con] Ajouter la synchronization avec le composant d'en face
-            # TODO: réfléchir sur le besoin de la synchronization pour le con
+            # TODO: réfléchir sur le besoin de la synchronization pour le con: pourquoi attendre que la connection d'en face
+            # soit faite, on peut juste lancer les bhvs et s'il n'y a pas de remote dependencies on considère la dépendance
+            # non served
             if remote_connection:
                 # Need d'initialiser le nombre de user sur la dépendance à 0 car si on veut déconnecter tout de suite,
                 # un check est fait sur le nb d'utilisateur
-                # TODO [dcon] voir si c'est pas mieux de faire un check sur si le topic a une valeur nulle
-                communication_handler.send_nb_dependency_users(0, comp1_name, dep1_name)
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
                 is_conn_synced = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
                 Printer.st_tprint(f"Is conn synced between {comp1_name} and {comp2_name} ? (for {dep1_name} and {dep2_name}): {is_conn_synced}")
@@ -386,7 +371,7 @@ class Assembly(object):
 
         connection: Connection = self._p_connections[id_connection_to_remove]
         if connection.can_remove():
-            connection.disconnect()  # TODO [dcon] pertinent d'ajouter une liste de connexions au RemoteDependency ?
+            connection.disconnect()
             self._p_component_connections[comp1_name].discard(connection)
 
             # self._p_component_connections ne sert qu'à faire une vérification au moment du del, un component remote
@@ -397,15 +382,14 @@ class Assembly(object):
             del self._p_connections[id_connection_to_remove]
 
             # [dcon] Ajouter la synchronization avec le composant d'en face
-            # TODO: réfléchir sur le besoin de la synchronization pour le dcon
+            # TODO: réfléchir sur le besoin de la synchronization pour le dcon, parce qu'une fois que moi je me suis déco,
+            # je n'ai pas besoin de savoir si les autres se sont déco (si on suppose un programme valide)
             if is_remote_disconnection:
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
                 return communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
 
             return True
         else:
-            # TODO: synchronizer également l'attente du connection.can_remove()
-            time.sleep(1)
             return False
 
     def push_b(self, component_name: str, behavior: str):
@@ -422,10 +406,6 @@ class Assembly(object):
         self.add_instruction(InternalInstruction.build_wait(component_name))
 
     def _wait(self, component_name: str):
-        # TODO [wait] Si on doit wait un component remote:
-        # - Soit on remplace la fonction par des zenoh.get successifs
-        # - Soit on met en place un subscribe (à voir comment et où)
-        # - Soit on change le fonctionnement de la fonction semantics()
         is_local_component = component_name in self._p_components.keys()
         if is_local_component:
             is_component_idle = component_name not in self._p_act_components
@@ -457,7 +437,6 @@ class Assembly(object):
         return all_local_idle and all_remote_idle
 
     def synchronize(self, debug=False):
-        # TODO: aims to also synchronize with other assemblies ?
         if debug:
             # TODO Remove access to internal queue of instructions_queue (not part of API)
             Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n" % (

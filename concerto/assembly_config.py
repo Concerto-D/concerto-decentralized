@@ -18,7 +18,6 @@ ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
 
 
-# TODO: fixer le id_sync qui est toujours au max
 class FixedEncoder(json.JSONEncoder):
     def default(self, obj):
         if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, InternalInstruction, Group]):

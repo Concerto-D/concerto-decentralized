@@ -61,7 +61,6 @@ class Connection:
         use_dep, provide_dep = Connection.compute_provide_use_deps(dep1, dep2)
         return f"{use_dep._p_id}/{provide_dep._p_id}"
 
-
     @staticmethod
     def compute_provide_use_deps(dep1: Dependency, dep2: Dependency):
         if dep1.get_type() in [DepType.PROVIDE, DepType.DATA_PROVIDE]:

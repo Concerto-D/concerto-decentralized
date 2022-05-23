@@ -39,9 +39,7 @@ def zenoh_session(func):
 @zenoh_session
 def get_nb_dependency_users(component_name: str, dependency_name: str, workspace=None) -> int:
     res = workspace.get(f"/{component_name}/{dependency_name}")
-
-    # The result always exists as the nb_users is set when the connection is created
-    return int(res[0].value.get_content())
+    return int(res[0].value.get_content()) if len(res) > 0 else 0
 
 
 @zenoh_session

@@ -3,7 +3,7 @@ import sys
 from examples.decentralized.clients_python_assembly import ClientsPython
 
 n = sys.argv[1] if len(sys.argv) > 1 else "1"
-sc = ClientsPython(n, is_asynchrone=False)
+sc = ClientsPython(n, is_asynchrone=True)
 sc.set_verbosity(2)
 sc.set_print_time(True)
 

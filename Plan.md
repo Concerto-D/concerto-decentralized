@@ -6,7 +6,9 @@
     - S'il n'y a aucun token qui a bougé et qu'il n'y a aucune transition active,
     on fait la commande asynchrone
     - La commande mise en attente du début est reprise là où elle n'avait pas terminée
-  - Virer les data_provides et data_use
+  - TODO:
+    - Communaliser les data_provides et data_use
+    - Pour les communications synchrone, mettre une fréquence de polling
 
 - II - design des cas d'étude - 1.5 semaine
   - Cas synthétique qui représentent tout ce qu'on veut montrer et qui traite tous les cas
