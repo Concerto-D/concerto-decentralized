@@ -59,7 +59,7 @@ class Place(object):
     def __init__(self, component, name, override_get_output_docks=None, cp=None):  # TODO remove cp
         self.component = component
         self._p_name = name
-        self.override_get_output_docks = override_get_output_docks  # TODO serializer la fonction
+        self.override_get_output_docks = override_get_output_docks
         self._p_input_docks = {}  # dictionary behavior -> docks[]
         self._p_output_docks = {}  # dictionary behavior -> docks[]
         self._p_provides = []

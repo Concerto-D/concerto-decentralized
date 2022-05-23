@@ -9,6 +9,8 @@
   - TODO:
     - Communaliser les data_provides et data_use
     - Pour les communications synchrone, mettre une fréquence de polling
+    - Alléger la sérialization
+    - Refacto RemoteDependency en faisant une classe chapeau abstraite
 
 - II - design des cas d'étude - 1.5 semaine
   - Cas synthétique qui représentent tout ce qu'on veut montrer et qui traite tous les cas

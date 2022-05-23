@@ -31,7 +31,6 @@ class RemoteDependency(Dependency):
     def get_component_name(self):
         return self.remote_component_name
 
-    # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
     def __eq__(self, other):
         if type(other) != type(self):
             return False

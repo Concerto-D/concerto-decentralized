@@ -389,7 +389,6 @@ class Component(object, metaclass=ABCMeta):
         :param type: the type DepType of the dependency
         :param binding: the name of the binding of the dependency (place or transition)
         """
-        # TODO: meaning switch ? Differences USE, DATA_USE ?
         if type == DepType.DATA_USE:
             transitions = []
             switches = []
@@ -754,7 +753,6 @@ class Component(object, metaclass=ABCMeta):
 
         for place in self._p_act_places:
             if place in self._p_visited_places:
-                # TODO à comprendre, visited_places ? Pour ne pas boucler à l'infini? Dans quel scénario ?
                 continue
             odocks = place.get_output_docks(self._p_act_behavior)
             if len(odocks) is 0:
@@ -893,8 +891,6 @@ class Component(object, metaclass=ABCMeta):
         for dock in self._p_act_idocks:
             place: Place = dock.get_place()
             if place in self._p_act_places:
-                # TODO comprendre: comment ce cas peut arriver ? **Quand une place s'active pour un dock, ça ne sert à
-                # rien de faire la même chose pour un autre associé à cette même place**
                 continue
 
             # On récupère tous les input docks associés au behavior actif de la fin des transitions

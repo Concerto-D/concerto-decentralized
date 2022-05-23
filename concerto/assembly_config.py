@@ -82,43 +82,18 @@ def restore_previous_config(assembly, previous_config):
     assembly._p_connections = {}
     # Restore connections
     for conn_data in previous_config['_p_connections'].keys():
-        # TODO: should only be dep2, dep1 is dep_comp
-        # TODO: refactor common code with _create_conn
         dep1_id, dep2_id = conn_data.split("/")
         comp1_name, dep1_name = dep1_id.split("-")
         comp2_name, dep2_name = dep2_id.split("-")
 
-        # Checking remote comp2
-        remote_connection_comp2 = comp2_name not in components_names
-        if remote_connection_comp2:
-            dep1 = components[comp1_name]._p_st_dependencies[dep1_name]
-            dep2_type = DepType.compute_opposite_type(
-                dep1.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
-            dep2 = RemoteDependency(comp2_name, dep2_name, dep2_type)  # TODO [con, dcon]: la stocker pour le dcon ?
-        else:
-            comp2 = components[comp2_name]
-            dep2 = comp2._p_st_dependencies[dep2_name]
-
-        # Checking remote comp1
-        remote_connection_comp1 = comp1_name not in components_names
-        if remote_connection_comp1:
-            dep1_type = DepType.compute_opposite_type(
-                dep2.get_type())  # TODO: assumption sur le fait que la dependency d'en face est forcément la stricte opposée
-            dep1 = RemoteDependency(comp1_name, dep1_name, dep1_type)  # TODO [con, dcon]: la stocker pour le dcon ?
-        else:
-            comp1 = components[comp1_name]
-            dep1 = comp1._p_st_dependencies[dep1_name]
-
+        dep1, dep2 = assembly._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
         conn = Connection(dep1, dep2)
-        if not remote_connection_comp1:
+        if comp1_name in assembly._p_components.keys():
             assembly._p_component_connections[comp1_name].add(conn)
-        if not remote_connection_comp2:
+        if comp2_name in assembly._p_components.keys():
             assembly._p_component_connections[comp2_name].add(conn)
         assembly._p_connections[conn._p_id] = conn
 
-    # TODO: to remove from serialization:
-    # - _p_component_connections
-    # - _p_instructions_queue
     assembly._p_act_components = set(previous_config['_p_act_components'])
     assembly._p_id_sync = previous_config['_p_id_sync']
     assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']

@@ -49,14 +49,12 @@ def send_nb_dependency_users(nb: int, component_name: str, dependency_name: str,
 
 @zenoh_session
 def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
-    # TODO Un seul topic pour conn et decon
     Printer.st_tprint(f"Sending {action}: {syncing_component}_{dep_provide}-{component_to_sync}_{dep_use}")
     workspace.put(f"/{action}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}", action)
 
 
 @zenoh_session
 def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
-    # TODO Un seul topic pour conn et decon
     result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
     return len(result) > 0 and result[0].value.get_content() == action
 

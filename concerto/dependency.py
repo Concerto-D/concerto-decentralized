@@ -68,7 +68,6 @@ class DepType(Enum):
 class Dependency(object):
     """
     This class represents a dependency.
-    TODO: refacto les fields non utilisés par RemoteDependency
     """
 
     def __init__(self, component, name: str, dep_type: DepType):
@@ -114,8 +113,6 @@ class Dependency(object):
         return self._p_data
 
     def read(self):
-        # TODO: à comprendre, pk on récupère les data de seulement la première connection active ?
-        # Pk on fait un get_provide_dep alors qu'on fait déjà la vérification dans le premier if ?
         if self.get_type() is not DepType.DATA_USE and self.get_type() is not DepType.USE:
             raise Exception("Trying to read from dependency '%s' which is not of type use or data use" % self.get_name())
         for c in self._p_connections:
@@ -175,7 +172,6 @@ class Dependency(object):
     def is_served(self):
         """
         Est ce que le use port est provisionné ?
-        TODO à comprendre: pk un use port aurait plusieurs connections ? **Pour être générique**
         """
         if self._p_type != DepType.DATA_USE and self._p_type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")
@@ -195,7 +191,6 @@ class Dependency(object):
                 return True
         return False
 
-    # TODO [con] voir si on garde ça, ou si on compare les dépendances directement par référence
     def __eq__(self, other):
         if type(other) != type(self):
             return False
