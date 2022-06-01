@@ -526,7 +526,6 @@ class Assembly(object):
                 self.alive = False
             self.semantics()
 
-
     def semantics(self):
         """
         This method runs one semantics iteration by first consuming the list
@@ -571,6 +570,8 @@ class Assembly(object):
             all_tokens_blocked = all_tokens_blocked and (not did_something)
 
         self.remove_from_active_components(idle_components)
+
+        # Synchrone or asynchrone wait
         if self._p_is_asynchrone and all_tokens_blocked:
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")

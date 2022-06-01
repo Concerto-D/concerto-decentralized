@@ -24,6 +24,9 @@ class RemoteDependency(Dependency):
         """
         return communication_handler.get_nb_dependency_users(self.remote_component_name, self._p_name) > 0
 
+    def is_refusing(self):
+        return communication_handler.get_refusing_state(self.get_component_name(), self.get_name())
+
     def get_data(self):
         self.check_get_data_is_provide()
         return communication_handler.get_data_dependency(self.get_name(), self.get_component_name())

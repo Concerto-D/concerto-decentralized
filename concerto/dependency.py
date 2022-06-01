@@ -75,6 +75,7 @@ class Dependency(object):
         self._p_name = name
         self._p_type = dep_type
         self._p_connections: Set = set()
+        self._p_is_refusing: bool = False
         self._p_nb_users = 0
         self._p_data = None
 
@@ -160,8 +161,7 @@ class Dependency(object):
     def start_using(self):
         self._p_nb_users += 1
 
-        # Si la dépendance d'en face associée à la même connection est remote,
-        # alors il faut la prévenir de la mise à jour du nb_users
+        # S'il y a au moins une dépendance remote, il faut la prévenir de la mise à jour du nb_users
         for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
                 communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
@@ -169,11 +169,29 @@ class Dependency(object):
     def stop_using(self):
         self._p_nb_users -= 1
 
-        # Si la dépendance d'en face associée à la même connection est remote,
-        # alors il faut la prévenir de la mise à jour du nb_users
+        # S'il y a au moins une dépendance remote, il faut la prévenir de la mise à jour du nb_users
         for conn in self._p_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
                 communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
+
+    def is_refusing(self):
+        return self._p_is_refusing
+
+    def is_allowed(self):
+        if self._p_type != DepType.DATA_USE and self._p_type != DepType.USE:
+            raise Exception("Trying to check if a provide port is allowed")
+        for c in self._p_connections:
+            if c.get_provide_dep().is_refusing():
+                return False
+        return True
+
+    def set_refusing_state(self, value: bool):
+        self._p_is_refusing = value
+
+        # S'il y a au moins une dépendance remote, il faut la prévenir du fait que le provide n'accepte
+        # plus d'utilisation
+        if any(type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency' for conn in self._p_connections):
+            communication_handler.send_refusing_state(value, self.get_component_name(), self._p_name)
 
     def is_served(self):
         """

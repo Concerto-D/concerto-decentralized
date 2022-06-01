@@ -47,6 +47,17 @@ def send_nb_dependency_users(nb: int, component_name: str, dependency_name: str,
 
 
 @zenoh_session
+def get_refusing_state(component_name: str, dependency_name: str, workspace=None) -> int:
+    res = workspace.get(f"/refusing/{component_name}/{dependency_name}")
+    return bool(int(res[0].value.get_content())) if len(res) > 0 else False
+
+
+@zenoh_session
+def send_refusing_state(value: int, component_name: str, dependency_name: str, workspace=None):
+    workspace.put(f"/refusing/{component_name}/{dependency_name}", int(value))
+
+
+@zenoh_session
 def get_data_dependency(component_name: str, dependency_name: str, workspace=None):
     res = workspace.get(f"/data/{component_name}/{dependency_name}")
     return res[0].value.get_content() if len(res) > 0 else ""

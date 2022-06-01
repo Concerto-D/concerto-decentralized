@@ -743,6 +743,24 @@ class Component(object, metaclass=ABCMeta):
         doing_something = did_something or (len(self._p_act_transitions) > 0)
         return idle, doing_something
 
+    def _put_provide_deps_in_refusing_state(self, place: Place):
+        """
+        TODO: duplicated code with _place_to_odocks
+        """
+        # Deps attached to place
+        for dep in self._p_place_dependencies[place.get_name()]:
+            if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+                dep.set_refusing_state(True)
+
+        # Deps attached to the group of the place
+        odocks = place.get_output_docks(self._p_act_behavior)
+        for group in self._p_place_groups[place.get_name()]:
+            group_operation = group.leave_place_operation(odocks)
+            if group.is_deactivating(group_operation):
+                for dep in self._p_group_dependencies[group.get_name()]:
+                    if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+                        dep.set_refusing_state(True)
+
     def _place_to_odocks(self) -> bool:
         """
         This method represents the one moving the token of a place to its
@@ -757,6 +775,8 @@ class Component(object, metaclass=ABCMeta):
             odocks = place.get_output_docks(self._p_act_behavior)
             if len(odocks) is 0:
                 continue
+
+            self._put_provide_deps_in_refusing_state(place)
 
             can_leave: bool = True
             # Checking place dependencies
@@ -913,7 +933,7 @@ class Component(object, metaclass=ABCMeta):
                 # Checking place dependencies
                 for dep in self._p_place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
-                        if not dep.is_served():
+                        if not dep.is_served() or not dep.is_allowed():
                             ready = False
                             break
                 if not ready:
@@ -928,7 +948,7 @@ class Component(object, metaclass=ABCMeta):
                     group_operation = group.enter_place_operation(inp_docks)
                     if group.is_activating(group_operation):
                         for dep in self._p_group_dependencies[group.get_name()]:
-                            if dep.get_type() is DepType.USE and (not dep.is_served()):
+                            if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
                                 ready = False
                                 break
                         activating_groups_operation[group] = group_operation
@@ -943,12 +963,16 @@ class Component(object, metaclass=ABCMeta):
                     group.apply(activating_groups_operation[group])
                     for dep in self._p_group_dependencies[group.get_name()]:
                         dep.start_using()
+                        if dep.is_refusing():
+                            dep.set_refusing_state(False)
                         if self.get_verbosity() >= 2:
                             self.print_color("Starting to use group dependency '%s'" % dep.get_name())
                 if self.get_verbosity() >= 1:
                     self.print_color("Entering place '%s'" % (place.get_name()))
                 for dep in self._p_place_dependencies[place.get_name()]:
                     dep.start_using()
+                    if dep.is_refusing():
+                        dep.set_refusing_state(False)
                     if self.get_verbosity() >= 2:
                         self.print_color("Starting to use place dependency '%s'" % dep.get_name())
                 self._p_act_places.add(place)
