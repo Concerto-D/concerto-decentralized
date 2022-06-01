@@ -9,9 +9,9 @@ from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
 from concerto.internal_instruction import InternalInstruction
 from concerto.place import Dock, Place
-from concerto.remote_dependency import RemoteDependency
 from concerto.transition import Transition
 from concerto.utility import Printer
+from evaluation.config import COMPONENTS_PARAMETERS
 
 SAVED_CONFIG_DIRECTORY = "/home/aomond/implementations/concerto-decentralized"
 ARCHIVE_DIR_NAME = "archives_reprises"
@@ -106,7 +106,8 @@ def _instanciate_components(assembly, previous_config):
     for comp_values in components_dicts.values():
         comp_id = comp_values['_p_id']
         comp_type = comp_values['_p_component_type']
-        component = assembly.components_types[comp_type]()
+        component_params = COMPONENTS_PARAMETERS[comp_id]
+        component = assembly.components_types[comp_type](*component_params)
         component.set_name(comp_id)
         components[comp_id] = component
 

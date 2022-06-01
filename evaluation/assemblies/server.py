@@ -1,6 +1,3 @@
-import time
-from typing import Dict, Tuple, List, Set
-
 from concerto.all import *
 
 class Server(Component):
@@ -94,5 +91,5 @@ class Server(Component):
 
     def prepare(self, dependency_id : int):
         self.print_color("preparing dependency %d"%dependency_id)
-        time.sleep(self.t_sp[dependency_id]) 
+        time.sleep(self.t_sp[dependency_id])
         self.print_color("prepared dependency %d"%dependency_id)
