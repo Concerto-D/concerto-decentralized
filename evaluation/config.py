@@ -1,4 +1,4 @@
-NB_DEPS_TOT = 5
+NB_DEPS_TOT = 2
 
 # Dummy values for server
 t_sc, t_ss, t_sp = [], [], []

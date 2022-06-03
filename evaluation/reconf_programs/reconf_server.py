@@ -16,6 +16,7 @@ def deploy():
 
 def update():
     sc.push_b("server", "suspend")
+    sc.wait_all(wait_for_refusing_provide=True)
     sc.push_b("server", "deploy")
     sc.wait_all()
 

@@ -405,8 +405,8 @@ class Assembly(object):
             self.add_to_active_components(component_name)
         return True
 
-    def wait(self, component_name: str):
-        self.add_instruction(InternalInstruction.build_wait(component_name))
+    def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
+        self.add_instruction(InternalInstruction.build_wait(component_name, wait_for_refusing_provide))
 
     def _wait(self, component_name: str):
         is_local_component = component_name in self._p_components.keys()
@@ -421,8 +421,8 @@ class Assembly(object):
 
         return is_component_idle
 
-    def wait_all(self):
-        self.add_instruction(InternalInstruction.build_wait_all())
+    def wait_all(self, wait_for_refusing_provide: bool = False):
+        self.add_instruction(InternalInstruction.build_wait_all(wait_for_refusing_provide))
 
     def _wait_all(self):
         all_local_idle = len(self._p_act_components) is 0
@@ -549,7 +549,7 @@ class Assembly(object):
             finished = instruction.apply_to(self)
             # Instruction pas finie: wait, waitall
             if finished:
-                if instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL]:
+                if instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL] and not instruction.args['wait_for_refusing_provide']:
                     self._p_id_sync += 1
                 self._p_instructions_queue.task_done()
                 self._p_nb_instructions_done += 1

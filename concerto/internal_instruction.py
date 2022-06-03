@@ -104,18 +104,21 @@ class InternalInstruction:
             })
 
     @staticmethod
-    def build_wait(component_name: str):
+    def build_wait(component_name: str, wait_for_refusing_provide: bool = False):
         return InternalInstruction(
             InternalInstruction.Type.WAIT,
             {
                 "component_name": component_name,
+                "wait_for_refusing_provide": wait_for_refusing_provide
             })
 
     @staticmethod
-    def build_wait_all():
+    def build_wait_all(wait_for_refusing_provide: bool = False):
         return InternalInstruction(
             InternalInstruction.Type.WAIT_ALL,
-            {})
+            {
+                "wait_for_refusing_provide": wait_for_refusing_provide
+            })
 
     def apply_to(self, assembly) -> bool:
         import time
@@ -132,7 +135,7 @@ class InternalInstruction:
         elif self.type is InternalInstruction.Type.PUSH_B:
             return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
-            return assembly._wait(self.args['component_name'])
+            return assembly._wait(self.args['component_name'], self.args['wait_for_refusing_provide'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
             return assembly._wait_all()
         else:
