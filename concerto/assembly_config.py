@@ -11,9 +11,9 @@ from concerto.internal_instruction import InternalInstruction
 from concerto.place import Dock, Place
 from concerto.transition import Transition
 from concerto.utility import Printer
-from evaluation.config import COMPONENTS_PARAMETERS
+from evaluation.experiment.config import COMPONENTS_PARAMETERS  # TODO: passer à l'autre fichier de config
 
-SAVED_CONFIG_DIRECTORY = "/home/aomond/implementations/concerto-decentralized"
+SAVED_CONFIG_DIRECTORY = "."
 ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
 
