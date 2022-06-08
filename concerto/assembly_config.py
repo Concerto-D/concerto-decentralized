@@ -107,7 +107,7 @@ def _instanciate_components(assembly, previous_config, reconf_configuration: Dic
         comp_id = comp_values['_p_id']
         comp_type = comp_values['_p_component_type']
         component_params = reconf_configuration['transitions_time'][comp_id]
-        component = assembly.components_types[comp_type](*component_params)
+        component = assembly.components_types[comp_type](**component_params)
         component.set_name(comp_id)
         component.set_assembly(assembly)
         components[comp_id] = component

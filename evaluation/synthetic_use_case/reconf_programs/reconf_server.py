@@ -7,7 +7,7 @@ config_file_path = sys.argv[1]
 with open(config_file_path, "r") as f:
     config_dict = yaml.safe_load(f)
 
-sc = ServerAssembly(config_dict, is_asynchrone=False)
+sc = ServerAssembly(config_dict, is_asynchrone=True)
 sc.set_verbosity(2)
 
 
