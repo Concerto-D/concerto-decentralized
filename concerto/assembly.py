@@ -21,7 +21,7 @@ from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction
 from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
-from concerto.utility import Messages, COLORS, Printer
+from concerto.utility import Messages, COLORS, Printer, TimeManager
 
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 1
@@ -39,6 +39,7 @@ class Assembly(object):
     """
 
     def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, is_asynchrone=True):
+        self.time_manager = TimeManager()
         self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
@@ -202,7 +203,8 @@ class Assembly(object):
 
         self._p_instructions_queue.put(instruction)
 
-    def execute_reconfiguration_program(self):
+    def execute_reconfiguration_program(self, duration: float):
+        self.time_manager.start(duration)
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
 
@@ -563,9 +565,10 @@ class Assembly(object):
         # les behaviors des composants
         idle_components: Set[str] = set()
 
+        are_active_transitions = False
         all_tokens_blocked = True
         for c in self._p_act_components:
-            is_idle, did_something = self._p_components[c].semantics()
+            is_idle, did_something, are_active_transitions = self._p_components[c].semantics()
             if is_idle:
                 idle_components.add(c)
             all_tokens_blocked = all_tokens_blocked and (not did_something)
@@ -577,6 +580,11 @@ class Assembly(object):
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
+            exit()
+        elif self.time_manager.is_time_up() and not are_active_transitions:
+            assembly_config.save_config(self)
+            Printer.st_tprint("Time's up")
+            Printer.st_tprint("Go sleep")
             exit()
         else:
             time.sleep(FREQUENCE_POLLING)

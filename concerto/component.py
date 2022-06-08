@@ -677,7 +677,7 @@ class Component(object, metaclass=ABCMeta):
 
         self._p_initialized = True
 
-    def semantics(self) -> Tuple[bool, bool]:
+    def semantics(self) -> Tuple[bool, bool, bool]:
         """
         This method apply the operational semantics at the component level.
         Returns whether the component is IDLE.
@@ -740,7 +740,7 @@ class Component(object, metaclass=ABCMeta):
                 self.print_color("Going IDLE")
 
         doing_something = did_something or (len(self._p_act_transitions) > 0)
-        return idle, doing_something
+        return idle, doing_something, len(self._p_act_transitions) > 0
 
     def _put_provide_deps_in_refusing_state(self, place: Place):
         """

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from typing import List, Any, Callable
 from datetime import datetime
 from contextlib import contextmanager
@@ -83,6 +84,23 @@ class Printer:
         print(Printer._format_tprint(message), file=stderr)
         if flush:
             stderr.flush()
+
+
+class TimeManager:
+    """
+    Used to exit an assembly when the time is up
+    """
+    def __init__(self):
+        self.ending_time = None
+
+    def start(self, duration: float):
+        self.ending_time = time.time() + duration
+
+    def get_time_left(self):
+        return round(self.ending_time - time.time(), 2)
+
+    def is_time_up(self):
+        return self.ending_time <= time.time()
 
 
 def remove_if(l: List[Any], remove_cond: Callable[[Any], bool]):
