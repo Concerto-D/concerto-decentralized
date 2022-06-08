@@ -79,7 +79,7 @@ def generate_reconf_configuration():
     )
 
     hash_file = str(abs(hash(rendered_template)))
-    path_file = f"evaluation/experiment/generated_configurations/generated_config_{hash_file}.yml"
+    path_file = f"evaluation/experiment/generated_configurations/experiment_config_{hash_file}.yml"
     with open(path_file, "w") as f:
         f.write(rendered_template)
 

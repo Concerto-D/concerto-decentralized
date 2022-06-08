@@ -132,7 +132,6 @@ class Component(object, metaclass=ABCMeta):
         self.dryrun: bool = False
         self.gantt: Optional[GanttRecord] = None
         self.hidden_from_gantt_chart: bool = False
-        self._assembly = None
         self.places: List[str] = []
         self.switches: List[Tuple[str, Callable[[Place, str], List[int]]]] = []
         self.transitions: Dict[str, Tuple] = {}

@@ -135,7 +135,7 @@ class InternalInstruction:
         elif self.type is InternalInstruction.Type.PUSH_B:
             return assembly._push_b(self.args['component_name'], self.args['behavior'])
         elif self.type is InternalInstruction.Type.WAIT:
-            return assembly._wait(self.args['component_name'], self.args['wait_for_refusing_provide'])
+            return assembly._wait(self.args['component_name'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
             return assembly._wait_all()
         else:

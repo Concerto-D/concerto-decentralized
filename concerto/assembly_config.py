@@ -2,6 +2,7 @@ import json
 import queue
 import shutil
 import os
+from typing import Dict
 
 import concerto
 from concerto.component import Component, Group
@@ -11,7 +12,6 @@ from concerto.internal_instruction import InternalInstruction
 from concerto.place import Dock, Place
 from concerto.transition import Transition
 from concerto.utility import Printer
-from evaluation.experiment.config import COMPONENTS_PARAMETERS  # TODO: passer à l'autre fichier de config
 
 SAVED_CONFIG_DIRECTORY = "."
 ARCHIVE_DIR_NAME = "archives_reprises"
@@ -70,11 +70,11 @@ def load_previous_config(assembly):
     return result
 
 
-def restore_previous_config(assembly, previous_config):
+def restore_previous_config(assembly, previous_config, reconf_configuration: Dict):
     # Restore components
     components_dicts = previous_config['_p_components']
     components_names = components_dicts.keys()
-    components = _instanciate_components(assembly, previous_config)
+    components = _instanciate_components(assembly, previous_config, reconf_configuration)
     for comp_values in components_dicts.values():
         component = _restore_component(assembly, comp_values, components_names, components)
         assembly._p_components[component._p_id] = component
@@ -100,15 +100,16 @@ def restore_previous_config(assembly, previous_config):
     assembly._p_is_asynchrone = previous_config['_p_is_asynchrone']
 
 
-def _instanciate_components(assembly, previous_config):
+def _instanciate_components(assembly, previous_config, reconf_configuration: Dict):
     components_dicts = previous_config['_p_components']
     components = {}
     for comp_values in components_dicts.values():
         comp_id = comp_values['_p_id']
         comp_type = comp_values['_p_component_type']
-        component_params = COMPONENTS_PARAMETERS[comp_id]
+        component_params = reconf_configuration['transitions_time'][comp_id]
         component = assembly.components_types[comp_type](*component_params)
         component.set_name(comp_id)
+        component.set_assembly(assembly)
         components[comp_id] = component
 
     return components

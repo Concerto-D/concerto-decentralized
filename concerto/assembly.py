@@ -38,7 +38,7 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, is_asynchrone=True):
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, is_asynchrone=True):
         self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
@@ -86,20 +86,20 @@ class Assembly(object):
         self.program_str: str = ""
 
         self.error_reports: List[str] = []
-        self._reprise_previous_config()
+        self._reprise_previous_config(reconf_config_dict)
 
     @property
     def _p_id(self):
         return self.name
 
-    def _reprise_previous_config(self):
+    def _reprise_previous_config(self, reconf_config_dict: Dict):
         """
         Check if the previous programm went to sleep (i.e. if a saved config file exists)
         and restore the previous config if so
         """
         if exists(assembly_config.build_saved_config_file_path(self.name)):
             previous_config = assembly_config.load_previous_config(self)
-            assembly_config.restore_previous_config(self, previous_config)
+            assembly_config.restore_previous_config(self, previous_config, reconf_config_dict)
 
     def set_verbosity(self, level: int):
         self.verbosity = level
@@ -475,7 +475,7 @@ class Assembly(object):
         return list(self._p_components.values())
 
     def thread_safe_report_error(self, component: Component, transition: Transition, error: str):
-        report = "Component: %s\nTransition: %s\nError:\n%s" % (component.name, transition.name, error)
+        report = "Component: %s\nTransition: %s\nError:\n%s" % (component.name, transition._p_name, error)
         self.error_reports.append(report)
 
     def get_error_reports(self) -> List[str]:
@@ -536,7 +536,8 @@ class Assembly(object):
         if self._p_current_instruction is not None:
             finished = self._p_current_instruction.apply_to(self)
             if finished:
-                if self._p_current_instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL]:
+                if (self._p_current_instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL]
+                        and not self._p_current_instruction.args['wait_for_refusing_provide']):
                     self._p_id_sync += 1
                 self._p_current_instruction = None
                 self._p_instructions_queue.task_done()
