@@ -65,8 +65,8 @@ def generate_deps_uptimes():
 
 
 def compute_recouvrement_between_nodes(uptimes_list: List[Dict]):
-    # Get all possibles overlapping [[(a1,b1), (a2,b2)], [(a3,b3), (a4,b4)], [(a5,b5), (a6,b6)]]
-    #                        become [((a1,b1),(a3,b3)), ((a1,b1),(a4,b4)), ((a1,b1),(a5,b5)), ((a1,b1),(a6,b6)),
+    # Get all possibles overlapping: [[(a1,b1), (a2,b2)], [(a3,b3), (a4,b4)], [(a5,b5), (a6,b6)]]
+    #                        become: [((a1,b1),(a3,b3)), ((a1,b1),(a4,b4)), ((a1,b1),(a5,b5)), ((a1,b1),(a6,b6)),
     #                                ((a2,b2),(a3,b3)), ((a2,b2),(a4,b4)), ((a2,b2),(a5,b5)), ((a2,b2),(a6,b6)),
     #                                ((a3,b3),(a5,b5)), ((a3,b3),(a6,b6)),
     #                                ((a4,b4),(a5,b5)), ((a4,b4),(a6,b6))]

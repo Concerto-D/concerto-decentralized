@@ -3,6 +3,15 @@ from enum import Enum
 from concerto.component import Component
 
 
+class InternalInstructionNumAttribution:
+    def __init__(self):
+        self.all_instructions_num = 0
+
+    def attribute_num(self, instruction):
+        instruction.num = self.all_instructions_num
+        self.all_instructions_num += 1
+
+
 class InternalInstruction:
     class Type(Enum):
         ADD = 0
@@ -33,21 +42,14 @@ class InternalInstruction:
         else:
             return "{type: %s, arguments: %s}" % (self.type, str(self.args))
 
-    all_instructions_num = 0
-
     def __init__(self, instr_type, args):
-        InternalInstruction.attribute_num(self)
+        self.num = None
         self.type = instr_type
         self.args = args
 
     @property
     def _p_id(self):
         return self.type
-
-    @staticmethod
-    def attribute_num(instruction):
-        instruction.num = InternalInstruction.all_instructions_num
-        InternalInstruction.all_instructions_num += 1
 
     def get_type(self):
         return self.type

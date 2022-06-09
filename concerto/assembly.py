@@ -5,6 +5,7 @@
 .. module:: assembly
    :synopsis: this file contains the Assembly class.
 """
+import sys
 import time
 from os.path import exists
 from typing import Dict, List, Set, Optional
@@ -18,7 +19,7 @@ from concerto.component import Component
 from concerto.remote_dependency import RemoteDependency
 from concerto.transition import Transition
 from concerto.connection import Connection
-from concerto.internal_instruction import InternalInstruction
+from concerto.internal_instruction import InternalInstruction, InternalInstructionNumAttribution
 from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, Printer, TimeManager
@@ -65,6 +66,7 @@ class Assembly(object):
         # queue of instructions (synchronized with semantics thread)
         self._p_instructions_queue = Queue()  # thread-safe  # PERSIST
         self._p_current_instruction = None  # PERSIST
+        self.instruction_num_attribution = InternalInstructionNumAttribution()
 
         # set of active components
         self._p_act_components: Set[str] = set()  # PERSIST
@@ -221,7 +223,9 @@ class Assembly(object):
         self._p_act_components.difference_update(idle_components)
 
     def add_component(self, name: str, comp: Component):
-        self.add_instruction(InternalInstruction.build_add(name, comp))
+        instruction = InternalInstruction.build_add(name, comp)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _add(self, name: str, comp: Component) -> bool:
         """
@@ -244,7 +248,9 @@ class Assembly(object):
         return True
 
     def del_component(self, component_name: str):
-        self.add_instruction(InternalInstruction.build_del(component_name))
+        instruction = InternalInstruction.build_del(component_name)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _del(self, component_name: str) -> bool:
         if component_name in self._p_act_components:
@@ -256,7 +262,9 @@ class Assembly(object):
         return True
 
     def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
-        self.add_instruction(InternalInstruction.build_connect(comp1_name, dep1_name, comp2_name, dep2_name))
+        instruction = InternalInstruction.build_connect(comp1_name, dep1_name, comp2_name, dep2_name)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
@@ -346,7 +354,9 @@ class Assembly(object):
         return dep1, dep2
 
     def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
-        self.add_instruction(InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name))
+        instruction = InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
@@ -398,7 +408,9 @@ class Assembly(object):
             return False
 
     def push_b(self, component_name: str, behavior: str):
-        self.add_instruction(InternalInstruction.build_push_b(component_name, behavior))
+        instruction = InternalInstruction.build_push_b(component_name, behavior)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _push_b(self, component_name: str, behavior: str):
         component = self.get_component(component_name)
@@ -408,7 +420,9 @@ class Assembly(object):
         return True
 
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
-        self.add_instruction(InternalInstruction.build_wait(component_name, wait_for_refusing_provide))
+        instruction = InternalInstruction.build_wait(component_name, wait_for_refusing_provide)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _wait(self, component_name: str):
         is_local_component = component_name in self._p_components.keys()
@@ -424,7 +438,9 @@ class Assembly(object):
         return is_component_idle
 
     def wait_all(self, wait_for_refusing_provide: bool = False):
-        self.add_instruction(InternalInstruction.build_wait_all(wait_for_refusing_provide))
+        instruction = InternalInstruction.build_wait_all(wait_for_refusing_provide)
+        self.instruction_num_attribution.attribute_num(instruction)
+        self.add_instruction(instruction)
 
     def _wait_all(self):
         all_local_idle = len(self._p_act_components) is 0
@@ -574,6 +590,7 @@ class Assembly(object):
             all_tokens_blocked = all_tokens_blocked and (not did_something)
 
         self.remove_from_active_components(idle_components)
+        sys.stdout.flush()  # For debugging purpose only
 
         # Synchrone or asynchrone wait
         if self._p_is_asynchrone and all_tokens_blocked:
