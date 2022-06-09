@@ -1,6 +1,4 @@
 pyyaml
 enoslib
-execo
 eclipse-zenoh
 jinja2
-pyyaml
