@@ -4,13 +4,13 @@ import yaml
 
 class G5kReservation:
     def _g5k_deploy(self, g5k_config, force_deploy=False, discover=True):
-        from enoslib.api import discover_networks
+        from enoslib.api import sync_info
         from enoslib.infra.enos_g5k.provider import G5k
         from enoslib.infra.enos_g5k.configuration import Configuration
         self._g5k_job = G5k(Configuration.from_dictionnary(g5k_config))
         self._roles, self._networks = self._g5k_job.init(force_deploy=force_deploy)
         if discover:
-            discover_networks(self._roles, self._networks)
+            sync_info(self._roles, self._networks)
         # logging.info('Wait 30 seconds for iface to be ready...')
         # time.sleep(30)
 

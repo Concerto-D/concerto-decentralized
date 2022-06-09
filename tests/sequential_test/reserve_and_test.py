@@ -40,11 +40,11 @@ def perform_experiment(list_chain_length: List[int], sleep_time: float, nb_repea
     from os import makedirs
 
     with open("conf.yaml") as f:
-        conf = yaml.load(f)
+        conf = yaml.safe_load(f)
 
     makedirs(working_directory, exist_ok=True)
     with open(working_directory + '/g5k_config.yaml', 'w') as g5k_config_file:
-        yaml.dump(conf, g5k_config_file)
+        yaml.safe_dump(conf, g5k_config_file)
 
     run_experiment(list_chain_length, sleep_time, nb_repeats, conf, working_directory)
 
