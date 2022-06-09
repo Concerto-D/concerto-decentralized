@@ -38,6 +38,5 @@ def execute_reconf(config_dict, duration, is_asynchrone=True):
 
 
 if __name__ == '__main__':
-    sys.stdout = open("output.txt", "w")
     config_dict, duration = get_assembly_parameters(sys.argv)
     execute_reconf(config_dict, duration, is_asynchrone=True)

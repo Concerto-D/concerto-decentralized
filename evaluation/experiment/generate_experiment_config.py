@@ -1,11 +1,17 @@
+import random
+import sys
 from typing import Dict, List
 from random import uniform
 import jinja2
 
-nb_deps_tot = 3
+
+def generate_number_deps_tot(min_value: int = 0, max_value: int = 10) -> Dict:
+    return {
+        "nb_deps_tot": random.randint(min_value, max_value)
+    }
 
 
-def generate_server_transitions_time(min_value: float = 0., max_value: float = 10.) -> Dict:
+def generate_server_transitions_time(nb_deps_tot: int, min_value: float = 0., max_value: float = 10.) -> Dict:
     server_t_sa = round(uniform(min_value, max_value), 2)
     server_t_sc = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
     server_t_sr = round(uniform(min_value, max_value), 2)
@@ -20,7 +26,7 @@ def generate_server_transitions_time(min_value: float = 0., max_value: float = 1
     }
 
 
-def generate_deps_transitions_time(min_value: float = 0., max_value: float = 10.) -> Dict:
+def generate_deps_transitions_time(nb_deps_tot: int, min_value: float = 0., max_value: float = 10.) -> Dict:
     deps_t_di = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
     deps_t_dr = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
     deps_t_du = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
@@ -58,18 +64,18 @@ def generate_server_uptimes():
     }
 
 
-def generate_deps_uptimes():
+def generate_deps_uptimes(nb_deps_tot):
     return {
         "deps_awake_times_lists": [generate_node_uptimes(total_wake_up=3, frequency=100, uptime_duration=40, variable_uptime=20, variable_frequency=70) for _ in range(nb_deps_tot)]
     }
 
 
 def compute_recouvrement_between_nodes(uptimes_list: List[Dict]):
-    # Get all possibles overlapping: [[(a1,b1), (a2,b2)], [(a3,b3), (a4,b4)], [(a5,b5), (a6,b6)]]
-    #                        become: [((a1,b1),(a3,b3)), ((a1,b1),(a4,b4)), ((a1,b1),(a5,b5)), ((a1,b1),(a6,b6)),
-    #                                ((a2,b2),(a3,b3)), ((a2,b2),(a4,b4)), ((a2,b2),(a5,b5)), ((a2,b2),(a6,b6)),
-    #                                ((a3,b3),(a5,b5)), ((a3,b3),(a6,b6)),
-    #                                ((a4,b4),(a5,b5)), ((a4,b4),(a6,b6))]
+    # Get all possibles combinaisons for overlapping: [[(a1,b1), (a2,b2)], [(a3,b3), (a4,b4)], [(a5,b5), (a6,b6)]]
+    #                                         become: [((a1,b1),(a3,b3)), ((a1,b1),(a4,b4)), ((a1,b1),(a5,b5)), ((a1,b1),(a6,b6)),
+    #                                                 ((a2,b2),(a3,b3)), ((a2,b2),(a4,b4)), ((a2,b2),(a5,b5)), ((a2,b2),(a6,b6)),
+    #                                                 ((a3,b3),(a5,b5)), ((a3,b3),(a6,b6)),
+    #                                                 ((a4,b4),(a5,b5)), ((a4,b4),(a6,b6))]
     all_combinations = []
     for i in range(len(uptimes_list)):
         for j in range(i+1, len(uptimes_list)):
@@ -77,11 +83,12 @@ def compute_recouvrement_between_nodes(uptimes_list: List[Dict]):
                 for l in range(len(uptimes_list[j])):
                     all_combinations.append((uptimes_list[i][k], uptimes_list[j][l]))
 
-    # Compute every overlap
+    # Compute total awakening time
     total_time = 0
     for node in uptimes_list:
         total_time += sum(uptime[1] for uptime in node)
 
+    # Compute every overlap
     total_overlap = 0
     for node1, node2 in all_combinations:
         # Get the time (t) and duration (d) for node1 and node2
@@ -103,24 +110,29 @@ def compute_recouvrement_between_nodes(uptimes_list: List[Dict]):
     return recouvrement
 
 
-def generate_reconf_configuration():
+def generate_reconf_configuration(file_suffix: str):
+    # Generating random values for experience variables
     configuration = {}
-    configuration.update(generate_server_transitions_time())
-    configuration.update(generate_deps_transitions_time())
+    nb_deps_tot_dict = generate_number_deps_tot(min_value=2, max_value=2)
+    nb_deps_tot = nb_deps_tot_dict["nb_deps_tot"]
+    configuration.update(nb_deps_tot_dict)
+    configuration.update(generate_server_transitions_time(nb_deps_tot))
+    configuration.update(generate_deps_transitions_time(nb_deps_tot))
     configuration.update(generate_server_uptimes())
-    configuration.update(generate_deps_uptimes())
+    configuration.update(generate_deps_uptimes(nb_deps_tot))
 
+    # Computing means covering percentage for all uptimes
     uptimes_list = [configuration['server_awake_times_list']] + configuration['deps_awake_times_lists']
     recouvrement = compute_recouvrement_between_nodes(uptimes_list)
+
+    # Generate configuration file
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader('evaluation/experiment/templates'))
     template = template_env.get_template("experiment_config.yaml.j2")
-    rendered_template = template.render(
-        nb_deps_tot=nb_deps_tot,
-        **configuration
-    )
-
+    rendered_template = template.render(**configuration)
     hash_file = str(abs(hash(rendered_template)))
-    path_file = f"evaluation/experiment/generated_configurations/experiment_config_{hash_file}.yml"
+    if file_suffix == "":
+        file_suffix = hash_file
+    path_file = f"evaluation/experiment/generated_configurations/experiment_config_{file_suffix}.yml"
     with open(path_file, "w") as f:
         f.write(rendered_template)
 
@@ -128,5 +140,6 @@ def generate_reconf_configuration():
 
 
 if __name__ == '__main__':
-    file_name = generate_reconf_configuration()
+    file_suffix = sys.argv[1] if len(sys.argv) > 1 else ""
+    file_name = generate_reconf_configuration(file_suffix)
     print(f"Config generated at {file_name}")

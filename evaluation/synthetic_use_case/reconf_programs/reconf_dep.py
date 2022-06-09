@@ -9,8 +9,7 @@ def get_assembly_parameters(args):
     config_file_path = args[2]
     with open(config_file_path, "r") as f:
         loaded_config = yaml.safe_load(f)
-    # uptime_duration = float(args[3])
-    uptime_duration = 20
+    uptime_duration = float(args[3])
     return dep_num, loaded_config, uptime_duration
 
 
