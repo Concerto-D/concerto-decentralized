@@ -103,11 +103,12 @@ class Assembly(object):
         and restore the previous config if so
         """
         if exists(assembly_config.build_saved_config_file_path(self.name)):
+            log.debug(f"\33[33m --- conf found at {assembly_config.build_saved_config_file_path(self.name)} ----\033[0m")
             previous_config = assembly_config.load_previous_config(self)
             assembly_config.restore_previous_config(self, previous_config, reconf_config_dict)
         else:
-            log.debug("----- Previous config doesn't NOT exists, starting from zero ----")
-            log.debug(f"----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----")
+            log.debug("'\33[33m'----- Previous config doesn't NOT exists, starting from zero ----'\033[0m'")
+            log.debug(f"'\33[33m'----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----'\033[0m'")
 
     def set_verbosity(self, level: int):
         self.verbosity = level
