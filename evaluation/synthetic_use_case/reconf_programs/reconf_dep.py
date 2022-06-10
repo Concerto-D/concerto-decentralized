@@ -37,4 +37,6 @@ def execute_reconf(dep_num, config_dict, duration, is_asynchrone=True):
 
 if __name__ == '__main__':
     dep_num, config_dict, duration = get_assembly_parameters(sys.argv)
+    sys.stdout = open(f"output_dep{dep_num}", "w")
+    sys.stderr = sys.stdout
     execute_reconf(dep_num, config_dict, duration, is_asynchrone=True)
