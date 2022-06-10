@@ -1,4 +1,3 @@
 pyyaml
-enoslib
 eclipse-zenoh
 jinja2
