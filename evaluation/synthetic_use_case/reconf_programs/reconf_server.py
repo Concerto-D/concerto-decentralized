@@ -1,6 +1,8 @@
 import logging
+import os
 import sys
 
+from concerto.logger import log
 from evaluation.synthetic_use_case.assemblies.server_assembly import ServerAssembly
 import yaml
 
@@ -40,5 +42,7 @@ def execute_reconf(config_dict, duration, is_asynchrone=True):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="a+")
+    log.debug(f"Working directory: {os.getcwd()}")
+    log.debug(f"Python path: {sys.path}")
     config_dict, duration = get_assembly_parameters(sys.argv)
     execute_reconf(config_dict, duration, is_asynchrone=True)
