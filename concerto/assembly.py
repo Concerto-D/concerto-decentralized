@@ -107,6 +107,7 @@ class Assembly(object):
             assembly_config.restore_previous_config(self, previous_config, reconf_config_dict)
         else:
             log.debug("----- Previous config doesn't NOT exists, starting from zero ----")
+            log.debug(f"----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----")
 
     def set_verbosity(self, level: int):
         self.verbosity = level
