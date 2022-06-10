@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from evaluation.synthetic_use_case.assemblies.server_assembly import ServerAssembly
@@ -38,7 +39,6 @@ def execute_reconf(config_dict, duration, is_asynchrone=True):
 
 
 if __name__ == '__main__':
-    sys.stdout = open("logs/output_server", "a+")
-    sys.stderr = sys.stdout
+    logging.basicConfig(filename="logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="w")
     config_dict, duration = get_assembly_parameters(sys.argv)
     execute_reconf(config_dict, duration, is_asynchrone=True)

@@ -537,7 +537,7 @@ class Component(object, metaclass=ABCMeta):
         if self.print_time:
             Printer.st_tprint(message)
         else:
-            print(message)
+            Printer.print(message)
 
     # TODO: Rewrite
     def is_connected(self, name: str):

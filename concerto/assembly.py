@@ -7,6 +7,7 @@
 """
 import sys
 import time
+import traceback
 from os.path import exists
 from typing import Dict, List, Set, Optional
 from threading import Thread
@@ -16,6 +17,7 @@ from concerto import communication_handler, assembly_config
 from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
+from concerto.logger import log
 from concerto.remote_dependency import RemoteDependency
 from concerto.transition import Transition
 from concerto.connection import Connection
@@ -192,7 +194,7 @@ class Assembly(object):
         if self.print_time:
             Printer.st_tprint(message)
         else:
-            print(message)
+            Printer.print(message)
 
     def add_instruction(self, instruction: InternalInstruction):
         # Check if instruction has been done already
@@ -518,14 +520,14 @@ class Assembly(object):
             check_dep = comp.check_connections()
 
         if not check:
-            print(Messages.warning() + "WARNING - some WARNINGS have been "
+            Printer.print(Messages.warning() + "WARNING - some WARNINGS have been "
                                        "detected in your components, please "
                                        "check them so as to not get unwilling "
                                        "behaviors in your deployment cordination"
                   + Messages.endc())
 
         if not check_dep:
-            print(Messages.warning() + "WARNING - some dependencies are not "
+            Printer.print(Messages.warning() + "WARNING - some dependencies are not "
                                        "connected within the assembly. This "
                                        "could lead to unwilling behaviors in "
                                        "your deployment coordination."
@@ -539,10 +541,13 @@ class Assembly(object):
 
     def loop_smeantics(self):
         while self.alive:
-            if self._p_instructions_queue.empty() and self._p_current_instruction is None:
-                print("---------------------- END OF RECONFIGURATION GG -----------------------")
-                self.alive = False
-            self.semantics()
+            try:
+                if self._p_instructions_queue.empty() and self._p_current_instruction is None:
+                    Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
+                    self.alive = False
+                self.semantics()
+            except Exception:
+                log.error(traceback.format_exc())
 
     def semantics(self):
         """
@@ -590,7 +595,6 @@ class Assembly(object):
             all_tokens_blocked = all_tokens_blocked and (not did_something)
 
         self.remove_from_active_components(idle_components)
-        sys.stdout.flush()  # For debugging purpose only
 
         # Synchrone or asynchrone wait
         if self._p_is_asynchrone and all_tokens_blocked:

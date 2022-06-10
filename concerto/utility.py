@@ -4,6 +4,8 @@ from typing import List, Any, Callable
 from datetime import datetime
 from contextlib import contextmanager
 
+from concerto.logger import log
+
 """
 .. module:: utility
    :synopsis: this file contains utility classes.
@@ -55,13 +57,6 @@ class Printer:
         if self._show:
             self.st_err_tprint(message, flush)
 
-    def print(self, message: str, flush: bool = False):
-        from sys import stdout
-        if self._show:
-            print(message)
-            if flush:
-                stdout.flush()
-
     @staticmethod
     def _format_tprint(message: str):
         now = datetime.now()
@@ -74,14 +69,20 @@ class Printer:
     @staticmethod
     def st_tprint(message: str, flush: bool = False):
         from sys import stdout
-        print(Printer._format_tprint(message))
+        formatted_message = Printer._format_tprint(message)
+        log.debug(formatted_message)
         if flush:
             stdout.flush()
 
     @staticmethod
+    def print(message: str):
+        log.debug(message)
+
+    @staticmethod
     def st_err_tprint(message: str, flush: bool = True):
         from sys import stderr
-        print(Printer._format_tprint(message), file=stderr)
+        formatted_message = Printer._format_tprint(message)
+        log.error(formatted_message)
         if flush:
             stderr.flush()
 

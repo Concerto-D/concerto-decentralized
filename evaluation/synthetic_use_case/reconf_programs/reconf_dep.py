@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from evaluation.synthetic_use_case.assemblies.dep_assembly import DepAssembly
@@ -37,6 +38,5 @@ def execute_reconf(dep_num, config_dict, duration, is_asynchrone=True):
 
 if __name__ == '__main__':
     dep_num, config_dict, duration = get_assembly_parameters(sys.argv)
-    sys.stdout = open(f"logs/output_dep{dep_num}", "a+")
-    sys.stderr = sys.stdout
+    logging.basicConfig(filename=f"logs/logs_dep{dep_num}.txt", format='%(asctime)s %(message)s', filemode="w")
     execute_reconf(dep_num, config_dict, duration, is_asynchrone=True)
