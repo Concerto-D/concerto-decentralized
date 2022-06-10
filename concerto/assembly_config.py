@@ -3,12 +3,14 @@ import queue
 import shutil
 import os
 from typing import Dict
+from pathlib import Path
 
 import concerto
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
 from concerto.internal_instruction import InternalInstruction
+from concerto.logger import log
 from concerto.place import Dock, Place
 from concerto.transition import Transition
 from concerto.utility import Printer
@@ -41,9 +43,12 @@ class FixedEncoder(json.JSONEncoder):
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
     if is_archive:
-        return f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
     else:
-        return f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
+    abs_path = str(Path(relative_path).resolve())
+    log.debug(f"\033[31m resolved path: {abs_path} \033[0m")
+    return abs_path
 
 
 def save_config(assembly):
