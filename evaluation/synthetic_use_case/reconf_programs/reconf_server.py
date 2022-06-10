@@ -38,7 +38,7 @@ def execute_reconf(config_dict, duration, is_asynchrone=True):
 
 
 if __name__ == '__main__':
-    sys.stdout = open("output_server", "w")
+    sys.stdout = open("output_server", "a")
     sys.stderr = sys.stdout
     config_dict, duration = get_assembly_parameters(sys.argv)
     execute_reconf(config_dict, duration, is_asynchrone=True)
