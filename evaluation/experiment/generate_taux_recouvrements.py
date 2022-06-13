@@ -1,5 +1,5 @@
+import random
 from itertools import product
-from random import uniform
 from typing import List, Dict
 
 
@@ -32,11 +32,11 @@ def generate_uptimes_for_dependencies(
         for i in range(nb_deps):
             uptimes_dict[i] = []
             for _ in range(freq):
-                time_to_awake = uniform(0, step_freq-time)
+                time_to_awake = random.uniform(0, step_freq-time)
 
                 # Ensure that there is no overlap in uptimes
                 while no_collisions and is_uptime_colliding_with_another(uptimes_dict[i], time_to_awake, time):
-                    time_to_awake = uniform(0, step_freq-time)
+                    time_to_awake = random.uniform(0, step_freq-time)
 
                 uptimes_dict[i].append(time_to_awake)
 
@@ -85,9 +85,9 @@ def compute_global_means_covering(covering_by_params: Dict):
 
 
 def main():
-    nb_deps_list = [2, 5, 10, 15, 20]
     freqs_awake_list = [1, 2, 3, 4, 5, 6, 7]
     time_awakening = [1, 3, 5]
+    nb_deps_list = [2, 5, 10, 15, 20]
     step_freq = 60
     print("---------- Wake up times by parameters -------------------")
     uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list, step_freq)
