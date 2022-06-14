@@ -1,32 +1,35 @@
 from typing import List
 
 import enoslib as en
-import subprocess
 
 
 def reserve_nodes_for_concerto_d(nb_deps_tot: int, nb_zenoh_routers: int):
+    """
+    TODO: voir pour les restriction des ressources (pour approcher des ressources d'une OU (raspberry ou autre))
+    TODO: Etre attentif au walltime lors du lancement des expériences
+    """
     _ = en.init_logging()
-    concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site="nantes")
+    concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site="rennes")
     conf = (
-        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="01:00:00", job_name="concerto-d")
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="03:00:00", job_name="concerto-d")
                   .add_network_conf(concerto_d_network)
     )
     conf = conf.add_machine(
         roles=["concerto_d", "server"],
-        cluster="econome",
+        cluster="parasilo",
         nodes=1,
         primary_network=concerto_d_network,
     )
     for i in range(nb_deps_tot):
         conf = conf.add_machine(
             roles=["concerto_d", f"dep{i}"],
-            cluster="econome",
+            cluster="parasilo",
             nodes=1,
             primary_network=concerto_d_network,
         )
     conf = conf.add_machine(
         roles=["zenoh_routers"],
-        cluster="econome",
+        cluster="parasilo",
         nodes=nb_zenoh_routers,
         primary_network=concerto_d_network,
     )
@@ -39,19 +42,34 @@ def reserve_nodes_for_concerto_d(nb_deps_tot: int, nb_zenoh_routers: int):
     # return None, None
 
 
+def install_apt_deps(roles_concerto_d: List):
+    with en.actions(roles=roles_concerto_d) as a:
+        a.apt(name=["python3", "git"], state="present")
+        print(a.results)
+
+
 def deploy_concerto_d(roles_concerto_d: List, configuration_file_path: str):
-    # TODO: remove enoslib from requirements when deployed
+    """
+    Homedir is shared between site frontend and nodes, so this can be done only once per site
+    """
     with en.actions(roles=roles_concerto_d) as a:
         home_dir = "/home/anomond"
-        a.apt(name=["python3", "git"], state="present")
-        # a.git(dest=f"{home_dir}/concertonode",
-        #       repo="git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git",
-        #       key_file=f"{home_dir}/.ssh/gitlab_concerto_d_deploy_key",
-        #       accept_hostkey=True)
+        a.copy(src="~/.ssh/gitlab_concerto_d_deploy_key", dest=f"{home_dir}/.ssh/gitlab_concerto_d_deploy_key")
+        a.git(dest=f"{home_dir}/concertonode",
+              repo="git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git",
+              key_file=f"{home_dir}/.ssh/gitlab_concerto_d_deploy_key",
+              accept_hostkey=True)
         a.pip(chdir=f"{home_dir}/concertonode",
               requirements=f"{home_dir}/concertonode/requirements.txt",
               virtualenv=f"{home_dir}/concertonode/venv")
-        # a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_configurations", state="directory")
+        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_configurations", state="directory")
+        # Reset reprise_configs dir
+        a.file(path=f"{home_dir}/concertonode/reprise_configs", state="absent")
+        a.file(path=f"{home_dir}/concertonode/reprise_configs", state="directory")
+        # Reset logs dir
+        a.file(path=f"{home_dir}/concertonode/logs", state="absent")
+        a.file(path=f"{home_dir}/concertonode/logs", state="directory")
+        a.file(path=f"{home_dir}/concertonode/archives_reprises", state="directory")
         a.copy(src=configuration_file_path, dest=f"{home_dir}/concertonode/{configuration_file_path}")
         print(a.results)
 
@@ -65,7 +83,7 @@ def deploy_zenoh_routers(roles_zenoh_router: List):
 
 def execute_reconf(role_node, config_file_path: str, duration, dep_num):
     command_args = []
-    command_args.append("PYTHONPATH=$PYTHONPATH:$(pwd)")  # What's executed in source_dir.sh
+    command_args.append("PYTHONPATH=$PYTHONPATH:$(pwd)")  # Set PYTHONPATH (equivalent of source source_dir.sh)
     command_args.append("venv/bin/python3")               # Execute inside the python virtualenv
     assembly_name = "server" if dep_num is None else "dep"
     command_args.append(f"evaluation/synthetic_use_case/reconf_programs/reconf_{assembly_name}.py")  # The reconf program to execute
@@ -79,12 +97,17 @@ def execute_reconf(role_node, config_file_path: str, duration, dep_num):
     with en.actions(roles=role_node) as a:
         a.shell(chdir=f"{home_dir}/concertonode", command=command_str)
 
-    # TODO: temporary until finding a solution to run script on individual hosts
+
+def execute_zenoh_routers(roles_zenoh_router, timeout):
+    print(f"launch zenoh routers with {timeout} timeout")
+    en.run_command(" ".join(["RUST_LOG=debug", "timeout", str(timeout), "zenohd", "--mem-storage='/**'"]), roles=roles_zenoh_router, background=True)
 
 
-def execute_zenoh_routers(roles_zenoh_router):
-    # Command zenohd doesn't give the hand back, but ansible cannot run script in the background
-    # TODO: try run_command(background=True)
-    for role in roles_zenoh_router:
-        subprocess.Popen(["ssh", role.address, "RUST_LOG=debug", "timeout", "500", "zenohd", "--mem-storage='/**'"])
-
+def get_logs_from_concerto_d_node(roles_sites, logs_assembly_names: List[str]):
+    """
+    Need one role per site to gather the logs
+    """
+    home_dir = "/home/anomond"
+    with en.actions(roles=roles_sites) as a:
+        for assembly_name in logs_assembly_names:
+            a.fetch(src=f"{home_dir}/concertonode/logs/logs_{assembly_name}.txt", dest=f"remote_logs/logs_{assembly_name}.txt")

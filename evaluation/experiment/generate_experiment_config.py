@@ -5,35 +5,9 @@ from random import uniform
 import jinja2
 
 
-def generate_number_deps_tot(min_value: int = 0, max_value: int = 10) -> Dict:
+def generate_number_deps_tot(min_value: int = 2, max_value: int = 20) -> Dict:
     return {
         "nb_deps_tot": random.randint(min_value, max_value)
-    }
-
-
-def generate_server_transitions_time(nb_deps_tot: int, min_value: float = 0., max_value: float = 10.) -> Dict:
-    server_t_sa = round(uniform(min_value, max_value), 2)
-    server_t_sc = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    server_t_sr = round(uniform(min_value, max_value), 2)
-    server_t_ss = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    server_t_sp = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    return {
-        "server_t_sa": server_t_sa,
-        "server_t_sc": server_t_sc,
-        "server_t_sr": server_t_sr,
-        "server_t_ss": server_t_ss,
-        "server_t_sp": server_t_sp,
-    }
-
-
-def generate_deps_transitions_time(nb_deps_tot: int, min_value: float = 0., max_value: float = 10.) -> Dict:
-    deps_t_di = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    deps_t_dr = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    deps_t_du = [round(uniform(min_value, max_value), 2) for i in range(nb_deps_tot)]
-    return {
-        "deps_t_di": deps_t_di,
-        "deps_t_dr": deps_t_dr,
-        "deps_t_du": deps_t_du,
     }
 
 
