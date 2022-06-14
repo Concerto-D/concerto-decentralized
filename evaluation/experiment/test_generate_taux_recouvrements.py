@@ -8,8 +8,10 @@ def test_nominal(mock_uniform):
     time_awakening = [3]
     nb_deps_list = [35]
     step_freq = 60
-    mock_uniform.side_effect = [
-        12, 25.7, 10.5, 14.2, 11.9, 25.7
+    mock_uniform.side_effect = [  # Each wakes up 2 times
+        12, 25.7,    # OU1
+        10.5, 14.2,  # OU2
+        11.9, 25.7   # OU3
     ]
     uptimes_by_params = generate_taux_recouvrements.generate_uptimes_for_dependencies(
         freqs_awake_list, time_awakening, nb_deps_list, step_freq

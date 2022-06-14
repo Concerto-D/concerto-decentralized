@@ -16,8 +16,7 @@ def generate_uptimes_for_dependencies(
         freqs_awake_list: List[int],
         time_awakening: List[int],
         nb_deps_list: List[int],
-        step_freq: int,
-        no_collisions: bool = True
+        step_freq: int
 ) -> Dict:
     """
     returns: Dict de la forme:
@@ -29,13 +28,13 @@ def generate_uptimes_for_dependencies(
         uptimes_dict = {}
 
         # For each dependency, pick randomly an uptime, freq times.
-        for i in range(nb_deps):
+        for i in range(nb_deps+1):  # Add 1 to the nb_deps to add the server
             uptimes_dict[i] = []
             for _ in range(freq):
                 time_to_awake = random.uniform(0, step_freq-time)
 
                 # Ensure that there is no overlap in uptimes
-                while no_collisions and is_uptime_colliding_with_another(uptimes_dict[i], time_to_awake, time):
+                while is_uptime_colliding_with_another(uptimes_dict[i], time_to_awake, time):
                     time_to_awake = random.uniform(0, step_freq-time)
 
                 uptimes_dict[i].append(time_to_awake)
@@ -84,10 +83,55 @@ def compute_global_means_covering(covering_by_params: Dict):
     return global_means_coverage
 
 
+def filtered_uptimes_by_covering(uptimes_by_params: Dict, global_means_coverage: Dict):
+    return uptimes_by_params
+
+
+def generate_server_transitions_time(nb_deps: int, min_value: float = 0., max_value: float = 10.) -> Dict:
+    server_t_sa = round(random.uniform(min_value, max_value), 2)
+    server_t_sc = [round(random.uniform(min_value, max_value), 2) for i in range(nb_deps)]
+    server_t_sr = round(random.uniform(min_value, max_value), 2)
+    server_t_ss = [round(random.uniform(min_value, max_value), 2) for i in range(nb_deps)]
+    server_t_sp = [round(random.uniform(min_value, max_value), 2) for i in range(nb_deps)]
+    return {
+        "t_sa": server_t_sa,
+        "t_sc": server_t_sc,
+        "t_sr": server_t_sr,
+        "t_ss": server_t_ss,
+        "t_sp": server_t_sp,
+    }
+
+
+def generate_deps_transitions_time(dep_num: int, min_value: float = 0., max_value: float = 10.) -> Dict:
+    deps_t_di = round(random.uniform(min_value, max_value), 2)
+    deps_t_dr = round(random.uniform(min_value, max_value), 2)
+    deps_t_du = round(random.uniform(min_value, max_value), 2)
+    return {
+        "id": dep_num,
+        "t_di": deps_t_di,
+        "t_dr": deps_t_dr,
+        "t_du": deps_t_du,
+    }
+
+
+def generate_transitions_times(nb_deps_exp: int, nb_generations: int):
+    all_generations_transitions_times = []
+    for _ in range(nb_generations):
+        transitions_time = {
+            "server": generate_server_transitions_time(nb_deps_exp)
+        }
+        for dep_num in range(nb_deps_exp):
+            transitions_time[str(dep_num)] = generate_deps_transitions_time(dep_num)
+
+        all_generations_transitions_times.append(transitions_time)
+
+    return all_generations_transitions_times
+
+
 def main():
-    freqs_awake_list = [1, 2, 3, 4, 5, 6, 7]
-    time_awakening = [1, 3, 5]
-    nb_deps_list = [2, 5, 10, 15, 20]
+    freqs_awake_list = [1, 2, 3, 4, 5]
+    time_awakening = [1, 3]
+    nb_deps_list = [2, 5, 10, 15]
     step_freq = 60
     print("---------- Wake up times by parameters -------------------")
     uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list, step_freq)
@@ -100,6 +144,18 @@ def main():
     print("---------- Global means coverage between all deps -------------------")
     global_means_coverage = compute_global_means_covering(covering_by_params)
     print(*sorted([{k: v} for k, v in global_means_coverage.items()], key=lambda x: [*x.values()][0]), sep="\n")
+
+    filtered_uptimes = filtered_uptimes_by_covering(uptimes_by_params, global_means_coverage)
+
+    nb_generations = 10
+    print(f"---------- Generate transitions times {nb_generations} times for each param ----------")
+    transitions_times_by_exp = {}
+    for params in uptimes_by_params.keys():
+        _, _, nb_deps = params
+        transitions_times_by_exp[params] = generate_transitions_times(nb_deps, nb_generations)
+
+    print(*[{k: v} for k, v in transitions_times_by_exp.items()], sep="\n")
+    return filtered_uptimes, transitions_times_by_exp
 
 
 if __name__ == '__main__':
