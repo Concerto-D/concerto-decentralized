@@ -1,45 +1,49 @@
 from typing import List
 
 import enoslib as en
+from enoslib.infra.enos_g5k.g5k_api_utils import get_cluster_site
 
 
-def reserve_nodes_for_concerto_d(nb_deps_tot: int, nb_zenoh_routers: int):
+provider = None
+
+
+def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int, cluster: str):
     """
     TODO: voir pour les restriction des ressources (pour approcher des ressources d'une OU (raspberry ou autre))
     TODO: Etre attentif au walltime lors du lancement des expériences
     """
     _ = en.init_logging()
-    concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site="rennes")
+    site = get_cluster_site(cluster)
+    concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
     conf = (
         en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="03:00:00", job_name="concerto-d")
                   .add_network_conf(concerto_d_network)
     )
     conf = conf.add_machine(
         roles=["concerto_d", "server"],
-        cluster="parasilo",
+        cluster=cluster,
         nodes=1,
         primary_network=concerto_d_network,
     )
-    for i in range(nb_deps_tot):
+    for i in range(nb_concerto_d_nodes - 1):
         conf = conf.add_machine(
             roles=["concerto_d", f"dep{i}"],
-            cluster="parasilo",
+            cluster=cluster,
             nodes=1,
             primary_network=concerto_d_network,
         )
     conf = conf.add_machine(
         roles=["zenoh_routers"],
-        cluster="parasilo",
+        cluster=cluster,
         nodes=nb_zenoh_routers,
         primary_network=concerto_d_network,
     )
     conf = conf.finalize()
 
+    global provider
     provider = en.G5k(conf)
-    # provider.destroy()
     roles, networks = provider.init()
     return roles, networks
-    # return None, None
 
 
 def install_apt_deps(roles_concerto_d: List):
@@ -48,7 +52,7 @@ def install_apt_deps(roles_concerto_d: List):
         print(a.results)
 
 
-def deploy_concerto_d(roles_concerto_d: List, configuration_file_path: str):
+def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
     """
     Homedir is shared between site frontend and nodes, so this can be done only once per site
     """
@@ -70,7 +74,7 @@ def deploy_concerto_d(roles_concerto_d: List, configuration_file_path: str):
         a.file(path=f"{home_dir}/concertonode/logs", state="absent")
         a.file(path=f"{home_dir}/concertonode/logs", state="directory")
         a.file(path=f"{home_dir}/concertonode/archives_reprises", state="directory")
-        a.copy(src=configuration_file_path, dest=f"{home_dir}/concertonode/{configuration_file_path}")
+        a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
         print(a.results)
 
 

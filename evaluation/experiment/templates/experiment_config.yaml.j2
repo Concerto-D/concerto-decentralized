@@ -1,6 +1,3 @@
-nb_deps_tot: {{ nb_deps_tot }}
-nb_zenoh_routers: 1
-
 transitions_time:
   server:
     t_sa: {{ server_t_sa }}
@@ -24,15 +21,3 @@ transitions_time:
     t_dr: {{ deps_t_dr[i] }}
     t_du: {{ deps_t_du[i] }}
   {% endfor %}
-
-uptimes:
-  server:
-    {% for awake_time in server_awake_times_list %}
-    - [{{ awake_time[0] }},{{ awake_time[1] }}]
-    {%- endfor -%}
-  {% for i in range(nb_deps_tot) %}
-  dep{{ i }}:
-    {% for awake_time in deps_awake_times_lists[i] %}
-    - [{{ awake_time[0] }},{{ awake_time[1] }}]
-    {%- endfor -%}
-  {%- endfor -%}

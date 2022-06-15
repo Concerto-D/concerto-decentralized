@@ -1,12 +1,16 @@
+import json
 import math
 import sys
 import time
+from pathlib import Path
 from threading import Thread
-from typing import Dict
+from typing import Dict, List
 
 import yaml
+from execo_engine import sweep, ParamSweeper
 
-from evaluation.experiment import concerto_d_g5k
+from evaluation.experiment import concerto_d_g5k, generate_taux_recouvrements
+from evaluation.experiment.concerto_d_g5k import provider
 
 tracking_thread = {
     "server": {
@@ -31,38 +35,39 @@ def execute_reconf_in_g5k(roles, assembly_name, expe_time_start, reconf_config_f
     tracking_thread[assembly_name]['total_running_time'] += time.time() - time_start
 
 
-def find_next_uptime(uptimes_dict):
-    min_uptime = ("", [math.inf, math.inf])
-    for name, values in uptimes_dict:
-        for v in values:
-            if v[0] < min_uptime[1][0]:
-                min_uptime = (name, v)
+def find_next_uptime(uptimes_nodes):
+    min_uptime = (0, (math.inf, math.inf))
+    for node_num, uptimes_values in enumerate(uptimes_nodes):
+        for uptime in uptimes_values:
+            if uptime[0] < min_uptime[1][0]:
+                min_uptime = (node_num, uptime)
 
     return min_uptime
 
 
-def schedule_and_run_uptimes_from_config(roles, reconf_config: Dict, reconfig_config_file_path):
+def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reconfig_config_file_path):
     """
     TODO: Faire une liste ordonnée globale pour tous les assemblies, puis attendre (enlever les calculs
     qui prennent un peu de temps)
     """
-    uptimes = reconf_config['uptimes']
     expe_time_start = time.time()
-    while sum(len(uptimes[name]) for name in uptimes.keys()) > 0:
+    uptimes_nodes = [list(uptimes) for uptimes in uptimes_nodes_tuples]
+    while any(len(uptimes) > 0 for uptimes in uptimes_nodes):
         # Find the next reconf to launch (closest in time)
-        name, next_uptime = find_next_uptime(uptimes.items())
-        print("MINIMAL UPTIME: ", name, next_uptime)
+        node_num, next_uptime = find_next_uptime(uptimes_nodes)
+        print("MINIMAL UPTIME: ", node_num, next_uptime)
         if next_uptime[0] <= time.time() - expe_time_start:
             # Init the thread that will handle the reconf
             duration = next_uptime[1]
-            dep_num = None if name == "server" else int(name.replace("dep",""))
+            dep_num = None if node_num == 0 else node_num - 1
+            name = "server" if node_num == 0 else f"dep{node_num - 1}"
             thread = Thread(target=execute_reconf_in_g5k, args=(roles, name, expe_time_start, reconfig_config_file_path, duration, dep_num))
 
             # Start reconf and remove it from uptimes
             thread.start()
             # thread.join()
             # l += thread,
-            uptimes[name].remove(next_uptime)
+            uptimes_nodes[node_num].remove(next_uptime)
         else:
             # Wait until its time to launch the reconf
             n = (expe_time_start + next_uptime[0]) - time.time()
@@ -73,58 +78,69 @@ def schedule_and_run_uptimes_from_config(roles, reconf_config: Dict, reconfig_co
     #     t.join()
 
 
-def compute_end_reconfiguration_time(uptimes):
+def compute_end_reconfiguration_time(uptimes_nodes):
     max_uptime_value = 0
-    for uptimes_list in uptimes.values():
-        for value in uptimes_list:
-            if value[0] + value[1] > max_uptime_value:
-                max_uptime_value = value[0] + value[1]
+    for uptimes_node in uptimes_nodes:
+        for uptime in uptimes_node:
+            if uptime[0] + uptime[1] > max_uptime_value:
+                max_uptime_value = uptime[0] + uptime[1]
 
     return max_uptime_value
 
 
-if __name__ == '__main__':
-    reconf_config_file_path = sys.argv[1]
-    with open(reconf_config_file_path, "r") as f:
-        reconf_config = yaml.safe_load(f)
-
-    # Reserve G5K nodes for concerto_d and zenoh
-    nb_deps_tot = reconf_config["nb_deps_tot"]
-    nb_zenoh_routers = reconf_config["nb_zenoh_routers"]
-    roles, networks = concerto_d_g5k.reserve_nodes_for_concerto_d(nb_deps_tot=nb_deps_tot, nb_zenoh_routers=nb_zenoh_routers)
+def launch_experiment(uptimes_nodes, transitions_times, cluster):
+    roles, networks = concerto_d_g5k.reserve_nodes_for_concerto_d(nb_concerto_d_nodes=len(uptimes_nodes), nb_zenoh_routers=1, cluster=cluster)
     print(roles, networks)
 
+    # Create configuration file
+    transitions_to_dump = {"server": dict(transitions_times[0])}
+    for dep_num in range(1, len(uptimes_nodes)):
+        transitions_to_dump[f"dep{dep_num-1}"] = dict(transitions_times[dep_num])
+
+    reconf_config_file = f"configuration_{str(abs(hash(transitions_times)))[:4]}.json"
+    with open(str(Path(reconf_config_file).resolve()), "w") as f:
+        json.dump({"nb_deps_tot": len(transitions_times)-1, "transitions_time": transitions_to_dump}, f, indent=4)
+
     # Deploy concerto_d nodes
-    # concerto_d_g5k.install_apt_deps(roles["concerto_d"])
-    # concerto_d_g5k.deploy_concerto_d(roles["server"], reconf_config_file_path)
+    concerto_d_g5k.install_apt_deps(roles["concerto_d"])
+    concerto_d_g5k.deploy_concerto_d(roles["server"], reconf_config_file)
 
     # Deploy zenoh routers
-    # max_uptime_value = compute_end_reconfiguration_time(reconf_config["uptimes"])
-    # concerto_d_g5k.deploy_zenoh_routers(roles["zenoh_routers"])
-    # concerto_d_g5k.execute_zenoh_routers(roles["zenoh_routers"], max_uptime_value)
+    max_uptime_value = compute_end_reconfiguration_time(uptimes_nodes)
+    concerto_d_g5k.deploy_zenoh_routers(roles["zenoh_routers"])
+    concerto_d_g5k.execute_zenoh_routers(roles["zenoh_routers"], max_uptime_value)
 
     # Run experiment
-    schedule_and_run_uptimes_from_config(roles, reconf_config, reconf_config_file_path)
+    schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file)
 
     # Get logs
     # concerto_d_g5k.get_logs_from_concerto_d_node(roles["server"], ["server", *[f"dep{i}" for i in range(nb_deps_tot)]])
 
-    # for i in range(7):
-    #     thread1 = Thread(target=concerto_d_g5k.execute_reconf, args=(roles["server"], reconf_config_file_path, 20, None))
-    #     thread1.start()
-    #     time.sleep(uniform(1, 4))
-    #     thread2 = Thread(target=concerto_d_g5k.execute_reconf, args=(roles["dep0"], reconf_config_file_path, 20, 0))
-    #     thread2.start()
-    #     time.sleep(uniform(1, 4))
-    #     thread3 = Thread(target=concerto_d_g5k.execute_reconf, args=(roles["dep1"], reconf_config_file_path, 20, 1))
-    #     thread3.start()
-    #
-    #     thread1.join()
-    #     thread2.join()
-    #     thread3.join()
 
-        # concerto_d_g5k.execute_reconf(roles["server"], reconf_config_file_path, 20, None)
-        # concerto_d_g5k.execute_reconf(roles["dep0"], reconf_config_file_path, 20, 0)
-        # concerto_d_g5k.execute_reconf(roles["dep1"], reconf_config_file_path, 20, 1)
-    print(tracking_thread)
-    print("---- FINNNNN DE LEXPPEEE ------")
+def compute_sweeper():
+    config_to_test, transitions_times_list, clusters_list = generate_taux_recouvrements.generate_taux()
+    sweeps = sweep({
+        "config": config_to_test,
+        "transitions_times": transitions_times_list,
+        "cluster": clusters_list
+    })
+
+    sweeper = ParamSweeper(
+        persistence_dir=str(Path("sweeps").resolve()), sweeps=sweeps, save_sweeps=True
+    )
+    parameter = sweeper.get_next()
+    while parameter:
+        # try:
+        launch_experiment(parameter["config"], parameter["transitions_times"], parameter["cluster"])
+        sweeper.done(parameter)
+        parameter = sweeper.get_next()
+        # except Exception as e:
+            # sweeper.skip(parameter)
+        # finally:
+            # provider.destroy()
+            # parameter = sweeper.get_next()
+
+
+if __name__ == '__main__':
+    compute_sweeper()
+    # main()
