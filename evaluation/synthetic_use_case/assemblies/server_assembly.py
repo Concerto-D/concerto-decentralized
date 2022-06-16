@@ -14,7 +14,7 @@ class ServerAssembly(Assembly):
         Assembly.__init__(self, "server_assembly", self.components_types, self.remote_component_names,
                           self.remote_assemblies_names, reconf_config_dict, is_asynchrone)
         server_params = reconf_config_dict['transitions_time']['server']
-        self.server = Server(**server_params)
+        self.server = Server(nb_deps=reconf_config_dict['nb_deps_tot'], **server_params)
 
         # Adding remote components and assemblies
         for i in range(reconf_config_dict['nb_deps_tot']):

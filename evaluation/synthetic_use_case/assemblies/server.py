@@ -2,8 +2,8 @@ from concerto.all import *
 
 class Server(Component):
 
-    def __init__(self, t_sa : float, t_sc : List[float], t_sr : float, t_ss : List[float], t_sp : List[float]):
-        self.nb_deps = len(t_sc)
+    def __init__(self, t_sa : float, t_sc : List[float], t_sr : float, t_ss : List[float], t_sp : List[float], nb_deps: int):
+        self.nb_deps = nb_deps
         self.t_sa = t_sa
         self.t_sc = t_sc
         self.t_sr = t_sr
