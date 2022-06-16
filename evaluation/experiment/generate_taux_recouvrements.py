@@ -16,7 +16,7 @@ def generate_uptimes_for_dependencies(
     # Compute each possible combination between parameters
     for freq, time, nb_deps in product(freqs_awake_list, time_awakening, nb_deps_list):
 
-        covering_perc_values = {0.1: None, 0.2: None, 0.4: None, 0.6: None}
+        covering_perc_values = {0.1: None, 0.2: None, 0.4: None, 0.6: None, 1: None}
         while not all(uptimes is not None for uptimes in covering_perc_values.values()):
             # On écarte de plus en plus la plage sur laquelle choisir les uptimes
             for step in range(time, time+600, 20):
@@ -37,9 +37,10 @@ def generate_uptimes_for_dependencies(
 
 def compute_uptimes_for_params(freq, nb_deps, step_uptime, time):
     uptimes_list = [[] for _ in range(nb_deps + 1)]
+    offset = 10
     for up_num in range(freq):
         for dep_num in range(nb_deps + 1):  # Add 1 to the nb_deps to add the server
-            time_to_awake = random.uniform(step_uptime * up_num, step_uptime * (up_num + 1) - time)
+            time_to_awake = random.uniform(step_uptime * up_num + offset * up_num, step_uptime * (up_num + 1) - time + offset * up_num)
             uptimes_list[dep_num].append((time_to_awake, time))
     return tuple(tuple(uptimes) for uptimes in uptimes_list)
 
@@ -100,21 +101,15 @@ def generate_transitions_times(nb_deps_exp: int, nb_generations: int):
 
 def generate_taux():
     freqs_awake_list = [4, 8]      # Valeurs fixées
-    time_awakening = [20, 40]        # Valeurs fixées
+    time_awakening = [20, 40]      # Valeurs fixées
     nb_deps_list = [2, 5, 10, 20]  # Valeurs fixées
     clusters_list = ["econome"]    # Nantes, Rennes
     print("---------- Wake up times by parameters -------------------")
     uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
     print("done")
-    for k, v in uptimes_by_params.items():
-        print(k)
-        for l, m in v.items():
-            print(l, m)
-    print(*[{k: v} for k, v in uptimes_by_params.items()], sep="\n")
-    # print()
 
     # print("--------- Uptime to test -----------------")
-    config_to_test = [uptimes_by_params[(4, 20, 2)][0.6], uptimes_by_params[(8, 40, 2)][0.6]]
+    uptimes_to_test = [((4, 20, 2, 0.6), uptimes_by_params[(4, 20, 2)][0.6]), ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])]
     # print(*config_to_test, sep="\n")
     # print()
 
@@ -125,7 +120,7 @@ def generate_taux():
 
     # print("f---------- Where to launch expe -----------")
 
-    return config_to_test, transitions_times_list, clusters_list
+    return uptimes_to_test, transitions_times_list, clusters_list
 
 
 if __name__ == '__main__':

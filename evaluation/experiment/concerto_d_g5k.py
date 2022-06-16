@@ -115,7 +115,7 @@ def build_finished_reconfiguration_path(assembly_name, dep_num):
     if dep_num is None:
         return f"finished_reconfigurations/{assembly_name}_assembly"
     else:
-        return f"finished_reconfigurations/{assembly_name.replace(dep_num, '')}_assembly_{dep_num}"
+        return f"finished_reconfigurations/{assembly_name.replace(str(dep_num), '')}_assembly_{dep_num}"
 
 
 def fetch_finished_reconfiguration_file(role_node, assembly_name, dep_num):
