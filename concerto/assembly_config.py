@@ -47,7 +47,7 @@ def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -
     else:
         relative_path = f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
     abs_path = str(Path(relative_path).resolve())
-    log.debug(f"\033[31m resolved path: {abs_path} \033[0m")
+    # log.debug(f"\033[31m resolved path: {abs_path} \033[0m")
     return abs_path
 
 
@@ -133,6 +133,7 @@ def _restore_component(assembly, comp_values, components_names, components):
     # Restore dependencies
     for dep_values in comp_values['_p_st_dependencies'].values():
         dep_comp = component._p_st_dependencies[dep_values['_p_name']]
+        dep_comp._p_is_refusing = dep_values['_p_is_refusing']
         dep_comp._p_nb_users = dep_values['_p_nb_users']
         dep_comp._p_data = dep_values['_p_data']
 
