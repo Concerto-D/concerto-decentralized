@@ -108,6 +108,7 @@ def execute_reconf(role_node, config_file_path: str, duration, dep_num):
 
 def execute_zenoh_routers(roles_zenoh_router, timeout):
     print(f"launch zenoh routers with {timeout} timeout")
+    en.run_command("kill $(ps -ef | grep -v grep | grep -w zenohd | awk '{print $2}')", roles=roles_zenoh_router, on_error_continue=True)
     en.run_command(" ".join(["RUST_LOG=debug", "timeout", str(timeout), "zenohd", "--mem-storage='/**'"]), roles=roles_zenoh_router, background=True)
 
 

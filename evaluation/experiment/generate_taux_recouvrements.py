@@ -103,13 +103,13 @@ def generate_taux():
     freqs_awake_list = [4, 8]      # Valeurs fixées
     time_awakening = [20, 40]      # Valeurs fixées
     nb_deps_list = [2, 5, 10, 20]  # Valeurs fixées
-    clusters_list = ["econome"]    # Nantes, Rennes
+    clusters_list = ["econome"]    # Nantes
     print("---------- Wake up times by parameters -------------------")
     uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
     print("done")
 
     # print("--------- Uptime to test -----------------")
-    uptimes_to_test = [((4, 20, 2, 0.6), uptimes_by_params[(4, 20, 2)][0.6]), ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])]
+    uptimes_to_test = [((8, 20, 2, 0.6), uptimes_by_params[(8, 20, 2)][0.6]), ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])]
     # print(*config_to_test, sep="\n")
     # print()
 
