@@ -11,6 +11,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
+from concerto.logger import log
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition
@@ -929,15 +930,16 @@ class Component(object, metaclass=ABCMeta):
                 if not ready:
                     continue
 
+                log.debug(f"Need to process {dock._p_id}")
                 # Checking place dependencies
                 for dep in self._p_place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
                         if not dep.is_served():
-                            print(f"Place dep {dep.get_name()} is not served")
+                            log.debug(f"Place dep {dep.get_name()} is not served")
                             ready = False
                             break
                         if not dep.is_allowed():
-                            print(f"Place dep {dep.get_name()} is not allowed")
+                            log.debug(f"Place dep {dep.get_name()} is not allowed")
                             ready = False
                             break
                 if not ready:
@@ -954,9 +956,9 @@ class Component(object, metaclass=ABCMeta):
                         for dep in self._p_group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
                                 if not dep.is_served():
-                                    print(f"Group dep {dep.get_name()} is not served")
+                                    log.debug(f"Group dep {dep.get_name()} is not served")
                                 if not dep.is_allowed():
-                                    print(f"Group dep {dep.get_name()} is not allowed")
+                                    log.debug(f"Group dep {dep.get_name()} is not allowed")
                                 ready = False
                                 break
                         activating_groups_operation[group] = group_operation
