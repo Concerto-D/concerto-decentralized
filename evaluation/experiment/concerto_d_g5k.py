@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 import enoslib as en
@@ -74,6 +75,9 @@ def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
         a.file(path=f"{home_dir}/concertonode/logs", state="absent")
         a.file(path=f"{home_dir}/concertonode/logs", state="directory")
         a.file(path=f"{home_dir}/concertonode/archives_reprises", state="directory")
+        # Reset finished_reconfigurations dir
+        a.file(path=f"{home_dir}/concertonode/finished_reconfigurations", state="absent")
+        a.file(path=f"{home_dir}/concertonode/finished_reconfigurations", state="directory")
         a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
         print(a.results)
 
@@ -107,6 +111,24 @@ def execute_zenoh_routers(roles_zenoh_router, timeout):
     en.run_command(" ".join(["RUST_LOG=debug", "timeout", str(timeout), "zenohd", "--mem-storage='/**'"]), roles=roles_zenoh_router, background=True)
 
 
+def build_finished_reconfiguration_path(assembly_name, dep_num):
+    if dep_num is None:
+        return f"finished_reconfigurations/{assembly_name}_assembly"
+    else:
+        return f"finished_reconfigurations/{assembly_name.replace(dep_num, '')}_assembly_{dep_num}"
+
+
+def fetch_finished_reconfiguration_file(role_node, assembly_name, dep_num):
+    home_dir = "/home/anomond"
+    with en.actions(roles=role_node) as a:
+        a.fetch(
+            src=f"{home_dir}/concertonode/{build_finished_reconfiguration_path(assembly_name, dep_num)}",
+            dest=str(Path(f"{build_finished_reconfiguration_path(assembly_name, dep_num)}").resolve()),
+            flat="yes",
+            fail_on_missing="no"
+        )
+
+
 def get_logs_from_concerto_d_node(roles_sites, logs_assembly_names: List[str]):
     """
     Need one role per site to gather the logs
@@ -114,4 +136,4 @@ def get_logs_from_concerto_d_node(roles_sites, logs_assembly_names: List[str]):
     home_dir = "/home/anomond"
     with en.actions(roles=roles_sites) as a:
         for assembly_name in logs_assembly_names:
-            a.fetch(src=f"{home_dir}/concertonode/logs/logs_{assembly_name}.txt", dest=f"remote_logs/logs_{assembly_name}.txt")
+            a.fetch(src=f"{home_dir}/concertonode/logs/logs_{assembly_name}.txt", dest=f"remote_logs/logs_{assembly_name}.txt", flat="yes")

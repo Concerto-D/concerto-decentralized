@@ -45,4 +45,4 @@ if __name__ == '__main__':
     log.debug(f"Working directory: {os.getcwd()}")
     log.debug(f"Python path: {sys.path}")
     config_dict, duration = get_assembly_parameters(sys.argv)
-    execute_reconf(config_dict, duration, is_asynchrone=True)
+    execute_reconf(config_dict, duration, is_asynchrone=False)

@@ -2,6 +2,7 @@ import json
 import math
 import sys
 import time
+from os.path import exists
 from pathlib import Path
 from threading import Thread
 from typing import Dict, List
@@ -12,27 +13,16 @@ from execo_engine import sweep, ParamSweeper
 from evaluation.experiment import concerto_d_g5k, generate_taux_recouvrements
 from evaluation.experiment.concerto_d_g5k import provider
 
-tracking_thread = {
-    "server": {
-        "total_running_time": 0,
-        "total_sleeping_time": 0
-    },
-    "dep0": {
-        "total_running_time": 0,
-        "total_sleeping_time": 0
-    },
-    "dep1": {
-        "total_running_time": 0,
-        "total_sleeping_time": 0
-    },
-}
+
+finished_nodes = []
 
 
-def execute_reconf_in_g5k(roles, assembly_name, expe_time_start, reconf_config_file_path, duration, dep_num):
-    print(f"{assembly_name} reconf starting at : ", time.time() - expe_time_start)
-    time_start = time.time()
+def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num):
     concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, dep_num)
-    tracking_thread[assembly_name]['total_running_time'] += time.time() - time_start
+    concerto_d_g5k.fetch_finished_reconfiguration_file(roles[assembly_name], assembly_name, dep_num)
+    if exists(str(Path(concerto_d_g5k.build_finished_reconfiguration_path(assembly_name, dep_num)).resolve())):
+        print("reconf finished")
+        finished_nodes.append(node_num)
 
 
 def find_next_uptime(uptimes_nodes):
@@ -56,26 +46,23 @@ def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reco
         # Find the next reconf to launch (closest in time)
         node_num, next_uptime = find_next_uptime(uptimes_nodes)
         print("MINIMAL UPTIME: ", node_num, next_uptime)
-        if next_uptime[0] <= time.time() - expe_time_start:
+        if node_num in finished_nodes:
+            uptimes_nodes[node_num].clear()
+        elif next_uptime[0] <= time.time() - expe_time_start:
             # Init the thread that will handle the reconf
             duration = next_uptime[1]
             dep_num = None if node_num == 0 else node_num - 1
             name = "server" if node_num == 0 else f"dep{node_num - 1}"
-            thread = Thread(target=execute_reconf_in_g5k, args=(roles, name, expe_time_start, reconfig_config_file_path, duration, dep_num))
+            thread = Thread(target=execute_reconf_in_g5k, args=(roles, name, expe_time_start, reconfig_config_file_path, duration, dep_num, node_num))
 
             # Start reconf and remove it from uptimes
             thread.start()
-            # thread.join()
-            # l += thread,
             uptimes_nodes[node_num].remove(next_uptime)
         else:
             # Wait until its time to launch the reconf
             n = (expe_time_start + next_uptime[0]) - time.time()
             print(f"sleeping {n} seconds")
             time.sleep(n)
-
-    # for t in l:
-    #     t.join()
 
 
 def compute_end_reconfiguration_time(uptimes_nodes):

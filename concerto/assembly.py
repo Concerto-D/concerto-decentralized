@@ -9,6 +9,7 @@ import sys
 import time
 import traceback
 from os.path import exists
+from pathlib import Path
 from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
@@ -543,12 +544,19 @@ class Assembly(object):
     OPERATIONAL SEMANTICS
     """
 
+    def is_reconfiguration_finished(self):
+        return self._p_instructions_queue.empty() and self._p_current_instruction is None
+
+    def finish_reconfiguration(self):
+        Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
+        Path(f"finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
+        exit()
+
     def loop_smeantics(self):
         while self.alive:
             try:
-                if self._p_instructions_queue.empty() and self._p_current_instruction is None:
-                    Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
-                    self.alive = False
+                if self.is_reconfiguration_finished():
+                    self.finish_reconfiguration()
                 self.semantics()
             except Exception:
                 log.error(traceback.format_exc())
@@ -584,7 +592,6 @@ class Assembly(object):
             else:
                 self._p_current_instruction = instruction
 
-
         # semantics for each component
         # Dès qu'une instruction est bloquante (e.g. wait, waitall) on exécute
         # les behaviors des composants
@@ -601,7 +608,9 @@ class Assembly(object):
         self.remove_from_active_components(idle_components)
 
         # Synchrone or asynchrone wait
-        if self._p_is_asynchrone and all_tokens_blocked:
+        if self.is_reconfiguration_finished():
+            self.finish_reconfiguration()
+        elif self._p_is_asynchrone and all_tokens_blocked:
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
