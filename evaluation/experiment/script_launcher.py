@@ -117,6 +117,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     with open(path_file, "w") as f:
         json.dump({"nb_deps_tot": len(uptimes_nodes) - 1, "transitions_time": transitions_to_dump}, f, indent=4)
     print(f"Config file saved in {path_file}")
+
     # Deploy concerto_d nodes
     print("------- Deploy concerto_d nodes ------")
     concerto_d_g5k.install_apt_deps(roles["concerto_d"])
@@ -162,7 +163,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     # concerto_d_g5k.get_logs_from_concerto_d_node(roles["server"], ["server", *[f"dep{i}" for i in range(nb_deps_tot)]])
 
 
-def compute_sweeper():
+def create_and_run_sweeper():
     uptimes_to_test, transitions_times_list, clusters_list = generate_taux_recouvrements.generate_taux()
     sweeps = sweep({
         "uptimes": uptimes_to_test,
@@ -190,5 +191,4 @@ def compute_sweeper():
 
 
 if __name__ == '__main__':
-    compute_sweeper()
-    # main()
+    create_and_run_sweeper()

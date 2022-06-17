@@ -10,13 +10,14 @@ def generate_uptimes_for_dependencies(
 ) -> Dict:
     """
     returns: Dict de la forme:
-    {(nb_de_reveils, temps_awoken, nb_deps): {dep_num: [temps_reveils]}}
+    {(nb_de_reveils, temps_awoken, nb_OU_deps): {taux_1: [temps_reveils_list_ou1, temps_reveils_list_ou2, ...], ...}, ...}
     """
     uptimes_by_params = {}
     # Compute each possible combination between parameters
     for freq, time, nb_deps in product(freqs_awake_list, time_awakening, nb_deps_list):
 
         covering_perc_values = {0.1: None, 0.2: None, 0.4: None, 0.6: None, 1: None}
+        # We want to have uptimes for each choosen percentage value
         while not all(uptimes is not None for uptimes in covering_perc_values.values()):
             # On écarte de plus en plus la plage sur laquelle choisir les uptimes
             for step in range(time, time+600, 20):
@@ -104,26 +105,17 @@ def generate_taux():
     time_awakening = [20, 40]      # Valeurs fixées
     nb_deps_list = [2, 5, 10, 20]  # Valeurs fixées
     clusters_list = ["econome"]    # Nantes
-    print("---------- Wake up times by parameters -------------------")
-    uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
-    print("done")
 
-    # print("--------- Uptime to test -----------------")
+    uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
     uptimes_to_test = [((8, 20, 2, 0.6), uptimes_by_params[(8, 20, 2)][0.6]), ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])]
-    # print(*config_to_test, sep="\n")
-    # print()
 
     nb_generations = 4
-    # print(f"---------- Generate {nb_generations} transitions times ----------")
     transitions_times_list = generate_transitions_times(max(nb_deps_list), nb_generations)
-    # print(*transitions_times_list, sep="\n")
-
-    # print("f---------- Where to launch expe -----------")
 
     return uptimes_to_test, transitions_times_list, clusters_list
 
 
 if __name__ == '__main__':
-    c,t, cl = generate_taux()
+    c, t, cl = generate_taux()
     print(c)
 
