@@ -12,7 +12,7 @@ from typing import Dict, List
 import yaml
 from execo_engine import sweep, ParamSweeper
 
-from evaluation.experiment import concerto_d_g5k, generate_taux_recouvrements
+from evaluation.experiment import concerto_d_g5k, generate_taux_recouvrements, assembly_parameters
 from evaluation.experiment.concerto_d_g5k import provider
 
 
@@ -182,8 +182,23 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     # concerto_d_g5k.get_logs_from_concerto_d_node(roles["server"], ["server", *[f"dep{i}" for i in range(nb_deps_tot)]])
 
 
+def get_uptimes_to_test():
+    # Fonction à remplir manuellement
+    return [{
+        (4, 20, 2): {0.1: (((25.195508847767325, 20), (163.41746947738693, 20), (281.6755192989782, 20), (371.8995510611459, 20)), ((64.74845465532238, 20), (147.2203654964685, 20), (265.8913222945456, 20), (359.9003031908631, 20)), ((75.5248356709052, 20), (110.38250838979351, 20), (227.25382536115265, 20), (336.7081900036671, 20))), 0.2: (((45.05244289773501, 20), (293.0319321004896, 20), (384.51929586803834, 20), (627.4006813648807, 20)), ((90.05618397146786, 20), (297.57791370535176, 20), (465.0435149454596, 20), (573.4871624556267, 20)), ((78.31490599244175, 20), (196.3528189492837, 20), (384.8190800572006, 20), (638.3959349210597, 20))), 0.4: (((28.15693067757011, 20), (108.04211234926512, 20), (172.32010193843712, 20), (245.83563728411406, 20)), ((0.27315015181298197, 20), (89.25035170996583, 20), (177.42769770689023, 20), (245.22155274570838, 20)), ((33.575992902361165, 20), (84.66136967070449, 20), (145.90457587979586, 20), (249.46867269034328, 20))), 0.6: (((6.793465155408676, 20), (61.43187825009504, 20), (100.81675296230114, 20), (150.45265288903047, 20)), ((15.147687939068383, 20), (50.152802336443976, 20), (108.91606619243265, 20), (154.76497466653035, 20)), ((14.864090261108526, 20), (59.742918321138355, 20), (108.84521451367577, 20), (164.806344555012, 20)))},
+
+    }]
+
+
 def create_and_run_sweeper():
-    uptimes_to_test, transitions_times_list, clusters_list = generate_taux_recouvrements.generate_taux()
+    # Generate transitions
+    nb_generations = 4
+    max_deps = 20
+    transitions_times_list = assembly_parameters.generate_transitions_times(max_deps, nb_generations)
+
+    clusters_list = ["econome"]  # Nantes
+    uptimes_to_test = get_uptimes_to_test()
+
     sweeps = sweep({
         "uptimes": uptimes_to_test,
         "transitions_times": transitions_times_list,

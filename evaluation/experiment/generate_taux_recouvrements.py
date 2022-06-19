@@ -1,9 +1,14 @@
+import os
 import random
+from datetime import datetime
 from itertools import product
-from typing import List, Dict, Tuple
+from os.path import exists
+from typing import List, Dict
+import matplotlib
+from matplotlib import pyplot as plt
 
 
-def generate_uptimes_for_dependencies(
+def generate_uptimes_by_params(
         freqs_awake_list: List[int],
         time_awakening: List[int],
         nb_deps_list: List[int],
@@ -66,69 +71,59 @@ def compute_covering_time_dep(dep_num: int, freq: int, time_awoken: float, all_d
     return overlaps_list
 
 
-def generate_server_transitions_time(nb_deps: int, min_value: float = 0., max_value: float = 10.) -> Tuple:
-    server_t_sa = round(random.uniform(min_value, max_value), 2)
-    server_t_sc = tuple(round(random.uniform(min_value, max_value), 2) for i in range(nb_deps))
-    server_t_sr = round(random.uniform(min_value, max_value), 2)
-    server_t_ss = tuple(round(random.uniform(min_value, max_value), 2) for i in range(nb_deps))
-    server_t_sp = tuple(round(random.uniform(min_value, max_value), 2) for i in range(nb_deps))
-    return tuple({
-        "t_sa": server_t_sa,
-        "t_sc": server_t_sc,
-        "t_sr": server_t_sr,
-        "t_ss": server_t_ss,
-        "t_sp": server_t_sp,
-    }.items())
+def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
+    # Configure to plot on images instead of screen
+    matplotlib.use('Agg')
+
+    line_number = 5      # Line number to plot uptimes, one line per OU
+    figure_number = 0    # Figure number to plot
+
+    # Create dir to store images
+    plot_results_dir = f"plot_results_{datetime_now_formatted}"
+    os.mkdir(plot_results_dir)
+
+    # For each combination of param, plot figure by covering percentage
+    for params, uptimes_to_plot in uptimes_by_params.items():
+        # Create dir to storage images for specific param combination
+        freq, duration, nb_deps = params
+        dir_to_save_name = f"{plot_results_dir}/{freq}_{duration}_{nb_deps}"
+        if not exists(dir_to_save_name):
+            os.mkdir(dir_to_save_name)
+
+        # Create image for each covering percentage
+        for perc, all_uptimes in uptimes_to_plot.items():
+            plt.figure(figure_number)
+            for uptimes_ou in all_uptimes:
+                color_number = 0
+                for uptime_tuple in uptimes_ou:
+                    uptime, duration = uptime_tuple
+                    start = uptime
+                    end = uptime + duration
+                    plt.plot([start, end], [line_number, line_number], 'br'[color_number])
+                    color_number = not color_number
+                line_number -= 0.5  # Decrease to print next OU
+            plt.plot([1, 3], [8, 8], 'w')   # Used to get lines closer together (else it is spread vertically)
+            plt.savefig(f"{dir_to_save_name}/matplotlib_multicolor_line_{int(perc * 100)}.png")
+            plt.close(figure_number)
+            figure_number += 1
+            line_number = 5
 
 
-def generate_deps_transitions_time(dep_num: int, min_value: float = 0., max_value: float = 10.) -> Tuple:
-    deps_t_di = round(random.uniform(min_value, max_value), 2)
-    deps_t_dr = round(random.uniform(min_value, max_value), 2)
-    deps_t_du = round(random.uniform(min_value, max_value), 2)
-    return tuple({
-        "id": dep_num,
-        "t_di": deps_t_di,
-        "t_dr": deps_t_dr,
-        "t_du": deps_t_du,
-    }.items())
-
-
-def generate_transitions_times(nb_deps_exp: int, nb_generations: int):
-    all_generations_transitions_times = []
-    for _ in range(nb_generations):
-        generations_tt = [generate_server_transitions_time(nb_deps_exp)]
-        for dep_num in range(nb_deps_exp):
-            generations_tt.append(generate_deps_transitions_time(dep_num))
-        all_generations_transitions_times.append(tuple(generations_tt))
-    return all_generations_transitions_times
-
-
-def generate_taux():
-    freqs_awake_list = [20]        # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
+def main():
+    # Compute uptimes
+    freqs_awake_list = [4, 8]      # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
     time_awakening = [20]          # Valeurs fixées TODO: placer le time_awaking en fonction du temps de la reconf à partir des temps de transitions
-    nb_deps_list = [2, 5, 10, 20]  # Valeurs fixées
-    clusters_list = ["econome"]    # Nantes (à déplacer)
-
-    uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
+    nb_deps_list = [2, 5, 10]      # Valeurs fixées
+    uptimes_by_params = generate_uptimes_by_params(freqs_awake_list, time_awakening, nb_deps_list)
 
     for key, uptimes in uptimes_by_params.items():
-        print(key, uptimes)
+        print({key: uptimes})
 
-    uptimes_to_test = [
-        ((8, 20, 2, 0.6), uptimes_by_params[(8, 20, 2)][0.6]),
-        ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])
-    ]
+    datetime_now_formatted = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    # TODO: Enregistrer les taux et les montrer sur un graphe
-    # TODO: Puis ensuite les choisir pour la suite de l'expérience
-
-    nb_generations = 4
-    transitions_times_list = generate_transitions_times(max(nb_deps_list), nb_generations)
-
-    return uptimes_to_test, transitions_times_list, clusters_list
+    # Plot uptimes
+    plot_uptimes(uptimes_by_params, datetime_now_formatted)
 
 
 if __name__ == '__main__':
-    c, t, cl = generate_taux()
-    # print(c)
-
+    main()

@@ -16,3 +16,4 @@ sweeps/
 logs/
 finished_reconfigurations/
 cachedir/
+plot_results*/
