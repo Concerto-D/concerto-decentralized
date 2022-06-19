@@ -6,12 +6,14 @@ from typing import Dict
 from pathlib import Path
 
 import concerto
+from concerto import time_logger
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
 from concerto.internal_instruction import InternalInstruction
-from concerto.logger import log
+from concerto.debug_logger import log
 from concerto.place import Dock, Place
+from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.utility import Printer
 
@@ -47,14 +49,15 @@ def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -
     else:
         relative_path = f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
     abs_path = str(Path(relative_path).resolve())
-    # log.debug(f"\033[31m resolved path: {abs_path} \033[0m")
     return abs_path
 
 
 def save_config(assembly):
     Printer.st_tprint("Saving current conf ...")
+    time_logger.log_time_value(TimeToSave.START_SAVING_STATE)
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
         json.dump(assembly, outfile, cls=FixedEncoder, indent=4)
+    time_logger.log_time_value(TimeToSave.END_SAVING_STATE)
 
 
 def load_previous_config(assembly):
@@ -102,7 +105,7 @@ def restore_previous_config(assembly, previous_config, reconf_configuration: Dic
     assembly._p_act_components = set(previous_config['_p_act_components'])
     assembly._p_id_sync = previous_config['_p_id_sync']
     assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']
-    assembly._p_is_asynchrone = previous_config['_p_is_asynchrone']
+    assembly._p_sleep_when_blocked = previous_config['_p_sleep_when_blocked']
 
 
 def _instanciate_components(assembly, previous_config, reconf_configuration: Dict):

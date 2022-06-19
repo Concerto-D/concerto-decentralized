@@ -1,6 +1,8 @@
 import logging
 import sys
 
+from concerto import time_logger
+from concerto.time_logger import TimeToSave
 from evaluation.synthetic_use_case.assemblies.dep_assembly import DepAssembly
 import yaml
 
@@ -28,8 +30,10 @@ def update(sc, dep_num):
     sc.wait_all()
 
 
-def execute_reconf(dep_num, config_dict, duration, is_asynchrone=True):
-    sc = DepAssembly(dep_num, config_dict, is_asynchrone=is_asynchrone)
+def execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=True):
+    # TODO: où on commence à voir le temps de reconf ?
+    time_logger.log_time_value(TimeToSave.START_RECONF)
+    sc = DepAssembly(dep_num, config_dict, sleep_when_blocked=sleep_when_blocked)
     sc.set_verbosity(2)
     deploy(sc, dep_num)
     update(sc, dep_num)
@@ -37,6 +41,10 @@ def execute_reconf(dep_num, config_dict, duration, is_asynchrone=True):
 
 
 if __name__ == '__main__':
+    # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server
     dep_num, config_dict, duration = get_assembly_parameters(sys.argv)
+    time_logger.init_time_log_dir(f"dep{dep_num}")
+    time_logger.log_time_value(TimeToSave.UP_TIME)
     logging.basicConfig(filename=f"logs/logs_dep{dep_num}.txt", format='%(asctime)s %(message)s', filemode="a+")
-    execute_reconf(dep_num, config_dict, duration, is_asynchrone=False)
+    execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=False)
+    time_logger.log_time_value(TimeToSave.SLEEP_TIME)

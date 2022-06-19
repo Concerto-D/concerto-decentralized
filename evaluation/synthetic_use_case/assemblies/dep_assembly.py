@@ -10,9 +10,9 @@ class DepAssembly(Assembly):
     remote_component_names = {"server"}
     remote_assemblies_names = {"server_assembly"}
 
-    def __init__(self, p, reconf_config_dict, is_asynchrone=True):
+    def __init__(self, p, reconf_config_dict, sleep_when_blocked=True):
         Assembly.__init__(self, f"dep_assembly_{p}", self.components_types, self.remote_component_names,
-                          self.remote_assemblies_names, reconf_config_dict, is_asynchrone)
+                          self.remote_assemblies_names, reconf_config_dict, sleep_when_blocked)
         dep_params = reconf_config_dict['transitions_time'][f"dep{p}"]
         self.dep = Dep(**dep_params)
 

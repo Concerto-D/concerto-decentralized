@@ -4,7 +4,7 @@ from typing import List, Any, Callable
 from datetime import datetime
 from contextlib import contextmanager
 
-from concerto.logger import log
+from concerto.debug_logger import log
 
 """
 .. module:: utility

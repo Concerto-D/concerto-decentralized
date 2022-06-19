@@ -11,7 +11,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
-from concerto.logger import log
+from concerto.debug_logger import log
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition

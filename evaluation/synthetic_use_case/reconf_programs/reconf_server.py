@@ -2,7 +2,10 @@ import logging
 import os
 import sys
 
-from concerto.logger import log
+from concerto.debug_logger import log
+
+from concerto import time_logger
+from concerto.time_logger import TimeToSave
 from evaluation.synthetic_use_case.assemblies.server_assembly import ServerAssembly
 import yaml
 
@@ -31,8 +34,9 @@ def update(sc):
     sc.wait_all()
 
 
-def execute_reconf(config_dict, duration, is_asynchrone=True):
-    sc = ServerAssembly(config_dict, is_asynchrone=is_asynchrone)
+def execute_reconf(config_dict, duration, sleep_when_blocked=True):
+    time_logger.log_time_value(TimeToSave.START_RECONF)
+    sc = ServerAssembly(config_dict, sleep_when_blocked=sleep_when_blocked)
     sc.set_verbosity(2)
     deploy(sc, config_dict["nb_deps_tot"])
     update(sc)
@@ -40,8 +44,11 @@ def execute_reconf(config_dict, duration, is_asynchrone=True):
 
 
 if __name__ == '__main__':
+    time_logger.init_time_log_dir("server")
+    time_logger.log_time_value(TimeToSave.UP_TIME)
     logging.basicConfig(filename="logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="a+")
     log.debug(f"Working directory: {os.getcwd()}")
     log.debug(f"Python path: {sys.path}")
     config_dict, duration = get_assembly_parameters(sys.argv)
-    execute_reconf(config_dict, duration, is_asynchrone=False)
+    execute_reconf(config_dict, duration, sleep_when_blocked=False)
+    time_logger.log_time_value(TimeToSave.SLEEP_TIME)

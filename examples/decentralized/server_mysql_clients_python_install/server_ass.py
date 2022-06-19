@@ -1,7 +1,7 @@
 import sys
 
 from examples.decentralized.servers_mysql_assembly import ServerMysqlAssembly
-sa = ServerMysqlAssembly(is_asynchrone=False)
+sa = ServerMysqlAssembly(sleep_when_blocked=False)
 sa.set_verbosity(2)
 sa.set_print_time(True)
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 1

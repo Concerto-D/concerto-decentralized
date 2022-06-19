@@ -14,12 +14,13 @@ from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
 
-from concerto import communication_handler, assembly_config
+from concerto import communication_handler, assembly_config, time_logger
 from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
-from concerto.logger import log
+from concerto.debug_logger import log
 from concerto.remote_dependency import RemoteDependency
+from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction, InternalInstructionNumAttribution
@@ -42,7 +43,7 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, is_asynchrone=True):
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, sleep_when_blocked=True):
         self.time_manager = TimeManager()
         self.components_types = components_types
         # dict of Component objects: id => object
@@ -80,7 +81,7 @@ class Assembly(object):
         # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
         self._p_nb_instructions_done = 0
 
-        self._p_is_asynchrone = is_asynchrone
+        self._p_sleep_when_blocked = sleep_when_blocked
 
         self.verbosity: int = 0
         self.print_time: bool = False
@@ -103,6 +104,8 @@ class Assembly(object):
         Check if the previous programm went to sleep (i.e. if a saved config file exists)
         and restore the previous config if so
         """
+        # TODO: si on ne reprend pas le state on le log quand même ? Ca peut donner une idée du temps que ça prend sans devoir le récupérer
+        time_logger.log_time_value(TimeToSave.START_LOADING_STATE)
         if exists(assembly_config.build_saved_config_file_path(self.name)):
             log.debug(f"\33[33m --- conf found at {assembly_config.build_saved_config_file_path(self.name)} ----\033[0m")
             previous_config = assembly_config.load_previous_config(self)
@@ -110,6 +113,7 @@ class Assembly(object):
         else:
             log.debug("'\33[33m'----- Previous config doesn't NOT exists, starting from zero ----'\033[0m'")
             log.debug(f"'\33[33m'----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----'\033[0m'")
+        time_logger.log_time_value(TimeToSave.END_LOADING_STATE)
 
     def set_verbosity(self, level: int):
         self.verbosity = level
@@ -608,14 +612,19 @@ class Assembly(object):
         self.remove_from_active_components(idle_components)
 
         # Synchrone or asynchrone wait
+        # TODO: refacto moment où on log l'endormissement et le end_reconf
+        # TODO: voir pour le bug: le end of reconfiguration s'affiche alors que l'assembly est encore en train de tourner (le wait/1/server_assembly est à inactive)
         if self.is_reconfiguration_finished():
+            time_logger.log_time_value(TimeToSave.END_RECONF)
             self.finish_reconfiguration()
-        elif self._p_is_asynchrone and all_tokens_blocked:
+        elif self._p_sleep_when_blocked and all_tokens_blocked:
+            time_logger.log_time_value(TimeToSave.END_RECONF)
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
             exit()
         elif self.time_manager.is_time_up() and not are_active_transitions:
+            time_logger.log_time_value(TimeToSave.END_RECONF)
             assembly_config.save_config(self)
             Printer.st_tprint("Time's up")
             Printer.st_tprint("Go sleep")
