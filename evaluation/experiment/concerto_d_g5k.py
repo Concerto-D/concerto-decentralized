@@ -20,6 +20,7 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
     # TODO: le walltime, le mettre jusqu'à 9am du jour d'après pour tous les noeuds
     # TODO: faire les réservations en avance pour toutes les expés (master + noeuds de l'expé), en amont dans un autre
     # script (voir aussi script Maverick + voir si on peut retrouver le provider depuis la conf).
+    # TODO: demander à Matthieu les conditions pour que la conf soit considérée comme similaire
     conf = (
         en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="02:00:00", job_name="concerto-d")
                   .add_network_conf(concerto_d_network)

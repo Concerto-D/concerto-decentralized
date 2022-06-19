@@ -26,7 +26,7 @@ reconfiguration_times = {
     "dep1": 0
 }
 
-# TODO: logger se qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
+# TODO: logger ce qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
 # A sauvegarder:
     # Réveil
     # Début chargement de l'état
