@@ -17,7 +17,7 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
     site = get_cluster_site(cluster)
     concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
     conf = (
-        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="03:00:00", job_name="concerto-d")
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="02:00:00", job_name="concerto-d")
                   .add_network_conf(concerto_d_network)
     )
     conf = conf.add_machine(

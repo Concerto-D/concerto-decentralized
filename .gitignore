@@ -12,3 +12,7 @@ venv/
 **#
 **.kate-swp
 resultats_experience/
+sweeps/
+logs/
+finished_reconfigurations/
+cachedir/

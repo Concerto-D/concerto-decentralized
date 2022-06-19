@@ -2,26 +2,31 @@ from evaluation.experiment import generate_taux_recouvrements
 from unittest.mock import patch
 
 
-@patch("random.uniform")
-def test_nominal(mock_uniform):
-    freqs_awake_list = [2]
-    time_awakening = [3]
-    nb_deps_list = [35]
-    step_freq = 60
-    mock_uniform.side_effect = [  # Each wakes up 2 times
-        12, 25.7,    # OU1
-        10.5, 14.2,  # OU2
-        11.9, 25.7   # OU3
+def test_compute_covering_time_dep():
+    freq = 2
+    time_awoken = 3
+    uptimes_list = (((12, 3), (25.7, 3)), ((10.5, 3), (14.3, 3)), ((11.9, 3), (25.7, 3)))
+    expected_overlaps = [
+        (1.5+0.7)/(time_awoken*freq),  # OU1/OU2
+        (2.9+3)/(time_awoken*freq)     # OU1/OU3
     ]
-    uptimes_by_params = generate_taux_recouvrements.generate_uptimes_for_dependencies(
-        freqs_awake_list, time_awakening, nb_deps_list, step_freq
-    )
-    print(uptimes_by_params)
-    covering_by_params = generate_taux_recouvrements.compute_means_covering_by_params(uptimes_by_params)
-    print(covering_by_params)
-    global_means_coverage = generate_taux_recouvrements.compute_global_means_covering(covering_by_params)
-    print(global_means_coverage)
+    overlaps_list = generate_taux_recouvrements.compute_covering_time_dep(0, freq, time_awoken, uptimes_list)
+    print(overlaps_list, expected_overlaps)
+
+    expected_overlaps = [
+        (1.5+0.7)/(time_awoken*freq),  # OU2/OU1
+        (1.6+0.6)/(time_awoken*freq)   # OU2/OU3
+    ]
+    overlaps_list = generate_taux_recouvrements.compute_covering_time_dep(1, freq, time_awoken, uptimes_list)
+    print(overlaps_list, expected_overlaps)
+
+    expected_overlaps = [
+        (2.9+3)/(time_awoken*freq),    # OU3/OU1
+        (1.6+0.6)/(time_awoken*freq)   # OU3/OU2
+    ]
+    overlaps_list = generate_taux_recouvrements.compute_covering_time_dep(2, freq, time_awoken, uptimes_list)
+    print(overlaps_list, expected_overlaps)
 
 
 if __name__ == '__main__':
-    test_nominal()
+    test_compute_covering_time_dep()
