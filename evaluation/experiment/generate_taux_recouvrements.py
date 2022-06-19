@@ -9,6 +9,7 @@ def generate_uptimes_for_dependencies(
         nb_deps_list: List[int],
 ) -> Dict:
     """
+    TODO: reprendre le nom des variables (time, nb_deps, etc)
     returns: Dict de la forme:
     {(nb_de_reveils, temps_awoken, nb_OU_deps): {taux_1: [temps_reveils_list_ou1, temps_reveils_list_ou2, ...], ...}, ...}
     """
@@ -16,8 +17,9 @@ def generate_uptimes_for_dependencies(
     # Compute each possible combination between parameters
     for freq, time, nb_deps in product(freqs_awake_list, time_awakening, nb_deps_list):
 
-        covering_perc_values = {0.1: None, 0.2: None, 0.4: None, 0.6: None, 1: None}
+        covering_perc_values = {0.1: None, 0.2: None, 0.4: None, 0.6: None}
         # We want to have uptimes for each choosen percentage value
+        # TODO: voir si ça prend trop de temps on met une condition d'arrêt
         while not all(uptimes is not None for uptimes in covering_perc_values.values()):
             # On écarte de plus en plus la plage sur laquelle choisir les uptimes
             for step in range(time, time+600, 20):
@@ -28,6 +30,7 @@ def generate_uptimes_for_dependencies(
                     covering_uptimes.append(round(sum(cov_perc_list)/len(cov_perc_list), 2))
                 global_means_coverage = round(sum(covering_uptimes) / len(covering_uptimes), 2)
                 for cover_val in covering_perc_values.keys():
+                    # Mettre des intervals plus larges, entre 0.1 et 0.2, au lieu d'une valeur fixe
                     if covering_perc_values[cover_val] is None and cover_val - cover_val*0.1 <= global_means_coverage <= cover_val + cover_val*0.1:
                         covering_perc_values[cover_val] = uptimes_list
 
@@ -101,13 +104,23 @@ def generate_transitions_times(nb_deps_exp: int, nb_generations: int):
 
 
 def generate_taux():
-    freqs_awake_list = [4, 8]      # Valeurs fixées
-    time_awakening = [20, 40]      # Valeurs fixées
+    freqs_awake_list = [20]        # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
+    time_awakening = [20]          # Valeurs fixées TODO: placer le time_awaking en fonction du temps de la reconf à partir des temps de transitions
     nb_deps_list = [2, 5, 10, 20]  # Valeurs fixées
-    clusters_list = ["econome"]    # Nantes
+    clusters_list = ["econome"]    # Nantes (à déplacer)
 
     uptimes_by_params = generate_uptimes_for_dependencies(freqs_awake_list, time_awakening, nb_deps_list)
-    uptimes_to_test = [((8, 20, 2, 0.6), uptimes_by_params[(8, 20, 2)][0.6]), ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])]
+
+    for key, uptimes in uptimes_by_params.items():
+        print(key, uptimes)
+
+    uptimes_to_test = [
+        ((8, 20, 2, 0.6), uptimes_by_params[(8, 20, 2)][0.6]),
+        ((8, 40, 2, 0.6), uptimes_by_params[(8, 40, 2)][0.6])
+    ]
+
+    # TODO: Enregistrer les taux et les montrer sur un graphe
+    # TODO: Puis ensuite les choisir pour la suite de l'expérience
 
     nb_generations = 4
     transitions_times_list = generate_transitions_times(max(nb_deps_list), nb_generations)
@@ -117,5 +130,5 @@ def generate_taux():
 
 if __name__ == '__main__':
     c, t, cl = generate_taux()
-    print(c)
+    # print(c)
 

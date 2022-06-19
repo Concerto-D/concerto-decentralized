@@ -12,10 +12,14 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
     """
     TODO: voir pour les restriction des ressources (pour approcher des ressources d'une OU (raspberry ou autre))
     TODO: Etre attentif au walltime lors du lancement des expériences
+    TODO: Pour les expés, rajouter le temps où l'expé se lance + réserver un noeud qui va lancer l'expérience
     """
     _ = en.init_logging()
     site = get_cluster_site(cluster)
     concerto_d_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
+    # TODO: le walltime, le mettre jusqu'à 9am du jour d'après pour tous les noeuds
+    # TODO: faire les réservations en avance pour toutes les expés (master + noeuds de l'expé), en amont dans un autre
+    # script (voir aussi script Maverick + voir si on peut retrouver le provider depuis la conf).
     conf = (
         en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="02:00:00", job_name="concerto-d")
                   .add_network_conf(concerto_d_network)

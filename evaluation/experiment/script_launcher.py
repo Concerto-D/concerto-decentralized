@@ -17,11 +17,29 @@ from evaluation.experiment.concerto_d_g5k import provider
 
 
 finished_nodes = []
+
+# Suivre le même principe pour le temps passé à dormir et à se réveillé
+# Mesurer le temps requis pour sauvegarder l'état
 reconfiguration_times = {
     "server": 0,
     "dep0": 0,
     "dep1": 0
 }
+
+# TODO: logger se qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
+# A sauvegarder:
+    # Réveil
+    # Début chargement de l'état
+    # Fin chargement de l'état
+    # Début reconf
+    # Fin de la reconf en cours
+    # Début sauvegarde
+    # Fin sauvegarde
+    # Endormissement
+# Puis calculs locaux sur ma machine
+# Pour la sauvegarde:
+    # Enregistrer sur le /tmp des noeuds, puis les récupérer avant de détruire la réservation (à voir)
+    # Timestamp pour faire la distinction entre les expés + numéro des OUs
 
 
 def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num, expe_time_start):
@@ -149,6 +167,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file)
 
     # Save results
+    # Dans le nom: timestamp
     reconfig_config_file_path = "reconfiguration_times_"
     reconfig_config_file_path += "_".join(map(str, params))
     reconfig_config_file_path += f"_{hash_file}_"
