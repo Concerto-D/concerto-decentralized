@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import traceback
+from datetime import datetime
 from os.path import exists
 from pathlib import Path
 from threading import Thread
@@ -17,39 +18,64 @@ from evaluation.experiment.concerto_d_g5k import provider
 
 
 finished_nodes = []
-
-# Suivre le même principe pour le temps passé à dormir et à se réveillé
-# Mesurer le temps requis pour sauvegarder l'état
-reconfiguration_times = {
-    "server": 0,
-    "dep0": 0,
-    "dep1": 0
+results = {
+    "server": {
+        "total_uptime_duration": 0,
+        "total_loading_state_duration": 0,
+        "total_reconf_time_duration": 0,
+        "total_saving_state_duration": 0
+    },
+    "dep0": {
+        "total_uptime_duration": 0,
+        "total_loading_state_duration": 0,
+        "total_reconf_time_duration": 0,
+        "total_saving_state_duration": 0
+    },
+    "dep1": {
+        "total_uptime_duration": 0,
+        "total_loading_state_duration": 0,
+        "total_reconf_time_duration": 0,
+        "total_saving_state_duration": 0
+    }
 }
 
 # TODO: logger ce qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
-# A sauvegarder:
-    # Réveil
-    # Début chargement de l'état
-    # Fin chargement de l'état
-    # Début reconf
-    # Fin de la reconf en cours
-    # Début sauvegarde
-    # Fin sauvegarde
-    # Endormissement
 # Puis calculs locaux sur ma machine
 # Pour la sauvegarde:
     # Enregistrer sur le /tmp des noeuds, puis les récupérer avant de détruire la réservation (à voir)
     # Timestamp pour faire la distinction entre les expés + numéro des OUs
 
 
-def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num, expe_time_start):
-    time_start = time.time()
-    concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, dep_num)
-    reconfiguration_times[assembly_name] += time.time() - time_start
+def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num):
+    # Execute reconf
+    timestamp_log_dir = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, timestamp_log_dir, dep_num)
+    # Fetch and compute results
+    concerto_d_g5k.fetch_times_log_file(roles[assembly_name], assembly_name, dep_num, timestamp_log_dir)
+    compute_results(str(Path(concerto_d_g5k.build_times_log_path(assembly_name, dep_num, timestamp_log_dir)).resolve()))
+    # Finish reconf for assembly name if its over
     concerto_d_g5k.fetch_finished_reconfiguration_file(roles[assembly_name], assembly_name, dep_num)
     if exists(str(Path(concerto_d_g5k.build_finished_reconfiguration_path(assembly_name, dep_num)).resolve())):
         print("reconf finished")
         finished_nodes.append(node_num)
+
+
+def compute_results(assembly_name: str, timestamp_log_file: str):
+    with open(timestamp_log_file, "r") as f:
+        loaded_results = yaml.safe_load(f)
+
+    if assembly_name not in results.keys():
+        results[assembly_name] = {
+            "total_uptime_duration": 0,
+            "total_loading_state_duration": 0,
+            "total_reconf_time_duration": 0,
+            "total_saving_state_duration": 0
+        }
+
+    results[assembly_name]["total_uptime_duration"] += loaded_results["sleep_time"] - loaded_results["up_time"]
+    results[assembly_name]["total_loading_state_duration"] += loaded_results["end_loading_state"] - loaded_results["start_loading_state"]
+    results[assembly_name]["total_reconf_time_duration"] += loaded_results["end_reconf"] - loaded_results["start_reconf"]
+    results[assembly_name]["total_saving_state_duration"] += loaded_results["end_saving_state"] - loaded_results["start_saving_state"]
 
 
 def find_next_uptime(uptimes_nodes):
@@ -66,6 +92,7 @@ def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reco
     """
     TODO: Faire une liste ordonnée globale pour tous les assemblies, puis attendre (enlever les calculs
     qui prennent un peu de temps)
+    TODO: à changer ? loader un json via yaml.load
     """
     print("SCHEDULING START")
     expe_time_start = time.time()
@@ -166,16 +193,16 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     print("------- Run experiment ----------")
     schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file)
 
-    # Save results
-    # Dans le nom: timestamp
-    reconfig_config_file_path = "reconfiguration_times_"
-    reconfig_config_file_path += "_".join(map(str, params))
-    reconfig_config_file_path += f"_{hash_file}_"
-    reconfig_config_file_path += cluster
-
-    print(f"Saving results in {reconfig_config_file_path}")
-    with open(reconfig_config_file_path, "w") as f:
-        json.dump(reconfiguration_times, f, indent=4)
+    # # Save results
+    # # Dans le nom: timestamp
+    # reconfig_config_file_path = "reconfiguration_times_"
+    # reconfig_config_file_path += "_".join(map(str, params))
+    # reconfig_config_file_path += f"_{hash_file}_"
+    # reconfig_config_file_path += cluster
+    #
+    # print(f"Saving results in {reconfig_config_file_path}")
+    # with open(reconfig_config_file_path, "w") as f:
+    #     json.dump(reconfiguration_times, f, indent=4)
 
     print("------ End of experiment ---------")
     # Get logs

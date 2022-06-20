@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import Tuple, Dict, Optional
 
 from concerto.debug_logger import log
 
@@ -10,12 +11,13 @@ from evaluation.synthetic_use_case.assemblies.server_assembly import ServerAssem
 import yaml
 
 
-def get_assembly_parameters(args):
+def get_assembly_parameters(args) -> Tuple[Dict, float, Optional[str]]:
     config_file_path = args[1]
     with open(config_file_path, "r") as f:
         loaded_config = yaml.safe_load(f)
     uptime_duration = float(args[2])
-    return loaded_config, uptime_duration
+    timestamp_log_dir = args[3] if len(args) > 3 else None
+    return loaded_config, uptime_duration, timestamp_log_dir
 
 
 def deploy(sc, nb_deps_tot):
@@ -44,11 +46,13 @@ def execute_reconf(config_dict, duration, sleep_when_blocked=True):
 
 
 if __name__ == '__main__':
-    time_logger.init_time_log_dir("server")
+    # TODO Voir si loader la config file prend du temps (comme pour loader
+    # le state), car on log the uptime après
+    config_dict, duration, timestamp_log_dir = get_assembly_parameters(sys.argv)
+    time_logger.init_time_log_dir("server", timestamp_log_dir=timestamp_log_dir)
     time_logger.log_time_value(TimeToSave.UP_TIME)
     logging.basicConfig(filename="logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="a+")
     log.debug(f"Working directory: {os.getcwd()}")
     log.debug(f"Python path: {sys.path}")
-    config_dict, duration = get_assembly_parameters(sys.argv)
     execute_reconf(config_dict, duration, sleep_when_blocked=False)
     time_logger.log_time_value(TimeToSave.SLEEP_TIME)

@@ -94,7 +94,7 @@ def deploy_zenoh_routers(roles_zenoh_router: List):
         print(a.results)
 
 
-def execute_reconf(role_node, config_file_path: str, duration, dep_num):
+def execute_reconf(role_node, config_file_path: str, duration: float, timestamp_log_file: str, dep_num):
     command_args = []
     command_args.append("PYTHONPATH=$PYTHONPATH:$(pwd)")  # Set PYTHONPATH (equivalent of source source_dir.sh)
     command_args.append("venv/bin/python3")               # Execute inside the python virtualenv
@@ -104,6 +104,7 @@ def execute_reconf(role_node, config_file_path: str, duration, dep_num):
         command_args.append(str(dep_num))  # If it's a dependency
     command_args.append(config_file_path)  # The path of the config file that the remote process will search to
     command_args.append(str(duration))     # The awakening time of the program, it goes to sleep afterwards (it exits)
+    command_args.append(timestamp_log_file)
 
     command_str = " ".join(command_args)
     home_dir = "/home/anomond"
@@ -132,6 +133,22 @@ def fetch_finished_reconfiguration_file(role_node, assembly_name, dep_num):
             dest=str(Path(f"{build_finished_reconfiguration_path(assembly_name, dep_num)}").resolve()),
             flat="yes",
             fail_on_missing="no"
+        )
+
+
+def build_times_log_path(assembly_name, dep_num, timestamp_log_file: str):
+    if dep_num is None:
+        return f"{assembly_name}_{timestamp_log_file}.yaml"
+    else:
+        return f"dep{dep_num}_{timestamp_log_file}.yaml"
+
+
+def fetch_times_log_file(role_node, assembly_name, dep_num, timestamp_log_file: str):
+    with en.actions(roles=role_node) as a:
+        a.fetch(
+            src=f"/tmp/{build_times_log_path(assembly_name, dep_num, timestamp_log_file)}",
+            dest=str(Path(f"{build_times_log_path(assembly_name, dep_num, timestamp_log_file)}").resolve()),
+            flat="yes"
         )
 
 

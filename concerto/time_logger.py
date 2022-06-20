@@ -1,8 +1,9 @@
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
-LOG_DIR_NAME = "tmp"
+LOG_DIR_NAME = "/tmp"
 LOG_DIR_TIMESTAMP = ""
 ASSEMBLY_NAME = ""
 
@@ -18,10 +19,10 @@ class TimeToSave:
     SLEEP_TIME = "sleep_time"
 
 
-def init_time_log_dir(assembly_name: str):
+def init_time_log_dir(assembly_name: str, timestamp_log_dir: Optional[str] = None):
     global LOG_DIR_TIMESTAMP
     global ASSEMBLY_NAME
-    LOG_DIR_TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    LOG_DIR_TIMESTAMP = timestamp_log_dir if timestamp_log_dir is not None else datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     ASSEMBLY_NAME = assembly_name
     Path(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml").touch()
 
