@@ -11,9 +11,13 @@ venv/
 **.autosave
 **#
 **.kate-swp
-resultats_experience/
-sweeps/
+evaluation/experiment/sweeps/
 logs/
 finished_reconfigurations/
 cachedir/
 plot_results*/
+to_remove/
+concerto/generated_transitions_time/
+evaluation/experiment/generated_covering_taux/
+evaluation/experiment/generated_transitions_time/
+evaluation/experiment/results_experiment/

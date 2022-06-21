@@ -43,10 +43,10 @@ def execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=True):
 
 
 if __name__ == '__main__':
-    # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server
+    # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server + créer tous les dirs
     dep_num, config_dict, duration, timestamp_log_dir = get_assembly_parameters(sys.argv)
     time_logger.init_time_log_dir(f"dep{dep_num}", timestamp_log_dir=timestamp_log_dir)
     time_logger.log_time_value(TimeToSave.UP_TIME)
-    logging.basicConfig(filename=f"logs/logs_dep{dep_num}.txt", format='%(asctime)s %(message)s', filemode="a+")
+    logging.basicConfig(filename=f"concerto/logs/logs_dep{dep_num}.txt", format='%(asctime)s %(message)s', filemode="a+")
     execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=False)
     time_logger.log_time_value(TimeToSave.SLEEP_TIME)

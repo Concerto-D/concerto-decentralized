@@ -1,14 +1,37 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import enoslib as en
 from enoslib.infra.enos_g5k.g5k_api_utils import get_cluster_site
 
 
-provider = None
+def get_provider_from_job_name(job_name: str):
+    conf = en.G5kConf.from_settings(job_name=job_name).finalize()
+    return en.G5k(conf)
 
 
-def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int, cluster: str):
+def reserve_node_for_controller(cluster: str, walltime: str = '01:00:00', reservation: Optional[str] = None):
+    _ = en.init_logging()
+    site = get_cluster_site(cluster)
+    base_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
+    conf = (
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime=walltime, reservation=reservation, job_name="controller")
+                  .add_network_conf(base_network)
+    )
+    conf = conf.add_machine(
+        roles=["controller"],
+        cluster=cluster,
+        nodes=1,
+        primary_network=base_network,
+    )
+    conf = conf.finalize()
+
+    provider = en.G5k(conf)
+    roles, networks = provider.init()
+    return roles, networks
+
+
+def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int, cluster: str, walltime: str = '01:00:00', reservation: Optional[str] = None):
     """
     TODO: voir pour les restriction des ressources (pour approcher des ressources d'une OU (raspberry ou autre))
     TODO: Etre attentif au walltime lors du lancement des expériences
@@ -20,9 +43,8 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
     # TODO: le walltime, le mettre jusqu'à 9am du jour d'après pour tous les noeuds
     # TODO: faire les réservations en avance pour toutes les expés (master + noeuds de l'expé), en amont dans un autre
     # script (voir aussi script Maverick + voir si on peut retrouver le provider depuis la conf).
-    # TODO: demander à Matthieu les conditions pour que la conf soit considérée comme similaire
     conf = (
-        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="02:00:00", job_name="concerto-d")
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime=walltime, reservation=reservation, job_name="concerto-d")
                   .add_network_conf(concerto_d_network)
     )
     conf = conf.add_machine(
@@ -46,7 +68,6 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
     )
     conf = conf.finalize()
 
-    global provider
     provider = en.G5k(conf)
     roles, networks = provider.init()
     return roles, networks
@@ -61,6 +82,7 @@ def install_apt_deps(roles_concerto_d: List):
 def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
     """
     Homedir is shared between site frontend and nodes, so this can be done only once per site
+    TODO: deploy on homedir, not on every node -> rename variables + function name
     """
     with en.actions(roles=roles_concerto_d) as a:
         home_dir = "/home/anomond"
@@ -74,15 +96,15 @@ def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
               virtualenv=f"{home_dir}/concertonode/venv")
         a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_configurations", state="directory")
         # Reset reprise_configs dir
-        a.file(path=f"{home_dir}/concertonode/reprise_configs", state="absent")
-        a.file(path=f"{home_dir}/concertonode/reprise_configs", state="directory")
+        a.file(path=f"{home_dir}/concertonode/concerto/reprise_configs", state="absent")
+        a.file(path=f"{home_dir}/concertonode/concerto/reprise_configs", state="directory")
         # Reset logs dir
-        a.file(path=f"{home_dir}/concertonode/logs", state="absent")
-        a.file(path=f"{home_dir}/concertonode/logs", state="directory")
-        a.file(path=f"{home_dir}/concertonode/archives_reprises", state="directory")
+        a.file(path=f"{home_dir}/concertonode/concerto/logs", state="absent")
+        a.file(path=f"{home_dir}/concertonode/concerto/logs", state="directory")
+        a.file(path=f"{home_dir}/concertonode/concerto/archives_reprises", state="directory")
         # Reset finished_reconfigurations dir
-        a.file(path=f"{home_dir}/concertonode/finished_reconfigurations", state="absent")
-        a.file(path=f"{home_dir}/concertonode/finished_reconfigurations", state="directory")
+        a.file(path=f"{home_dir}/concertonode/concerto/finished_reconfigurations", state="absent")
+        a.file(path=f"{home_dir}/concertonode/concerto/finished_reconfigurations", state="directory")
         a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
         print(a.results)
 
@@ -129,8 +151,8 @@ def fetch_finished_reconfiguration_file(role_node, assembly_name, dep_num):
     home_dir = "/home/anomond"
     with en.actions(roles=role_node) as a:
         a.fetch(
-            src=f"{home_dir}/concertonode/{build_finished_reconfiguration_path(assembly_name, dep_num)}",
-            dest=str(Path(f"{build_finished_reconfiguration_path(assembly_name, dep_num)}").resolve()),
+            src=f"{home_dir}/concertonode/concerto/{build_finished_reconfiguration_path(assembly_name, dep_num)}",
+            dest=f"concerto/{build_finished_reconfiguration_path(assembly_name, dep_num)}",
             flat="yes",
             fail_on_missing="no"
         )
@@ -147,7 +169,7 @@ def fetch_times_log_file(role_node, assembly_name, dep_num, timestamp_log_file: 
     with en.actions(roles=role_node) as a:
         a.fetch(
             src=f"/tmp/{build_times_log_path(assembly_name, dep_num, timestamp_log_file)}",
-            dest=str(Path(f"{build_times_log_path(assembly_name, dep_num, timestamp_log_file)}").resolve()),
+            dest=f"evaluation/experiment/results_experiment/logs_files_assemblies/{build_times_log_path(assembly_name, dep_num, timestamp_log_file)}",
             flat="yes"
         )
 
@@ -159,4 +181,4 @@ def get_logs_from_concerto_d_node(roles_sites, logs_assembly_names: List[str]):
     home_dir = "/home/anomond"
     with en.actions(roles=roles_sites) as a:
         for assembly_name in logs_assembly_names:
-            a.fetch(src=f"{home_dir}/concertonode/logs/logs_{assembly_name}.txt", dest=f"remote_logs/logs_{assembly_name}.txt", flat="yes")
+            a.fetch(src=f"{home_dir}/concertonode/concerto/logs/logs_{assembly_name}.txt", dest=f"concerto/remote_logs/logs_{assembly_name}.txt", flat="yes")

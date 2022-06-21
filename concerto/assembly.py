@@ -553,7 +553,7 @@ class Assembly(object):
 
     def finish_reconfiguration(self):
         Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
-        Path(f"finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
+        Path(f"concerto/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
         exit()
 
     def loop_smeantics(self):

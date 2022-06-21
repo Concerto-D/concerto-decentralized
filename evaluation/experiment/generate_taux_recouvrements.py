@@ -79,16 +79,15 @@ def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
     figure_number = 0    # Figure number to plot
 
     # Create dir to store images
-    plot_results_dir = f"plot_results_{datetime_now_formatted}"
-    os.mkdir(plot_results_dir)
+    plot_results_dir = f"evaluation/experiment/generated_covering_taux/{datetime_now_formatted}"
+    os.makedirs(plot_results_dir)
 
     # For each combination of param, plot figure by covering percentage
     for params, uptimes_to_plot in uptimes_by_params.items():
         # Create dir to storage images for specific param combination
         freq, duration, nb_deps = params
         dir_to_save_name = f"{plot_results_dir}/{freq}_{duration}_{nb_deps}"
-        if not exists(dir_to_save_name):
-            os.mkdir(dir_to_save_name)
+        os.makedirs(dir_to_save_name)
 
         # Create image for each covering percentage
         for perc, all_uptimes in uptimes_to_plot.items():
@@ -103,7 +102,7 @@ def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
                     color_number = not color_number
                 line_number -= 0.5  # Decrease to print next OU
             plt.plot([1, 3], [8, 8], 'w')   # Used to get lines closer together (else it is spread vertically)
-            plt.savefig(f"{dir_to_save_name}/matplotlib_multicolor_line_{int(perc * 100)}.png")
+            plt.savefig(f"{dir_to_save_name}/{int(perc * 100)}_percent_coverage.png")
             plt.close(figure_number)
             figure_number += 1
             line_number = 5

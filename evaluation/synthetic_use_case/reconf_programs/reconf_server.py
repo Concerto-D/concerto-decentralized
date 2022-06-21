@@ -51,7 +51,7 @@ if __name__ == '__main__':
     config_dict, duration, timestamp_log_dir = get_assembly_parameters(sys.argv)
     time_logger.init_time_log_dir("server", timestamp_log_dir=timestamp_log_dir)
     time_logger.log_time_value(TimeToSave.UP_TIME)
-    logging.basicConfig(filename="logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="a+")
+    logging.basicConfig(filename="concerto/logs/logs_server.txt", format='%(asctime)s %(message)s', filemode="a+")
     log.debug(f"Working directory: {os.getcwd()}")
     log.debug(f"Python path: {sys.path}")
     execute_reconf(config_dict, duration, sleep_when_blocked=False)

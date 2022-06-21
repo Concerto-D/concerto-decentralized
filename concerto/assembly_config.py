@@ -17,7 +17,7 @@ from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.utility import Printer
 
-SAVED_CONFIG_DIRECTORY = "."
+SAVED_CONFIG_DIRECTORY = "concerto"
 ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
 
