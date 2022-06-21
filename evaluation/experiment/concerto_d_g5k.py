@@ -94,7 +94,10 @@ def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
         a.pip(chdir=f"{home_dir}/concertonode",
               requirements=f"{home_dir}/concertonode/requirements.txt",
               virtualenv=f"{home_dir}/concertonode/venv")
-        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_configurations", state="directory")
+        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_covering_taux", state="directory")
+        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/generated_transitions_time", state="directory")
+        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/results_experiment", state="directory")
+        a.file(path=f"{home_dir}/concertonode/evaluation/experiment/results_experiment/logs_files_assemblies", state="directory")
         # Reset reprise_configs dir
         a.file(path=f"{home_dir}/concertonode/concerto/reprise_configs", state="absent")
         a.file(path=f"{home_dir}/concertonode/concerto/reprise_configs", state="directory")

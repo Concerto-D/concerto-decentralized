@@ -53,7 +53,7 @@ def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duratio
 
     # Fetch and compute results
     concerto_d_g5k.fetch_times_log_file(roles[assembly_name], assembly_name, dep_num, timestamp_log_dir)
-    compute_results(assembly_name, str(Path(concerto_d_g5k.build_times_log_path(assembly_name, dep_num, timestamp_log_dir)).resolve()))
+    compute_results(assembly_name, concerto_d_g5k.build_times_log_path(assembly_name, dep_num, timestamp_log_dir))
 
     # Finish reconf for assembly name if its over
     concerto_d_g5k.fetch_finished_reconfiguration_file(roles[assembly_name], assembly_name, dep_num)
@@ -63,7 +63,7 @@ def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duratio
 
 
 def compute_results(assembly_name: str, timestamp_log_file: str):
-    with open(timestamp_log_file, "r") as f:
+    with open(f"evaluation/experiment/results_experiment/logs_files_assemblies/{timestamp_log_file}", "r") as f:
         loaded_results = yaml.safe_load(f)
 
     if assembly_name not in results.keys():
@@ -238,7 +238,7 @@ def create_and_run_sweeper():
     max_deps = 20
     transitions_times_list = assembly_parameters.generate_transitions_times(max_deps, nb_generations)
 
-    clusters_list = ["uvb"]  # Nantes, Grenoble
+    clusters_list = ["econome"]  # Nantes, Grenoble
     uptimes_to_test = get_uptimes_to_test()
 
     sweeps = sweep({
