@@ -79,12 +79,19 @@ def install_apt_deps(roles_concerto_d: List):
         print(a.results)
 
 
-def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
+def put_assemblies_configuration_file(role_controller, configuration_file: str):
+    with en.actions(roles=role_controller) as a:
+        home_dir = "/home/anomond"
+        a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
+        print(a.results)
+
+
+def initiate_concerto_d_dir(role_controller):
     """
     Homedir is shared between site frontend and nodes, so this can be done only once per site
     TODO: deploy on homedir, not on every node -> rename variables + function name
     """
-    with en.actions(roles=roles_concerto_d) as a:
+    with en.actions(roles=role_controller) as a:
         home_dir = "/home/anomond"
         a.copy(src="~/.ssh/gitlab_concerto_d_deploy_key", dest=f"{home_dir}/.ssh/gitlab_concerto_d_deploy_key")
         a.git(dest=f"{home_dir}/concertonode",
@@ -108,11 +115,10 @@ def deploy_concerto_d(roles_concerto_d: List, configuration_file: str):
         # Reset finished_reconfigurations dir
         a.file(path=f"{home_dir}/concertonode/concerto/finished_reconfigurations", state="absent")
         a.file(path=f"{home_dir}/concertonode/concerto/finished_reconfigurations", state="directory")
-        a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
         print(a.results)
 
 
-def deploy_zenoh_routers(roles_zenoh_router: List):
+def install_zenoh_router(roles_zenoh_router: List):
     with en.actions(roles=roles_zenoh_router) as a:
         a.apt_repository(repo="deb [trusted=yes] https://download.eclipse.org/zenoh/debian-repo/ /", state="present")
         a.apt(name="zenoh", update_cache="yes")

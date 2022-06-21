@@ -158,15 +158,12 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     # TODO: Mettre les deux expériences (cf présentation) (donc ce qui est mesuré dans les deux expériences)
     print("------ Creating configuration file for reconfiguration programs --------")
 
-    dir_to_save = "evaluation/experiment/generated_transitions_time"
-    os.makedirs(dir_to_save, exist_ok=True)
-
     transitions_to_dump = {"server": dict(transitions_times[0])}
     for dep_num in range(1, len(uptimes_nodes)):
         transitions_to_dump[f"dep{dep_num-1}"] = dict(transitions_times[dep_num])
 
     hash_file = str(abs(hash(transitions_times)))[:4]
-    reconf_config_file = f"{dir_to_save}/configuration_{hash_file}.json"
+    reconf_config_file = f"evaluation/experiment/generated_transitions_time/configuration_{hash_file}.json"
     with open(reconf_config_file, "w") as f:
         json.dump({"nb_deps_tot": len(uptimes_nodes) - 1, "transitions_time": transitions_to_dump}, f, indent=4)
     print(f"Config file saved in {reconf_config_file}")
@@ -174,7 +171,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     # Deploy concerto_d nodes
     print("------- Deploy concerto_d nodes ------")
     concerto_d_g5k.install_apt_deps(roles["concerto_d"])
-    concerto_d_g5k.deploy_concerto_d(roles["server"], reconf_config_file)
+    concerto_d_g5k.put_assemblies_configuration_file(roles["server"], reconf_config_file)
 
     print("------- Removing previous finished_configurations files -------")
     # TODO: to refacto
@@ -194,7 +191,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     # Deploy zenoh routers
     print("------- Deploy zenoh routers -------")
     max_uptime_value = compute_end_reconfiguration_time(uptimes_nodes)
-    concerto_d_g5k.deploy_zenoh_routers(roles["zenoh_routers"])
+    concerto_d_g5k.install_zenoh_router(roles["zenoh_routers"])
     concerto_d_g5k.execute_zenoh_routers(roles["zenoh_routers"], max_uptime_value)
 
     # Reset results

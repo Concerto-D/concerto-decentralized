@@ -1,13 +1,9 @@
-import subprocess
-
 from evaluation.experiment import concerto_d_g5k
 
 
 def main():
-    cluster = "econome"
-    concerto_d_g5k.reserve_node_for_controller(cluster)
-    # subprocess.Popen("evaluation/experiment/test.sh")
-    return
+    controller_role, networks = concerto_d_g5k.reserve_node_for_controller("econome")
+    concerto_d_g5k.initiate_concerto_d_dir(controller_role["controller"])
 
 
 if __name__ == '__main__':
