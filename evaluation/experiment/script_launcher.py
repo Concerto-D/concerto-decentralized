@@ -219,7 +219,8 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
         json.dump(results, f, indent=4)
 
     # Save config expe + results
-    dir_to_save_path = f"/home/anomond/all_expe_results/{reconfig_config_file_path}"
+    datetime_now_formatted = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    dir_to_save_path = f"/home/anomond/all_expe_results/{datetime_now_formatted}_{reconfig_config_file_path}"
     os.makedirs(dir_to_save_path)
 
     # Save uptimes
