@@ -17,26 +17,7 @@ from evaluation.experiment import concerto_d_g5k, assembly_parameters
 
 
 finished_nodes = []
-results = {
-    "server": {
-        "total_uptime_duration": 0,
-        "total_loading_state_duration": 0,
-        "total_reconf_time_duration": 0,
-        "total_saving_state_duration": 0
-    },
-    "dep0": {
-        "total_uptime_duration": 0,
-        "total_loading_state_duration": 0,
-        "total_reconf_time_duration": 0,
-        "total_saving_state_duration": 0
-    },
-    "dep1": {
-        "total_uptime_duration": 0,
-        "total_loading_state_duration": 0,
-        "total_reconf_time_duration": 0,
-        "total_saving_state_duration": 0
-    }
-}
+results = {}
 
 # TODO: logger ce qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
 # Puis calculs locaux sur ma machine
@@ -174,19 +155,16 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     concerto_d_g5k.put_assemblies_configuration_file(roles["server"], reconf_config_file)
 
     print("------- Removing previous finished_configurations files -------")
-    # TODO: to refacto
-    path_dep_0 = f"concerto/finished_reconfigurations/dep_assembly_0"
-    path_dep_1 = f"concerto/finished_reconfigurations/dep_assembly_1"
     path_server = f"concerto/finished_reconfigurations/server_assembly"
-    if exists(path_dep_0):
-        print(f"Removing {path_dep_0}")
-        os.remove(path_dep_0)
-    if exists(path_dep_1):
-        print(f"Removing {path_dep_1}")
-        os.remove(path_dep_1)
     if exists(path_server):
         print(f"Removing {path_server}")
         os.remove(path_server)
+
+    for i in range(len(uptimes_nodes) - 1):
+        path_dep = f"concerto/finished_reconfigurations/dep_assembly_{i}"
+        if exists(path_dep):
+            print(f"Removing {path_dep}")
+            os.remove(path_dep)
 
     # Deploy zenoh routers
     print("------- Deploy zenoh routers -------")
