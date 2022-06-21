@@ -224,7 +224,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     os.makedirs(dir_to_save_path)
 
     # Save uptimes
-    with open(f"{dir_to_save_path}/uptimes.json") as f:
+    with open(f"{dir_to_save_path}/uptimes.json", "w") as f:
         json.dump({
             "params": params,
             "uptimes": uptimes_nodes
