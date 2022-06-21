@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Optional
 
 import enoslib as en
@@ -79,10 +78,18 @@ def install_apt_deps(roles_concerto_d: List):
         print(a.results)
 
 
-def put_assemblies_configuration_file(role_controller, configuration_file: str):
+def put_assemblies_configuration_file(role_controller, configuration_file_path: str):
     with en.actions(roles=role_controller) as a:
         home_dir = "/home/anomond"
-        a.copy(src=configuration_file, dest=f"{home_dir}/concertonode/{configuration_file}")
+        a.copy(src=configuration_file_path, dest=f"{home_dir}/concertonode/{configuration_file_path}")
+        print(a.results)
+
+
+def put_uptimes_file(role_controller, uptimes_dir_path: str, uptimes_file_name: str):
+    with en.actions(roles=role_controller) as a:
+        home_dir = "/home/anomond"
+        a.file(path=f"{home_dir}/concertonode/{uptimes_dir_path}", state="directory")
+        a.copy(src=f"{uptimes_dir_path}/{uptimes_file_name}", dest=f"{home_dir}/concertonode/{uptimes_dir_path}/{uptimes_file_name}")
         print(a.results)
 
 

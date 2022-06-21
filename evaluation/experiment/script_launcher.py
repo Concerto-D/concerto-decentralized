@@ -1,19 +1,19 @@
 import json
 import math
 import os
-import sys
+import shutil
 import time
 import traceback
 from datetime import datetime
 from os.path import exists
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List
+from typing import List
 
 import yaml
 from execo_engine import sweep, ParamSweeper
 
-from evaluation.experiment import concerto_d_g5k, generate_taux_recouvrements, assembly_parameters
+from evaluation.experiment import concerto_d_g5k, assembly_parameters
 
 
 finished_nodes = []
@@ -209,14 +209,31 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
 
     # Save results
     # Dans le nom: timestamp
-    reconfig_config_file_path = "results_"
-    reconfig_config_file_path += "_".join(map(str, params))
+    reconfig_config_file_path = "_".join(map(str, params))
     reconfig_config_file_path += f"_{hash_file}_"
     reconfig_config_file_path += cluster
+    full_path = f"evaluation/experiment/results_experiment/results_{reconfig_config_file_path}"
 
-    print(f"Saving results in {reconfig_config_file_path}")
-    with open(f"evaluation/experiment/results_experiment/{reconfig_config_file_path}", "w") as f:
+    print(f"Saving results in {full_path}")
+    with open(full_path, "w") as f:
         json.dump(results, f, indent=4)
+
+    # Save config expe + results
+    dir_to_save_path = f"/home/anomond/all_expe_results/{reconfig_config_file_path}"
+    os.makedirs(dir_to_save_path)
+
+    # Save uptimes
+    with open(f"{dir_to_save_path}/uptimes.json") as f:
+        json.dump({
+            "params": params,
+            "uptimes": uptimes_nodes
+        }, f)
+
+    # Save transitions time
+    shutil.copy(reconf_config_file, f"{dir_to_save_path}/transitions_times.json")
+
+    # Save experience results
+    shutil.copy(full_path, f"{dir_to_save_path}/results_{reconfig_config_file_path}.json")
 
     print("------ End of experiment ---------")
     # Get logs
@@ -225,7 +242,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
 
 def get_uptimes_to_test():
     """
-    Fonction à remplir manuellement
+    Remplir manuellement le chemin du fichier avec les uptimes, et les taux retournés
     """
     with open(f"evaluation/experiment/generated_covering_taux/2022-06-21_12-41-23/uptimes.json") as f:
         loaded_uptimes = json.load(f)
@@ -236,13 +253,10 @@ def get_uptimes_to_test():
             for uptimes_node in uptimes_nodes:
                 li += tuple(tuple(uptime) for uptime in uptimes_node),
             values[perc] = tuple(li)
+
     return [
         ((8, 20, 2, 0.6), loaded_uptimes[str((8, 20, 2))][str(0.6)])
     ]
-    # return [
-    #     # ((4, 20, 2, 0.2), (((45.05244289773501, 20), (293.0319321004896, 20), (384.51929586803834, 20), (627.4006813648807, 20)), ((90.05618397146786, 20), (297.57791370535176, 20), (465.0435149454596, 20), (573.4871624556267, 20)), ((78.31490599244175, 20), (196.3528189492837, 20), (384.8190800572006, 20), (638.3959349210597, 20)))),
-    #     ((4, 20, 2, 0.6), (((6.793465155408676, 20), (61.43187825009504, 20), (100.81675296230114, 20), (150.45265288903047, 20)), ((15.147687939068383, 20), (50.152802336443976, 20), (108.91606619243265, 20), (154.76497466653035, 20)), ((14.864090261108526, 20), (59.742918321138355, 20), (108.84521451367577, 20), (164.806344555012, 20))))
-    # ]
 
 
 def create_and_run_sweeper():
