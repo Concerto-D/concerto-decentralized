@@ -33,17 +33,17 @@ def update(sc, dep_num):
 
 
 def execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=True):
-    # TODO: où on commence à voir le temps de reconf ?
-    time_logger.log_time_value(TimeToSave.START_RECONF)
+    # TODO: où on commence à voir le temps de reconf ? Avant la création de l'assembly ou après
     sc = DepAssembly(dep_num, config_dict, sleep_when_blocked=sleep_when_blocked)
     sc.set_verbosity(2)
+    time_logger.log_time_value(TimeToSave.START_RECONF)
     deploy(sc, dep_num)
     update(sc, dep_num)
     sc.execute_reconfiguration_program(duration)
 
 
 if __name__ == '__main__':
-    # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server + créer tous les dirs
+    # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server + créer tous les dirs (pour une exécution en locale)
     dep_num, config_dict, duration, timestamp_log_dir = get_assembly_parameters(sys.argv)
     time_logger.init_time_log_dir(f"dep{dep_num}", timestamp_log_dir=timestamp_log_dir)
     time_logger.log_time_value(TimeToSave.UP_TIME)

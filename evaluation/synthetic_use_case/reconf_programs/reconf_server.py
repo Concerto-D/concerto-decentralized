@@ -37,9 +37,9 @@ def update(sc):
 
 
 def execute_reconf(config_dict, duration, sleep_when_blocked=True):
-    time_logger.log_time_value(TimeToSave.START_RECONF)
     sc = ServerAssembly(config_dict, sleep_when_blocked=sleep_when_blocked)
     sc.set_verbosity(2)
+    time_logger.log_time_value(TimeToSave.START_RECONF)
     deploy(sc, config_dict["nb_deps_tot"])
     update(sc)
     sc.execute_reconfiguration_program(duration)

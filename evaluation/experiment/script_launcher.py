@@ -57,7 +57,7 @@ def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duratio
 
     # Finish reconf for assembly name if its over
     concerto_d_g5k.fetch_finished_reconfiguration_file(roles[assembly_name], assembly_name, dep_num)
-    if exists(str(Path(concerto_d_g5k.build_finished_reconfiguration_path(assembly_name, dep_num)).resolve())):
+    if exists(f"concerto/{concerto_d_g5k.build_finished_reconfiguration_path(assembly_name, dep_num)}"):
         print("reconf finished")
         finished_nodes.append(node_num)
 
@@ -154,6 +154,8 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     print(roles, networks)
 
     # Create configuration file
+    # TODO: Mettre synchrone/asynchrone/Muse
+    # TODO: Mettre les deux expériences (cf présentation) (donc ce qui est mesuré dans les deux expériences)
     print("------ Creating configuration file for reconfiguration programs --------")
 
     dir_to_save = "evaluation/experiment/generated_transitions_time"
@@ -176,9 +178,9 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
 
     print("------- Removing previous finished_configurations files -------")
     # TODO: to refacto
-    path_dep_0 = str(Path(f"concerto/finished_reconfigurations/dep_assembly_0").resolve())
-    path_dep_1 = str(Path(f"concerto/finished_reconfigurations/dep_assembly_1").resolve())
-    path_server = str(Path(f"concerto/finished_reconfigurations/server_assembly").resolve())
+    path_dep_0 = f"concerto/finished_reconfigurations/dep_assembly_0"
+    path_dep_1 = f"concerto/finished_reconfigurations/dep_assembly_1"
+    path_server = f"concerto/finished_reconfigurations/server_assembly"
     if exists(path_dep_0):
         print(f"Removing {path_dep_0}")
         os.remove(path_dep_0)
@@ -225,11 +227,25 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
 
 
 def get_uptimes_to_test():
-    # Fonction à remplir manuellement
+    """
+    Fonction à remplir manuellement
+    """
+    with open(f"evaluation/experiment/generated_covering_taux/2022-06-21_12-41-23/uptimes.json") as f:
+        loaded_uptimes = json.load(f)
+
+    for params, values in loaded_uptimes.items():
+        for perc, uptimes_nodes in values.items():
+            li = []
+            for uptimes_node in uptimes_nodes:
+                li += tuple(tuple(uptime) for uptime in uptimes_node),
+            values[perc] = tuple(li)
     return [
-        # ((4, 20, 2, 0.2), (((45.05244289773501, 20), (293.0319321004896, 20), (384.51929586803834, 20), (627.4006813648807, 20)), ((90.05618397146786, 20), (297.57791370535176, 20), (465.0435149454596, 20), (573.4871624556267, 20)), ((78.31490599244175, 20), (196.3528189492837, 20), (384.8190800572006, 20), (638.3959349210597, 20)))),
-        ((4, 20, 2, 0.6), (((6.793465155408676, 20), (61.43187825009504, 20), (100.81675296230114, 20), (150.45265288903047, 20)), ((15.147687939068383, 20), (50.152802336443976, 20), (108.91606619243265, 20), (154.76497466653035, 20)), ((14.864090261108526, 20), (59.742918321138355, 20), (108.84521451367577, 20), (164.806344555012, 20))))
+        ((8, 20, 2, 0.6), loaded_uptimes[str((8, 20, 2))][str(0.6)])
     ]
+    # return [
+    #     # ((4, 20, 2, 0.2), (((45.05244289773501, 20), (293.0319321004896, 20), (384.51929586803834, 20), (627.4006813648807, 20)), ((90.05618397146786, 20), (297.57791370535176, 20), (465.0435149454596, 20), (573.4871624556267, 20)), ((78.31490599244175, 20), (196.3528189492837, 20), (384.8190800572006, 20), (638.3959349210597, 20)))),
+    #     ((4, 20, 2, 0.6), (((6.793465155408676, 20), (61.43187825009504, 20), (100.81675296230114, 20), (150.45265288903047, 20)), ((15.147687939068383, 20), (50.152802336443976, 20), (108.91606619243265, 20), (154.76497466653035, 20)), ((14.864090261108526, 20), (59.742918321138355, 20), (108.84521451367577, 20), (164.806344555012, 20))))
+    # ]
 
 
 def create_and_run_sweeper():

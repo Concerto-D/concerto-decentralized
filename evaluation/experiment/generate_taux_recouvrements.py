@@ -1,3 +1,4 @@
+import json
 import os
 import random
 from datetime import datetime
@@ -5,6 +6,7 @@ from itertools import product
 from os.path import exists
 from typing import List, Dict
 import matplotlib
+import yaml
 from matplotlib import pyplot as plt
 
 
@@ -122,6 +124,10 @@ def main():
 
     # Plot uptimes
     plot_uptimes(uptimes_by_params, datetime_now_formatted)
+
+    # Save uptimes
+    with open(f"evaluation/experiment/generated_covering_taux/{datetime_now_formatted}/uptimes.json", "w") as f:
+        json.dump({str(k): v for k,v in uptimes_by_params.items()}, f)
 
 
 if __name__ == '__main__':
