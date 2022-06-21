@@ -112,9 +112,9 @@ def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
 
 def main():
     # Compute uptimes
-    freqs_awake_list = [4, 8]      # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
-    time_awakening = [20]          # Valeurs fixées TODO: placer le time_awaking en fonction du temps de la reconf à partir des temps de transitions
-    nb_deps_list = [2, 5, 10]      # Valeurs fixées
+    freqs_awake_list = [4, 8, 16]      # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
+    time_awakening = [20, 30]          # Valeurs fixées TODO: placer le time_awaking en fonction du temps de la reconf à partir des temps de transitions
+    nb_deps_list = [2, 5, 10, 15]      # Valeurs fixées
     uptimes_by_params = generate_uptimes_by_params(freqs_awake_list, time_awakening, nb_deps_list)
 
     for key, uptimes in uptimes_by_params.items():

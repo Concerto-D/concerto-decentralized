@@ -256,7 +256,7 @@ def get_uptimes_to_test():
             values[perc] = tuple(li)
 
     return [
-        ((8, 20, 2, 0.6), loaded_uptimes[str((8, 20, 2))][str(0.6)])
+        ((8, 30, 5, 0.6), loaded_uptimes[str((8, 30, 5))][str(0.6)])
     ]
 
 
@@ -293,6 +293,8 @@ def create_and_run_sweeper():
         finally:
             parameter = sweeper.get_next()
 
+    concerto_d_g5k.get_provider_from_job_name("concerto_d").destroy()
+    concerto_d_g5k.get_provider_from_job_name("controller").destroy()
 
 if __name__ == '__main__':
     create_and_run_sweeper()
