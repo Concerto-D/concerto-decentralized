@@ -1,3 +1,5 @@
 pyyaml
 eclipse-zenoh
 jinja2
+execo
+enoslib
