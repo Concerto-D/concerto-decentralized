@@ -245,7 +245,7 @@ def get_uptimes_to_test():
     """
     Remplir manuellement le chemin du fichier avec les uptimes, et les taux retournés
     """
-    with open(f"evaluation/experiment/generated_covering_taux/2022-06-21_12-41-23/uptimes.json") as f:
+    with open(f"evaluation/experiment/generated_covering_taux/2022-06-21_17-19-20/uptimes.json") as f:
         loaded_uptimes = json.load(f)
 
     for params, values in loaded_uptimes.items():
@@ -295,6 +295,7 @@ def create_and_run_sweeper():
 
     concerto_d_g5k.get_provider_from_job_name("concerto_d").destroy()
     concerto_d_g5k.get_provider_from_job_name("controller").destroy()
+
 
 if __name__ == '__main__':
     create_and_run_sweeper()
