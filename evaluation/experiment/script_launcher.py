@@ -19,11 +19,8 @@ from evaluation.experiment import concerto_d_g5k, assembly_parameters
 finished_nodes = []
 results = {}
 
-# TODO: logger ce qu'on veut mesurer directement dans l'appli, puis récupérer les résultats
-# Puis calculs locaux sur ma machine
 # Pour la sauvegarde:
     # Enregistrer sur le /tmp des noeuds, puis les récupérer avant de détruire la réservation (à voir)
-    # Timestamp pour faire la distinction entre les expés + numéro des OUs
 
 
 def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num):

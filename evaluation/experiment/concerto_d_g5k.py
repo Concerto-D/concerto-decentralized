@@ -33,8 +33,6 @@ def reserve_node_for_controller(cluster: str, walltime: str = '01:00:00', reserv
 def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int, cluster: str, walltime: str = '01:00:00', reservation: Optional[str] = None):
     """
     TODO: voir pour les restriction des ressources (pour approcher des ressources d'une OU (raspberry ou autre))
-    TODO: Etre attentif au walltime lors du lancement des expériences
-    TODO: Pour les expés, rajouter le temps où l'expé se lance + réserver un noeud qui va lancer l'expérience
     """
     _ = en.init_logging()
     site = get_cluster_site(cluster)
@@ -96,7 +94,6 @@ def put_uptimes_file(role_controller, uptimes_dir_path: str, uptimes_file_name: 
 def initiate_concerto_d_dir(role_controller):
     """
     Homedir is shared between site frontend and nodes, so this can be done only once per site
-    TODO: deploy on homedir, not on every node -> rename variables + function name
     """
     with en.actions(roles=role_controller) as a:
         home_dir = "/home/anomond"
