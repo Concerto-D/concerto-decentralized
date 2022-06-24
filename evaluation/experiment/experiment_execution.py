@@ -13,7 +13,7 @@ from typing import List
 import yaml
 from execo_engine import sweep, ParamSweeper
 
-from evaluation.experiment import concerto_d_g5k, assembly_parameters
+from evaluation.experiment import concerto_d_g5k, generate_transitions_time
 
 
 finished_nodes = []
@@ -48,15 +48,19 @@ def compute_results(assembly_name: str, timestamp_log_file: str):
         results[assembly_name] = {
             "total_uptime_duration": 0,
             "total_loading_state_duration": 0,
-            "total_reconf_time_duration": 0,
+            "total_deploy_duration": 0,
+            "total_update_duration": 0,
             "total_saving_state_duration": 0
         }
 
     results[assembly_name]["total_uptime_duration"] += loaded_results["sleep_time"] - loaded_results["up_time"]
     results[assembly_name]["total_loading_state_duration"] += loaded_results["end_loading_state"] - loaded_results["start_loading_state"]
-    results[assembly_name]["total_reconf_time_duration"] += loaded_results["end_reconf"] - loaded_results["start_reconf"]
     if "end_saving_state" in loaded_results.keys() and "start_saving_state" in loaded_results.keys():
         results[assembly_name]["total_saving_state_duration"] += loaded_results["end_saving_state"] - loaded_results["start_saving_state"]
+    if "start_deploy" in loaded_results.keys() and "end_deploy" in loaded_results.keys():
+        results[assembly_name]["total_deploy_duration"] += loaded_results["end_deploy"] - loaded_results["start_deploy"]
+    if "start_update" in loaded_results.keys() and "end_update" in loaded_results.keys():
+        results[assembly_name]["total_update_duration"] += loaded_results["end_update"] - loaded_results["start_update"]
 
 
 def find_next_uptime(uptimes_nodes):
@@ -128,40 +132,17 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     print("------ Provisionning infrastructure --------")
     params, uptimes_nodes = uptimes_params_nodes
     print(params, uptimes_nodes)
-    roles, networks = concerto_d_g5k.reserve_nodes_for_concerto_d(nb_concerto_d_nodes=len(uptimes_nodes), nb_zenoh_routers=1, cluster=cluster)
+    roles, networks = concerto_d_g5k.get_provider_from_job_name("concerto_d")
     print(roles, networks)
 
-    # Create configuration file
+    # Create transitions time file
     # TODO: Mettre synchrone/asynchrone/Muse
     # TODO: Mettre les deux expériences (cf présentation) (donc ce qui est mesuré dans les deux expériences)
-    print("------ Creating configuration file for reconfiguration programs --------")
+    # TODO: générer les fichiers en amont et uniquement passer leurs chemin au ParamSweeper
+    hash_file, reconf_config_file = generate_transitions_time_file(transitions_times, uptimes_nodes)
 
-    transitions_to_dump = {"server": dict(transitions_times[0])}
-    for dep_num in range(1, len(uptimes_nodes)):
-        transitions_to_dump[f"dep{dep_num-1}"] = dict(transitions_times[dep_num])
-
-    hash_file = str(abs(hash(transitions_times)))[:4]
-    reconf_config_file = f"evaluation/experiment/generated_transitions_time/configuration_{hash_file}.json"
-    with open(reconf_config_file, "w") as f:
-        json.dump({"nb_deps_tot": len(uptimes_nodes) - 1, "transitions_time": transitions_to_dump}, f, indent=4)
-    print(f"Config file saved in {reconf_config_file}")
-
-    # Deploy concerto_d nodes
-    print("------- Deploy concerto_d nodes ------")
-    concerto_d_g5k.install_apt_deps(roles["concerto_d"])
-    concerto_d_g5k.put_assemblies_configuration_file(roles["server"], reconf_config_file)
-
-    print("------- Removing previous finished_configurations files -------")
-    path_server = f"concerto/finished_reconfigurations/server_assembly"
-    if exists(path_server):
-        print(f"Removing {path_server}")
-        os.remove(path_server)
-
-    for i in range(len(uptimes_nodes) - 1):
-        path_dep = f"concerto/finished_reconfigurations/dep_assembly_{i}"
-        if exists(path_dep):
-            print(f"Removing {path_dep}")
-            os.remove(path_dep)
+    # Reinitialize finished configuration states
+    reinitialize_finished_config_state(uptimes_nodes)
 
     # Deploy zenoh routers
     print("------- Deploy zenoh routers -------")
@@ -169,12 +150,13 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     concerto_d_g5k.install_zenoh_router(roles["zenoh_routers"])
     concerto_d_g5k.execute_zenoh_routers(roles["zenoh_routers"], max_uptime_value)
 
-    # Reset results
+    # Reset results logs
     for assembly_name in results.keys():
         results[assembly_name] = {
             "total_uptime_duration": 0,
             "total_loading_state_duration": 0,
-            "total_reconf_time_duration": 0,
+            "total_deploy_duration": 0,
+            "total_update_duration": 0,
             "total_saving_state_duration": 0
         }
 
@@ -183,37 +165,60 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
     schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file)
 
     # Save results
+    save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes)
+
+    print("------ End of experiment ---------")
+
+
+def save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes):
     # Dans le nom: timestamp
     reconfig_config_file_path = "_".join(map(str, params))
     reconfig_config_file_path += f"_{hash_file}_"
     reconfig_config_file_path += cluster
     full_path = f"evaluation/experiment/results_experiment/results_{reconfig_config_file_path}"
-
     print(f"Saving results in {full_path}")
     with open(full_path, "w") as f:
         json.dump(results, f, indent=4)
-
     # Save config expe + results
     datetime_now_formatted = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     dir_to_save_path = f"/home/anomond/all_expe_results/{reconfig_config_file_path}_{datetime_now_formatted}"
     os.makedirs(dir_to_save_path)
-
     # Save uptimes
     with open(f"{dir_to_save_path}/uptimes.json", "w") as f:
         json.dump({
             "params": params,
             "uptimes": uptimes_nodes
         }, f)
-
     # Save transitions time
     shutil.copy(reconf_config_file, f"{dir_to_save_path}/transitions_times.json")
-
     # Save experience results
     shutil.copy(full_path, f"{dir_to_save_path}/results_{reconfig_config_file_path}.json")
 
-    print("------ End of experiment ---------")
-    # Get logs
-    # concerto_d_g5k.get_logs_from_concerto_d_node(roles["server"], ["server", *[f"dep{i}" for i in range(nb_deps_tot)]])
+
+def reinitialize_finished_config_state(uptimes_nodes):
+    print("------- Removing previous finished_configurations files -------")
+    path_server = f"concerto/finished_reconfigurations/server_assembly"
+    if exists(path_server):
+        print(f"Removing {path_server}")
+        os.remove(path_server)
+    for i in range(len(uptimes_nodes) - 1):
+        path_dep = f"concerto/finished_reconfigurations/dep_assembly_{i}"
+        if exists(path_dep):
+            print(f"Removing {path_dep}")
+            os.remove(path_dep)
+
+
+def generate_transitions_time_file(transitions_times, uptimes_nodes):
+    print("------ Creating configuration file for reconfiguration programs --------")
+    transitions_to_dump = {"server": dict(transitions_times[0])}
+    for dep_num in range(1, len(uptimes_nodes)):
+        transitions_to_dump[f"dep{dep_num - 1}"] = dict(transitions_times[dep_num])
+    hash_file = str(abs(hash(transitions_times)))[:4]
+    reconf_config_file = f"evaluation/experiment/generated_transitions_time/configuration_{hash_file}.json"
+    with open(reconf_config_file, "w") as f:
+        json.dump({"nb_deps_tot": len(uptimes_nodes) - 1, "transitions_time": transitions_to_dump}, f, indent=4)
+    print(f"Config file saved in {reconf_config_file}")
+    return hash_file, reconf_config_file
 
 
 def get_uptimes_to_test():
@@ -239,7 +244,7 @@ def create_and_run_sweeper():
     # Generate transitions
     nb_generations = 4
     max_deps = 20
-    transitions_times_list = assembly_parameters.generate_transitions_times(max_deps, nb_generations)
+    transitions_times_list = generate_transitions_time.generate_transitions_times(max_deps, nb_generations)
 
     clusters_list = ["econome"]  # Nantes, Grenoble
     uptimes_to_test = get_uptimes_to_test()
@@ -267,9 +272,6 @@ def create_and_run_sweeper():
             traceback.print_exc()
         finally:
             parameter = sweeper.get_next()
-
-    concerto_d_g5k.get_provider_from_job_name("concerto_d").destroy()
-    concerto_d_g5k.get_provider_from_job_name("controller").destroy()
 
 
 if __name__ == '__main__':

@@ -9,6 +9,27 @@ def get_provider_from_job_name(job_name: str):
     return en.G5k(conf)
 
 
+def reserve_node_for_deployment(cluster: str):
+    _ = en.init_logging()
+    site = get_cluster_site(cluster)
+    base_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
+    conf = (
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="00:00:10", job_name="concerto_d_deployment")
+                  .add_network_conf(base_network)
+    )
+    conf = conf.add_machine(
+        roles=["concerto_d_deployment"],
+        cluster=cluster,
+        nodes=1,
+        primary_network=base_network,
+    )
+    conf = conf.finalize()
+
+    provider = en.G5k(conf)
+    roles, networks = provider.init()
+    return roles, networks, provider
+
+
 def reserve_node_for_controller(cluster: str, walltime: str = '01:00:00', reservation: Optional[str] = None):
     _ = en.init_logging()
     site = get_cluster_site(cluster)

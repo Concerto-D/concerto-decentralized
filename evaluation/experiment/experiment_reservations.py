@@ -6,12 +6,9 @@ def main():
     # Mettre à jour python-grid5000 n'a pas l'air d'être une bonne solution car la version d'enoslib utilise une
     # version specific de python-grid5000
     # TODO: à signaler: même avec verify_ssl ça ne suffit pas il faut mettre le user et le mdp sur le front-end
-    controller_role, networks = concerto_d_g5k.reserve_node_for_controller("econome")
-    concerto_d_g5k.initiate_concerto_d_dir(controller_role["controller"])
-
-    uptimes_dir_path = "evaluation/experiment/generated_covering_taux/2022-06-21_17-19-20"
-    uptimes_file_name = "uptimes.json"
-    concerto_d_g5k.put_uptimes_file(controller_role["controller"], uptimes_dir_path, uptimes_file_name)
+    cluster = "paravance"
+    concerto_d_g5k.reserve_nodes_for_concerto_d(nb_concerto_d_nodes=3, nb_zenoh_routers=1, cluster=cluster)
+    concerto_d_g5k.reserve_node_for_controller(cluster)
 
 
 if __name__ == '__main__':
