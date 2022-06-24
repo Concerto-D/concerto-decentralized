@@ -25,13 +25,12 @@ def generate_uptimes_by_params(
     # Compute each possible combination between parameters
     for freq, duration, nb_deps in product(freqs_awake_list, time_awakening, nb_deps_list):
 
-        covering_perc_values = {0.15: None, 0.25: None, 0.35: None, 0.45: None, 0.55: None}
+        covering_perc_values = {(0.02, 0.05): None, (0.20, 0.30): None, (0.50, 0.60): None}
         # We want to have uptimes for each choosen percentage value
         # TODO: voir si ça prend trop de temps on met une condition d'arrêt
-        start_time = time.time()
-        while (not all(uptimes is not None for uptimes in covering_perc_values.values())) and (time.time() - start_time) < 10:
+        while not all(uptimes is not None for uptimes in covering_perc_values.values()):
             # On écarte de plus en plus la plage sur laquelle choisir les uptimes
-            for step in range(duration, duration+30):
+            for step in range(duration, duration+2000, 20):
                 uptimes_list = compute_uptimes_for_params(freq, nb_deps, step, duration)
 
                 # Check if uptimes overlap fits into category
@@ -42,7 +41,8 @@ def generate_uptimes_by_params(
                 global_means_coverage = round(sum(covering_uptimes) / len(covering_uptimes), 2)
                 for cover_val in covering_perc_values.keys():
                     # TODO Mettre des intervals plus larges, entre 0.1 et 0.2, au lieu d'une valeur fixe
-                    if covering_perc_values[cover_val] is None and cover_val - 0.05 <= global_means_coverage < cover_val + 0.05:
+                    if covering_perc_values[cover_val] is None and cover_val[0] <= global_means_coverage < cover_val[1]:
+                        print(f"Found for {(freq, duration, nb_deps)} {cover_val}")
                         covering_perc_values[cover_val] = uptimes_list
 
         uptimes_by_params[(freq, duration, nb_deps)] = covering_perc_values
@@ -109,7 +109,7 @@ def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
                     color_number = not color_number
                 line_number -= 0.5  # Decrease to print next OU
             plt.plot([1, 3], [8, 8], 'w')   # Used to get lines closer together (else it is spread vertically)
-            plt.savefig(f"{dir_to_save_name}/{int(perc * 100)}_percent_coverage.png")
+            plt.savefig(f"{dir_to_save_name}/{int(perc[0] * 100)}-{int(perc[1] * 100)}_percent_coverage.png")
             plt.close(figure_number)
             figure_number += 1
             line_number = 5
@@ -117,13 +117,11 @@ def plot_uptimes(uptimes_by_params, datetime_now_formatted: str):
 
 def main():
     # Compute uptimes
-    freqs_awake_list = [4, 8, 16]      # Valeurs fixées TODO: s'assurer que la reconf se termine (20 est suffisant pour des temps entre 0 et 10s)
-    time_awakening = [20, 30]          # Valeurs fixées TODO: placer le time_awaking en fonction du temps de la reconf à partir des temps de transitions
-    nb_deps_list = [2, 5, 10, 15]      # Valeurs fixées
+    freqs_awake_list = [30]            # Valeurs fixées
+    time_awakening = [30, 60]          # Valeurs fixées
+    nb_deps_list = [12]                # Valeurs fixées
     uptimes_by_params = generate_uptimes_by_params(freqs_awake_list, time_awakening, nb_deps_list)
-
-    for key, uptimes in uptimes_by_params.items():
-        print({key: uptimes})
+    print("finished")
 
     datetime_now_formatted = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -132,7 +130,7 @@ def main():
 
     # Save uptimes
     with open(f"evaluation/experiment/generated_covering_taux/{datetime_now_formatted}/uptimes.json", "w") as f:
-        json.dump({str(k): v for k,v in uptimes_by_params.items()}, f)
+        json.dump({str(k): {str(perc): uptimes for perc, uptimes in v.items()} for k,v in uptimes_by_params.items()}, f)  # TODO: to refacto (que ce soit plus clair)
 
 
 if __name__ == '__main__':

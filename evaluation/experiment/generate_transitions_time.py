@@ -2,7 +2,7 @@ import random
 from typing import Tuple
 
 
-def generate_server_transitions_time(nb_deps: int, min_value: float = 0., max_value: float = 10.) -> Tuple:
+def generate_server_transitions_time(nb_deps: int, min_value: float = 10., max_value: float = 60.) -> Tuple:
     server_t_sa = round(random.uniform(min_value, max_value), 2)
     server_t_sc = tuple(round(random.uniform(min_value, max_value), 2) for i in range(nb_deps))
     server_t_sr = round(random.uniform(min_value, max_value), 2)
@@ -17,7 +17,7 @@ def generate_server_transitions_time(nb_deps: int, min_value: float = 0., max_va
     }.items())
 
 
-def generate_deps_transitions_time(dep_num: int, min_value: float = 0., max_value: float = 10.) -> Tuple:
+def generate_deps_transitions_time(dep_num: int, min_value: float = 10., max_value: float = 60.) -> Tuple:
     deps_t_di = round(random.uniform(min_value, max_value), 2)
     deps_t_dr = round(random.uniform(min_value, max_value), 2)
     deps_t_du = round(random.uniform(min_value, max_value), 2)

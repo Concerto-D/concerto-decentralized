@@ -10,15 +10,16 @@ def get_provider_from_job_name(job_name: str):
 
 
 def reserve_node_for_deployment(cluster: str):
+    # TODO: dire à Matthieu qu'il y a un problème entre enoslib et parasilo (le provider n'est pas reload alors que je donne le même job_name et le même cluster)
     _ = en.init_logging()
     site = get_cluster_site(cluster)
     base_network = en.G5kNetworkConf(type="prod", roles=["base_network"], site=site)
     conf = (
-        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="00:00:10", job_name="concerto_d_deployment")
+        en.G5kConf.from_settings(job_type="allow_classic_ssh", walltime="00:10:00", job_name="concerto_d_deployment")
                   .add_network_conf(base_network)
     )
     conf = conf.add_machine(
-        roles=["concerto_d_deployment"],
+        roles=["deployment"],
         cluster=cluster,
         nodes=1,
         primary_network=base_network,

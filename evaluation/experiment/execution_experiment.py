@@ -235,7 +235,7 @@ def get_uptimes_to_test():
     """
     Remplir manuellement le chemin du fichier avec les uptimes, et les taux retournés
     """
-    with open(f"evaluation/experiment/generated_covering_taux/2022-06-21_17-19-20/uptimes.json") as f:
+    with open(f"evaluation/experiment/generated_covering_taux/2022-06-24_18-00-54/uptimes.json") as f:
         loaded_uptimes = json.load(f)
 
     for params, values in loaded_uptimes.items():
@@ -246,7 +246,12 @@ def get_uptimes_to_test():
             values[perc] = tuple(li)
 
     return [
-        ((8, 30, 5, 0.6), loaded_uptimes[str((8, 30, 5))][str(0.6)])
+        ((30, 30, 12, (0.02, 0.05)), loaded_uptimes[str((30, 30, 12))][str((0.02, 0.05))]),
+        ((30, 30, 12, (0.20, 0.30)), loaded_uptimes[str((30, 30, 12))][str((0.20, 0.30))]),
+        ((30, 30, 12, (0.50, 0.60)), loaded_uptimes[str((30, 30, 12))][str((0.50, 0.60))]),
+        ((30, 60, 12, (0.02, 0.05)), loaded_uptimes[str((30, 60, 12))][str((0.02, 0.05))]),
+        ((30, 60, 12, (0.20, 0.30)), loaded_uptimes[str((30, 60, 12))][str((0.20, 0.30))]),
+        ((30, 60, 12, (0.50, 0.60)), loaded_uptimes[str((30, 60, 12))][str((0.50, 0.60))]),
     ]
 
 
