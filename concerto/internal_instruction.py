@@ -139,6 +139,6 @@ class InternalInstruction:
         elif self.type is InternalInstruction.Type.WAIT:
             return assembly._wait(self.args['component_name'])
         elif self.type is InternalInstruction.Type.WAIT_ALL:
-            return assembly._wait_all()
+            return assembly._wait_all(self.args.get('wait_for_refusing_provide', False))
         else:
             raise Exception("Invalid internal instruction type")

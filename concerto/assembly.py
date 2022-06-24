@@ -472,11 +472,12 @@ class Assembly(object):
         self.instruction_num_attribution.attribute_num(instruction)
         self.add_instruction(instruction)
 
-    def _wait_all(self):
+    def _wait_all(self, wait_for_refusing_provide=False):
         all_local_idle = len(self._p_act_components) is 0
         if all_local_idle:
             # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
-            communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
+            if not wait_for_refusing_provide:
+                communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
             all_remote_idle = all(
                 communication_handler.get_remote_component_state(assembly_name, self._p_id_sync) == INACTIVE
                 for assembly_name in self._remote_assemblies_names
