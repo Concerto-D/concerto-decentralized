@@ -18,16 +18,16 @@ from evaluation.experiment import concerto_d_g5k, generate_transitions_time
 
 finished_nodes = []
 results = {}
-
-# Pour la sauvegarde:
-    # Enregistrer sur le /tmp des noeuds, puis les récupérer avant de détruire la réservation (à voir)
+sleeping_times_nodes = {}
 
 
-def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num):
+def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duration, dep_num, node_num, experiment_num):
     timestamp_log_dir = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Execute reconf
-    concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, timestamp_log_dir, dep_num)
+    sleeping_times_nodes[assembly_name]["total_sleeping_time"] = time.time() - sleeping_times_nodes[assembly_name]["current_down_time"]
+    concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, timestamp_log_dir, dep_num, experiment_num)
+    sleeping_times_nodes[assembly_name]["current_down_time"] = time.time()
 
     # Fetch and compute results
     concerto_d_g5k.fetch_times_log_file(roles[assembly_name], assembly_name, dep_num, timestamp_log_dir)
@@ -73,7 +73,7 @@ def find_next_uptime(uptimes_nodes):
     return min_uptime
 
 
-def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reconfig_config_file_path):
+def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reconfig_config_file_path, experiment_num):
     """
     TODO: Faire une liste ordonnée globale pour tous les assemblies, puis attendre (enlever les calculs
     qui prennent un peu de temps)
@@ -98,7 +98,7 @@ def schedule_and_run_uptimes_from_config(roles, uptimes_nodes_tuples: List, reco
             duration = next_uptime[1]
             dep_num = None if node_num == 0 else node_num - 1
             name = "server" if node_num == 0 else f"dep{node_num - 1}"
-            thread = Thread(target=execute_reconf_in_g5k, args=(roles, name, reconfig_config_file_path, duration, dep_num, node_num))
+            thread = Thread(target=execute_reconf_in_g5k, args=(roles, name, reconfig_config_file_path, duration, dep_num, node_num, experiment_num))
 
             # Start reconf and remove it from uptimes
             thread.start()
@@ -127,7 +127,7 @@ def compute_end_reconfiguration_time(uptimes_nodes):
     return max_uptime_value
 
 
-def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
+def launch_experiment(uptimes_params_nodes, transitions_times, cluster, experiment_num):
     # Provision infrastructure
     print("------ Provisionning infrastructure --------")
     params, uptimes_nodes = uptimes_params_nodes
@@ -162,7 +162,17 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster):
 
     # Run experiment
     print("------- Run experiment ----------")
-    schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file)
+    nodes_names = ["server"] + [f"dep{i}" for i in range(len(uptimes_nodes - 1))]
+    for name in nodes_names:
+        sleeping_times_nodes[name] = {
+            "total_sleeping_time": 0,
+            "current_down_time": time.time(),
+        }
+
+    schedule_and_run_uptimes_from_config(roles, uptimes_nodes, reconf_config_file, experiment_num)
+
+    for name in nodes_names:
+        results[name]["total_sleeping_time"] = sleeping_times_nodes[name]["total_sleeping_time"]
 
     # Save results
     save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes)
@@ -246,13 +256,14 @@ def create_and_run_sweeper():
     max_deps = 20
     transitions_times_list = generate_transitions_time.generate_transitions_times(max_deps, nb_generations)
 
-    clusters_list = ["econome"]  # Nantes, Grenoble
+    clusters_list = ["paravance"]  # Nantes, Grenoble
     uptimes_to_test = get_uptimes_to_test()
 
     sweeps = sweep({
         "uptimes": uptimes_to_test,
         "transitions_times": transitions_times_list,
-        "cluster": clusters_list
+        "cluster": clusters_list,
+        "experiment_num": [1, 2]
     })
 
     sweeper = ParamSweeper(
@@ -264,7 +275,7 @@ def create_and_run_sweeper():
             print("----- Launching experiment with parameters ---------")
             print(parameter)
             print("----------------------------------------------------")
-            launch_experiment(parameter["uptimes"], parameter["transitions_times"], parameter["cluster"])
+            launch_experiment(parameter["uptimes"], parameter["transitions_times"], parameter["cluster"], parameter["experiment_num"])
             sweeper.done(parameter)
         except Exception as e:
             sweeper.skip(parameter)

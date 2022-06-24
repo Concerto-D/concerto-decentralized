@@ -8,14 +8,15 @@ from evaluation.synthetic_use_case.assemblies.dep_assembly import DepAssembly
 import yaml
 
 
-def get_assembly_parameters(args) -> Tuple[int, Dict, float, Optional[str]]:
+def get_assembly_parameters(args) -> Tuple[int, Dict, float, bool, Optional[str]]:
     dep_num = int(args[1])
     config_file_path = args[2]
     with open(config_file_path, "r") as f:
         loaded_config = yaml.safe_load(f)
     uptime_duration = float(args[3])
-    timestamp_log_dir = args[4] if len(args) > 4 else None
-    return dep_num, loaded_config, uptime_duration, timestamp_log_dir
+    sleep_when_blocked = args[4] == 2
+    timestamp_log_dir = args[5] if len(args) > 5 else None
+    return dep_num, loaded_config, uptime_duration, sleep_when_blocked, timestamp_log_dir
 
 
 def deploy(sc, dep_num):
@@ -45,9 +46,9 @@ def execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=True):
 
 if __name__ == '__main__':
     # TODO: avoir une fonction globale pour gérer reconf_dep et reconf_server + créer tous les dirs (pour une exécution en locale)
-    dep_num, config_dict, duration, timestamp_log_dir = get_assembly_parameters(sys.argv)
+    dep_num, config_dict, duration, sleep_when_blocked, timestamp_log_dir = get_assembly_parameters(sys.argv)
     time_logger.init_time_log_dir(f"dep{dep_num}", timestamp_log_dir=timestamp_log_dir)
     time_logger.log_time_value(TimeToSave.UP_TIME)
     logging.basicConfig(filename=f"concerto/logs/logs_dep{dep_num}.txt", format='%(asctime)s %(message)s', filemode="a+")
-    execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=False)
+    execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=sleep_when_blocked)
     time_logger.log_time_value(TimeToSave.SLEEP_TIME)

@@ -150,7 +150,7 @@ def install_zenoh_router(roles_zenoh_router: List):
         print(a.results)
 
 
-def execute_reconf(role_node, config_file_path: str, duration: float, timestamp_log_file: str, dep_num):
+def execute_reconf(role_node, config_file_path: str, duration: float, timestamp_log_file: str, dep_num, experiment_num: int):
     command_args = []
     command_args.append("PYTHONPATH=$PYTHONPATH:$(pwd)")  # Set PYTHONPATH (equivalent of source source_dir.sh)
     command_args.append("venv/bin/python3")               # Execute inside the python virtualenv
@@ -160,6 +160,7 @@ def execute_reconf(role_node, config_file_path: str, duration: float, timestamp_
         command_args.append(str(dep_num))  # If it's a dependency
     command_args.append(config_file_path)  # The path of the config file that the remote process will search to
     command_args.append(str(duration))     # The awakening time of the program, it goes to sleep afterwards (it exits)
+    command_args.append(str(experiment_num))
     command_args.append(timestamp_log_file)
 
     command_str = " ".join(command_args)
