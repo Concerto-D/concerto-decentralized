@@ -19,6 +19,7 @@ def get_assembly_parameters(args) -> Tuple[int, Dict, float, Optional[str]]:
 
 
 def deploy(sc, dep_num):
+    # _p_id_sync = 0
     sc.add_component(f"dep{dep_num}", sc.dep)
     sc.connect(f"dep{dep_num}", "ip", "server", f"serviceu_ip{dep_num}")
     sc.connect(f"dep{dep_num}", "service", "server", f"serviceu{dep_num}")
@@ -27,6 +28,7 @@ def deploy(sc, dep_num):
 
 
 def update(sc, dep_num):
+    # _p_id_sync = 1
     sc.push_b(f"dep{dep_num}", "update")
     sc.push_b(f"dep{dep_num}", "deploy")
     sc.wait_all()
@@ -36,7 +38,6 @@ def execute_reconf(dep_num, config_dict, duration, sleep_when_blocked=True):
     # TODO: où on commence à voir le temps de reconf ? Avant la création de l'assembly ou après
     sc = DepAssembly(dep_num, config_dict, sleep_when_blocked=sleep_when_blocked)
     sc.set_verbosity(2)
-    time_logger.log_time_value(TimeToSave.START_RECONF)
     deploy(sc, dep_num)
     update(sc, dep_num)
     sc.execute_reconfiguration_program(duration)

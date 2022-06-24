@@ -218,10 +218,29 @@ class Assembly(object):
 
     def execute_reconfiguration_program(self, duration: float):
         self.time_manager.start(duration)
+        self.start_reconf_timer()
         if not self.semantics_thread.is_alive():
             self.semantics_thread.start()
 
         self.semantics_thread.join()
+
+    def start_reconf_timer(self):
+        """
+        TODO: very ad-hoc solution, to refacto
+        """
+        if self._p_id_sync == 0:
+            time_logger.start_deploy()
+        if self._p_id_sync == 1:
+            time_logger.start_update()
+
+    def end_reconf_timer(self):
+        """
+        TODO: very ad-hoc solution, to refacto
+        """
+        if self._p_id_sync == 0:
+            time_logger.end_deploy()
+        if self._p_id_sync == 1:
+            time_logger.end_update()
 
     def run_reconfiguration(self, reconfiguration: Reconfiguration):
         for instr in reconfiguration._get_instructions():
@@ -455,7 +474,6 @@ class Assembly(object):
 
     def _wait_all(self):
         all_local_idle = len(self._p_act_components) is 0
-        time.sleep(0.2)
         if all_local_idle:
             # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
             communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
@@ -577,7 +595,11 @@ class Assembly(object):
             if finished:
                 if (self._p_current_instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL]
                         and not self._p_current_instruction.args['wait_for_refusing_provide']):
+                    # TODO: very ad-hoc solution, to refacto
+                    # Consider that it goes from one reconf (deploy) to another (update)
+                    self.end_reconf_timer()
                     self._p_id_sync += 1
+                    self.start_reconf_timer()
                 self._p_current_instruction = None
                 self._p_instructions_queue.task_done()
                 self._p_nb_instructions_done += 1
@@ -615,16 +637,16 @@ class Assembly(object):
         # TODO: refacto moment où on log l'endormissement et le end_reconf
         # TODO: voir pour le bug: le end of reconfiguration s'affiche alors que l'assembly est encore en train de tourner (le wait/1/server_assembly est à inactive)
         if self.is_reconfiguration_finished():
-            time_logger.log_time_value(TimeToSave.END_RECONF)
+            self.end_reconf_timer()
             self.finish_reconfiguration()
         elif self._p_sleep_when_blocked and all_tokens_blocked:
-            time_logger.log_time_value(TimeToSave.END_RECONF)
+            self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
             exit()
         elif self.time_manager.is_time_up() and not are_active_transitions:
-            time_logger.log_time_value(TimeToSave.END_RECONF)
+            self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Time's up")
             Printer.st_tprint("Go sleep")
