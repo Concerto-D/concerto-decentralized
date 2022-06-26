@@ -176,16 +176,17 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster, experime
         results[name]["total_sleeping_time"] = sleeping_times_nodes[name]["total_sleeping_time"]
 
     # Save results
-    save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes)
+    save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes, experiment_num)
 
     print("------ End of experiment ---------")
 
 
-def save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes):
+def save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes, expe_num):
     # Dans le nom: timestamp
     reconfig_config_file_path = "_".join(map(str, params))
     reconfig_config_file_path += f"_{hash_file}_"
     reconfig_config_file_path += cluster
+    reconfig_config_file_path += f"_expe_{expe_num}"
     full_path = f"evaluation/experiment/results_experiment/results_{reconfig_config_file_path}"
     print(f"Saving results in {full_path}")
     with open(full_path, "w") as f:
@@ -204,6 +205,8 @@ def save_results(cluster, hash_file, params, reconf_config_file, uptimes_nodes):
     shutil.copy(reconf_config_file, f"{dir_to_save_path}/transitions_times.json")
     # Save experience results
     shutil.copy(full_path, f"{dir_to_save_path}/results_{reconfig_config_file_path}.json")
+    # Save file with finished reconfigurations
+    shutil.copytree("concerto/finished_reconfigurations", f"{dir_to_save_path}/finished_reconfigurations")
 
 
 def reinitialize_finished_config_state(uptimes_nodes):
