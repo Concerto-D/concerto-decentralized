@@ -89,6 +89,18 @@ def reserve_nodes_for_concerto_d(nb_concerto_d_nodes: int, nb_zenoh_routers: int
 
     provider = en.G5k(conf)
     roles, networks = provider.init()
+    roles = en.sync_info(roles, networks)
+
+    netem = en.NetemHTB()
+    netem.add_constraints(
+        src=roles["zenoh_routers"],
+        dest=roles[f"concerto_d"],
+        delay="0ms",
+        rate="200kbit",
+        symetric=True,
+    )
+    netem.deploy()
+    netem.validate()
     return roles, networks
 
 

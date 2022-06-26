@@ -131,7 +131,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster, experime
     # Provision infrastructure
     print("------ Provisionning infrastructure --------")
     params, uptimes_nodes = uptimes_params_nodes
-    print(params, uptimes_nodes)
+    print(params)
     # TODO: Need to do the reservation previsouly but still to precise roles and stuff, to change
     roles, networks = concerto_d_g5k.reserve_nodes_for_concerto_d(nb_concerto_d_nodes=len(uptimes_nodes), nb_zenoh_routers=1, cluster=cluster)
     print(roles, networks)
@@ -163,7 +163,7 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster, experime
 
     # Run experiment
     print("------- Run experiment ----------")
-    nodes_names = ["server"] + [f"dep{i}" for i in range(len(uptimes_nodes - 1))]
+    nodes_names = ["server"] + [f"dep{i}" for i in range(len(uptimes_nodes) - 1)]
     for name in nodes_names:
         sleeping_times_nodes[name] = {
             "total_sleeping_time": 0,
@@ -278,9 +278,7 @@ def create_and_run_sweeper():
     parameter = sweeper.get_next()
     while parameter:
         try:
-            print("----- Launching experiment with parameters ---------")
-            print(parameter)
-            print("----------------------------------------------------")
+            print("----- Launching experiment ---------")
             launch_experiment(parameter["uptimes"], parameter["transitions_times"], parameter["cluster"], parameter["experiment_num"])
             sweeper.done(parameter)
         except Exception as e:
