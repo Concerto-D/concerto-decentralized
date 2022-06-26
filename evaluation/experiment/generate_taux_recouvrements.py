@@ -52,7 +52,7 @@ def generate_uptimes_by_params(
 
 def compute_uptimes_for_params(freq, nb_deps, step_uptime, time):
     uptimes_list = [[] for _ in range(nb_deps + 1)]
-    offset = 10
+    offset = 60
     for up_num in range(freq):
         for dep_num in range(nb_deps + 1):  # Add 1 to the nb_deps to add the server
             time_to_awake = random.uniform(step_uptime * up_num + offset * up_num, step_uptime * (up_num + 1) - time + offset * up_num)

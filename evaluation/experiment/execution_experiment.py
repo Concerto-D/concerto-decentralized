@@ -132,7 +132,8 @@ def launch_experiment(uptimes_params_nodes, transitions_times, cluster, experime
     print("------ Provisionning infrastructure --------")
     params, uptimes_nodes = uptimes_params_nodes
     print(params, uptimes_nodes)
-    roles, networks = concerto_d_g5k.get_provider_from_job_name("concerto_d")
+    # TODO: Need to do the reservation previsouly but still to precise roles and stuff, to change
+    roles, networks = concerto_d_g5k.reserve_nodes_for_concerto_d(nb_concerto_d_nodes=len(uptimes_nodes), nb_zenoh_routers=1, cluster=cluster)
     print(roles, networks)
 
     # Create transitions time file
@@ -235,7 +236,7 @@ def get_uptimes_to_test():
     """
     Remplir manuellement le chemin du fichier avec les uptimes, et les taux retournés
     """
-    with open(f"evaluation/experiment/generated_covering_taux/2022-06-24_18-00-54/uptimes.json") as f:
+    with open(f"evaluation/experiment/generated_covering_taux/2022-06-26_14-50-58/uptimes.json") as f:
         loaded_uptimes = json.load(f)
 
     for params, values in loaded_uptimes.items():
