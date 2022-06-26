@@ -25,7 +25,7 @@ def execute_reconf_in_g5k(roles, assembly_name, reconf_config_file_path, duratio
     timestamp_log_dir = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Execute reconf
-    sleeping_times_nodes[assembly_name]["total_sleeping_time"] = time.time() - sleeping_times_nodes[assembly_name]["current_down_time"]
+    sleeping_times_nodes[assembly_name]["total_sleeping_time"] += time.time() - sleeping_times_nodes[assembly_name]["current_down_time"]
     concerto_d_g5k.execute_reconf(roles[assembly_name], reconf_config_file_path, duration, timestamp_log_dir, dep_num, experiment_num)
     sleeping_times_nodes[assembly_name]["current_down_time"] = time.time()
 
