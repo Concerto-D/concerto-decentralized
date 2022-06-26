@@ -262,7 +262,7 @@ def create_and_run_sweeper():
     max_deps = 20
     transitions_times_list = generate_transitions_time.generate_transitions_times(max_deps, nb_generations)
 
-    clusters_list = ["paravance"]  # Nantes, Grenoble
+    clusters_list = ["uvb"]
     uptimes_to_test = get_uptimes_to_test()
 
     sweeps = sweep({
