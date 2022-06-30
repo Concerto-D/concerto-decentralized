@@ -44,6 +44,8 @@ class FixedEncoder(json.JSONEncoder):
 
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
+    os.makedirs(f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}", exist_ok=True)
+    os.makedirs(f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}", exist_ok=True)
     if is_archive:
         relative_path = f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
     else:

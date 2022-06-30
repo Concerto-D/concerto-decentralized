@@ -5,6 +5,7 @@
 .. module:: assembly
    :synopsis: this file contains the Assembly class.
 """
+import os
 import sys
 import time
 import traceback
@@ -572,6 +573,7 @@ class Assembly(object):
 
     def finish_reconfiguration(self):
         Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
+        os.makedirs("concerto/finished_reconfigurations", exist_ok=True)
         Path(f"concerto/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
         exit()
 
