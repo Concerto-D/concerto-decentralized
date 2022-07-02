@@ -231,7 +231,7 @@ class Assembly(object):
         """
         if self._p_id_sync == 0:
             time_logger.start_deploy()
-        if self._p_id_sync == 1:
+        if self._p_id_sync >= 1:
             time_logger.start_update()
 
     def end_reconf_timer(self):
@@ -240,7 +240,7 @@ class Assembly(object):
         """
         if self._p_id_sync == 0:
             time_logger.end_deploy()
-        if self._p_id_sync == 1:
+        if self._p_id_sync >= 1:
             time_logger.end_update()
 
     def run_reconfiguration(self, reconfiguration: Reconfiguration):
@@ -615,7 +615,9 @@ class Assembly(object):
             # Instruction pas finie: wait, waitall
             if finished:
                 if instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL] and not instruction.args['wait_for_refusing_provide']:
+                    self.end_reconf_timer()
                     self._p_id_sync += 1
+                    self.start_reconf_timer()
                 self._p_instructions_queue.task_done()
                 self._p_nb_instructions_done += 1
             else:
