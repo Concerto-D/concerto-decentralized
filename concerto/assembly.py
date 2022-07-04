@@ -44,8 +44,8 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, sleep_when_blocked=True):
-        self.time_manager = TimeManager()
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, sleep_when_blocked=True, timeout=False):
+        self.time_manager = TimeManager(timeout)
         self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
@@ -644,7 +644,7 @@ class Assembly(object):
         if self.is_reconfiguration_finished():
             self.end_reconf_timer()
             self.finish_reconfiguration()
-        elif self._p_sleep_when_blocked and all_tokens_blocked:
+        elif self._p_sleep_when_blocked and all_tokens_blocked and self.is_timeout_done():
             self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
@@ -658,6 +658,12 @@ class Assembly(object):
             exit()
         else:
             time.sleep(FREQUENCE_POLLING)
+
+    def is_timeout_done(self):
+        if not self.time_manager.timeout:
+            return True
+        else:
+            return self.time_manager.get_time_left() <= self.time_manager.duration / 2
 
     def is_idle(self) -> bool:
         """

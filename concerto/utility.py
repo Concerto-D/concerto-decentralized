@@ -91,10 +91,13 @@ class TimeManager:
     """
     Used to exit an assembly when the time is up
     """
-    def __init__(self):
+    def __init__(self, timeout):
+        self.timeout = timeout
+        self.duration = None
         self.ending_time = None
 
     def start(self, duration: float):
+        self.duration = duration
         self.ending_time = time.time() + duration
 
     def get_time_left(self):
