@@ -231,7 +231,7 @@ class Assembly(object):
         """
         if self._p_id_sync == 0:
             time_logger.start_deploy()
-        if self._p_id_sync >= 1:
+        if self._p_id_sync == 1:
             time_logger.start_update()
 
     def end_reconf_timer(self):
@@ -240,7 +240,7 @@ class Assembly(object):
         """
         if self._p_id_sync == 0:
             time_logger.end_deploy()
-        if self._p_id_sync >= 1:
+        if self._p_id_sync == 1:
             time_logger.end_update()
 
     def run_reconfiguration(self, reconfiguration: Reconfiguration):
