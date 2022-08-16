@@ -6,7 +6,7 @@ from typing import Dict
 from pathlib import Path
 
 import concerto
-from concerto import time_logger
+from concerto import time_logger, dir_paths
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
@@ -17,7 +17,6 @@ from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.utility import Printer
 
-SAVED_CONFIG_DIRECTORY = "concerto"
 ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
 
@@ -44,12 +43,10 @@ class FixedEncoder(json.JSONEncoder):
 
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
-    os.makedirs(f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}", exist_ok=True)
-    os.makedirs(f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}", exist_ok=True)
     if is_archive:
-        relative_path = f"{SAVED_CONFIG_DIRECTORY}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{dir_paths.execution_expe_dir}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
     else:
-        relative_path = f"{SAVED_CONFIG_DIRECTORY}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{dir_paths.execution_expe_dir}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
     abs_path = str(Path(relative_path).resolve())
     return abs_path
 

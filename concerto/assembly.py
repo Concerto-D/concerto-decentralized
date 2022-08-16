@@ -15,7 +15,7 @@ from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
 
-from concerto import communication_handler, assembly_config, time_logger
+from concerto import communication_handler, assembly_config, time_logger, dir_paths
 from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
@@ -573,8 +573,7 @@ class Assembly(object):
 
     def finish_reconfiguration(self):
         Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
-        os.makedirs("concerto/finished_reconfigurations", exist_ok=True)
-        Path(f"concerto/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
+        Path(f"{dir_paths.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
         exit()
 
     def loop_smeantics(self):
