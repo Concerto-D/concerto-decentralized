@@ -79,11 +79,7 @@ class Assembly(object):
 
         # Operational semantics
 
-        # thread running the semantics of the assembly in a loop
         # TODO: checker pk le debug crash au bout d'un temps sur WSL (timeout ?)
-        self.semantics_thread: Thread = Thread(name="semantic_thread", target=self.loop_smeantics)
-        self.alive: bool = True
-
         # queue of instructions (synchronized with semantics thread)
         self._p_instructions_queue = Queue()  # thread-safe  # PERSIST
         self._p_current_instruction = None  # PERSIST
@@ -576,16 +572,8 @@ class Assembly(object):
         Path(f"{dir_paths.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
 
     def run_semantics_iteration(self):
-        """
-        This method runs one semantics iteration by first consuming the list
-        of assembly instructions and then by running semantics of each component
-        of the assembly.
-        """
-        # semantics for each component
-        # Dès qu'une instruction est bloquante (e.g. wait, waitall) on exécute
-        # les behaviors des composants
+        # Execute semantic iterator
         idle_components: Set[str] = set()
-
         are_active_transitions = False
         all_tokens_blocked = True
         for c in self._p_act_components:
@@ -596,23 +584,25 @@ class Assembly(object):
 
         self.remove_from_active_components(idle_components)
 
-        # Synchrone or asynchrone wait
-        # TODO: refacto moment où on log l'endormissement et le end_reconf
-        # TODO: voir pour le bug: le end of reconfiguration s'affiche alors que l'assembly est encore en train de tourner (le wait/1/server_assembly est à inactive)
+        # Check for sleeping conditions
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
-            self.end_reconf_timer()
-            assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
-            exit()
+            self.go_to_sleep()
         elif self.time_manager.is_initial_time_up() and not are_active_transitions:
-            self.end_reconf_timer()
-            assembly_config.save_config(self)
             Printer.st_tprint("Time's up")
             Printer.st_tprint("Go sleep")
-            exit()
+            self.go_to_sleep()
         else:
             time.sleep(FREQUENCE_POLLING)
+
+    def go_to_sleep(self):
+        self.end_reconf_timer()
+        assembly_config.save_config(self)
+        time_to_log = TimeToSave.END_DEPLOY if self._p_id_sync == 0 else TimeToSave.END_UPDATE
+        time_logger.log_time_value(time_to_log)
+        exit()
+
 
     def is_idle(self) -> bool:
         """
