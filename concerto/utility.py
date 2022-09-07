@@ -91,20 +91,25 @@ class TimeManager:
     """
     Used to exit an assembly when the time is up
     """
-    def __init__(self, timeout):
-        self.timeout = timeout
+    def __init__(self, waiting_rate):
+        self.waiting_rate = float(waiting_rate)
         self.duration = None
-        self.ending_time = None
+        self.initial_ending_time = None
+        self.waiting_rate_ending_time = None
 
     def start(self, duration: float):
-        self.duration = duration
-        self.ending_time = time.time() + duration
+        self.duration = duration  # TODO: see if it's useful to set it
+        self.initial_ending_time = time.time() + duration
+        self.waiting_rate_ending_time = self.initial_ending_time * self.waiting_rate
 
     def get_time_left(self):
-        return round(self.ending_time - time.time(), 2)
+        return round(self.initial_ending_time - time.time(), 2)
 
-    def is_time_up(self):
-        return self.ending_time <= time.time()
+    def is_initial_time_up(self):
+        return self.initial_ending_time <= time.time()
+
+    def is_waiting_rate_time_up(self):
+        return self.waiting_rate_ending_time <= time.time()
 
 
 def remove_if(l: List[Any], remove_cond: Callable[[Any], bool]):

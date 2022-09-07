@@ -44,8 +44,8 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, sleep_when_blocked=True, timeout=False):
-        self.time_manager = TimeManager(timeout)
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, waiting_rate):
+        self.time_manager = TimeManager(waiting_rate)
         self.components_types = components_types
         # dict of Component objects: id => object
         self._p_components: Dict[str, Component] = {}  # PERSIST
@@ -82,7 +82,7 @@ class Assembly(object):
         # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
         self._p_nb_instructions_done = 0
 
-        self._p_sleep_when_blocked = sleep_when_blocked
+        self._p_waiting_rate = waiting_rate
 
         self.verbosity: int = 0
         self.print_time: bool = False
@@ -592,6 +592,7 @@ class Assembly(object):
         of the assembly.
         """
         # On commence par exécuter les instructions non bloquantes
+        # TODO refacto this function
         if self._p_current_instruction is not None:
             finished = self._p_current_instruction.apply_to(self)
             if finished:
@@ -643,13 +644,13 @@ class Assembly(object):
         if self.is_reconfiguration_finished():
             self.end_reconf_timer()
             self.finish_reconfiguration()
-        elif self._p_sleep_when_blocked and all_tokens_blocked and self.is_timeout_done():
+        elif self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
             Printer.st_tprint("Going sleeping bye")
             exit()
-        elif self.time_manager.is_time_up() and not are_active_transitions:
+        elif self.time_manager.is_initial_time_up() and not are_active_transitions:
             self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Time's up")
@@ -657,12 +658,6 @@ class Assembly(object):
             exit()
         else:
             time.sleep(FREQUENCE_POLLING)
-
-    def is_timeout_done(self):
-        if not self.time_manager.timeout:
-            return True
-        else:
-            return self.time_manager.get_time_left() <= self.time_manager.duration / 2
 
     def is_idle(self) -> bool:
         """

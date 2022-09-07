@@ -104,7 +104,7 @@ def restore_previous_config(assembly, previous_config, reconf_configuration: Dic
     assembly._p_act_components = set(previous_config['_p_act_components'])
     assembly._p_id_sync = previous_config['_p_id_sync']
     assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']
-    assembly._p_sleep_when_blocked = previous_config['_p_sleep_when_blocked']
+    assembly._p_waiting_rate = previous_config['_p_waiting_rate']
 
 
 def _instanciate_components(assembly, previous_config, reconf_configuration: Dict):

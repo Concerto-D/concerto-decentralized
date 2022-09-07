@@ -6,6 +6,7 @@ if [ "$STATUS_DOCKER_SERVICE" = " * Docker is not running" ]; then
   sleep 5
 fi
 
-rm ../concerto/reprise_configs/*
+rm ../../evaluation/reprise_configs/*
+rm ../../evaluation/finished_reconfigurations/*
 ./stop_routers.sh
 ./start_routers.sh 1
