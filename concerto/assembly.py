@@ -230,32 +230,6 @@ class Assembly(object):
 
         self._p_instructions_queue.put(instruction)
 
-    def execute_reconfiguration_program(self, duration: float):
-        self.time_manager.start(duration)
-        self.start_reconf_timer()
-        if not self.semantics_thread.is_alive():
-            self.semantics_thread.start()
-
-        self.semantics_thread.join()
-
-    def start_reconf_timer(self):
-        """
-        TODO: very ad-hoc solution, to refacto
-        """
-        if self._p_id_sync == 0:
-            time_logger.start_deploy()
-        if self._p_id_sync == 1:
-            time_logger.start_update()
-
-    def end_reconf_timer(self):
-        """
-        TODO: very ad-hoc solution, to refacto
-        """
-        if self._p_id_sync == 0:
-            time_logger.end_deploy()
-        if self._p_id_sync == 1:
-            time_logger.end_update()
-
     def run_reconfiguration(self, reconfiguration: Reconfiguration):
         for instr in reconfiguration._get_instructions():
             self.add_instruction(instr)
@@ -597,7 +571,6 @@ class Assembly(object):
             time.sleep(FREQUENCE_POLLING)
 
     def go_to_sleep(self):
-        self.end_reconf_timer()
         assembly_config.save_config(self)
         time_to_log = TimeToSave.END_DEPLOY if self._p_id_sync == 0 else TimeToSave.END_UPDATE
         time_logger.log_time_value(time_to_log)
