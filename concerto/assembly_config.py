@@ -54,6 +54,7 @@ def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -
 def save_config(assembly):
     Printer.st_tprint("Saving current conf ...")
     time_logger.log_time_value(TimeToSave.START_SAVING_STATE)
+    assembly._p_global_nb_instructions_done = assembly.current_nb_instructions_done
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
         json.dump(assembly, outfile, cls=FixedEncoder, indent=4)
     time_logger.log_time_value(TimeToSave.END_SAVING_STATE)
@@ -103,7 +104,7 @@ def restore_previous_config(assembly, previous_config, reconf_configuration: Dic
 
     assembly._p_act_components = set(previous_config['_p_act_components'])
     assembly._p_id_sync = previous_config['_p_id_sync']
-    assembly._p_nb_instructions_done = previous_config['_p_nb_instructions_done']
+    assembly._p_global_nb_instructions_done = previous_config['_p_global_nb_instructions_done']
     assembly._p_waiting_rate = previous_config['_p_waiting_rate']
 
 

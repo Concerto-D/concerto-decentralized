@@ -33,6 +33,22 @@ from concerto.utility import Messages, COLORS, Printer, TimeManager
 FREQUENCE_POLLING = 0.1
 
 
+def track_instruction_number(func):
+    def _track_instruction_number(self, *args, **kwargs):
+        log.debug(f"current_nb_instructions_done: {self.current_nb_instructions_done}")
+        log.debug(f"_p_global_nb_instructions_done: {self._p_global_nb_instructions_done}")
+        if self.current_nb_instructions_done >= self._p_global_nb_instructions_done:
+            log.debug(f"DOING {func}")
+            result = func(self, *args, **kwargs)
+        else:
+            log.debug(f"ALREADY DID {func}, skipping")
+            result = None
+        self.current_nb_instructions_done += 1
+        return result
+
+    return _track_instruction_number
+
+
 class Assembly(object):
     """This Assembly class is used to create a assembly.
 
@@ -80,7 +96,8 @@ class Assembly(object):
         self._p_id_sync = 0  #PERSIST
 
         # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
-        self._p_nb_instructions_done = 0
+        self.current_nb_instructions_done = 0
+        self._p_global_nb_instructions_done = 0
 
         self._p_waiting_rate = waiting_rate
 
@@ -209,7 +226,7 @@ class Assembly(object):
     def add_instruction(self, instruction: InternalInstruction):
         # Check if instruction has been done already
         # Do not add it to the queue if its the case
-        if instruction.num < self._p_nb_instructions_done:
+        if instruction.num < self._p_global_nb_instructions_done:
             return
 
         if self.dump_program:
@@ -253,17 +270,8 @@ class Assembly(object):
     def remove_from_active_components(self, idle_components: Set[str]):
         self._p_act_components.difference_update(idle_components)
 
+    @track_instruction_number
     def add_component(self, name: str, comp: Component):
-        instruction = InternalInstruction.build_add(name, comp)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
-
-    def _add(self, name: str, comp: Component) -> bool:
-        """
-        This method adds a component instance to the assembly
-
-        :param comp: the component instance to add
-        """
         if name in self._p_components:
             raise Exception("Trying to add '%s' as a component while it is already a component" % name)
         comp.set_name(name)
@@ -276,28 +284,24 @@ class Assembly(object):
         self._p_components[name] = comp
         self._p_component_connections[name] = set()
         self.add_to_active_components(name)  # _init
-        return True
 
+    @track_instruction_number
     def del_component(self, component_name: str):
-        instruction = InternalInstruction.build_del(component_name)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
+        finished = False
+        while not finished:
+            finished = True
+            if component_name in self._p_act_components:
+                finished = False
+            if len(self._p_component_connections[component_name]) > 0:
+                finished = False  # TODO: should never go here
+            del self._p_component_connections[component_name]
+            del self._p_components[component_name]
 
-    def _del(self, component_name: str) -> bool:
-        if component_name in self._p_act_components:
-            return False
-        if len(self._p_component_connections[component_name]) > 0:
-            return False
-        del self._p_component_connections[component_name]
-        del self._p_components[component_name]
-        return True
+            if not finished:
+                self.run_semantics_iteration()
 
+    @track_instruction_number
     def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
-        instruction = InternalInstruction.build_connect(comp1_name, dep1_name, comp2_name, dep2_name)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
-
-    def _connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
         Assumption: comp1_name and dep1_name are NOT remote
@@ -311,15 +315,18 @@ class Assembly(object):
         # - Faire une vérification à partir du type de composant (si on part du principe
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
-        dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
-        connection_id = Connection.build_id_from_dependencies(dep1, dep2)
-        if connection_id in self._p_connections:
-            Printer.st_tprint(f"Connection already done: Waiting connection from {comp2_name}")
-            result = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
-        else:
-            result = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
+        finished = False
+        while not finished:
+            dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
+            connection_id = Connection.build_id_from_dependencies(dep1, dep2)
+            if connection_id in self._p_connections:
+                Printer.st_tprint(f"Connection already done: Waiting connection from {comp2_name}")
+                finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
+            else:
+                finished = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
 
-        return result
+            if not finished:
+                self.run_semantics_iteration()
 
     def _create_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
@@ -384,12 +391,8 @@ class Assembly(object):
 
         return dep1, dep2
 
+    @track_instruction_number
     def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
-        instruction = InternalInstruction.build_disconnect(comp1_name, dep1_name, comp2_name, dep2_name)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
-
-    def _disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str) -> bool:
         """
         This method adds a connection between two components dependencies.
         Assumption: comp1_name and dep1_name are NOT remote
@@ -398,14 +401,17 @@ class Assembly(object):
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-        dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
-        connection_id = Connection.build_id_from_dependencies(dep1, dep2)
-        if connection_id not in self._p_connections:
-            result = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
-        else:
-            result = self._remove_conn(comp1_name, dep1_name, comp2_name, dep2_name)
+        finished = False
+        while not finished:
+            dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
+            connection_id = Connection.build_id_from_dependencies(dep1, dep2)
+            if connection_id not in self._p_connections:
+                finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
+            else:
+                finished = self._remove_conn(comp1_name, dep1_name, comp2_name, dep2_name)
 
-        return result
+            if not finished:
+                self.run_semantics_iteration()
 
     def _remove_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
@@ -438,55 +444,52 @@ class Assembly(object):
         else:
             return False
 
+    @track_instruction_number
     def push_b(self, component_name: str, behavior: str):
-        instruction = InternalInstruction.build_push_b(component_name, behavior)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
-
-    def _push_b(self, component_name: str, behavior: str):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
         if component_name not in self._p_act_components:
             self.add_to_active_components(component_name)
-        return True
 
+    @track_instruction_number
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
-        instruction = InternalInstruction.build_wait(component_name, wait_for_refusing_provide)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
+        finished = False
+        while not finished:
+            is_local_component = component_name in self._p_components.keys()
+            if is_local_component:
+                is_component_idle = component_name not in self._p_act_components
 
-    def _wait(self, component_name: str):
-        is_local_component = component_name in self._p_components.keys()
-        if is_local_component:
-            is_component_idle = component_name not in self._p_act_components
+                # Si le component a terminé, on prévient les autres assemblies
+                if is_component_idle:
+                    communication_handler.set_component_state(INACTIVE, component_name, self._p_id_sync)
+            else:
+                is_component_idle = communication_handler.get_remote_component_state(component_name, self._p_id_sync) == INACTIVE
 
-            # Si le component a terminé, on prévient les autres assemblies
-            if is_component_idle:
-                communication_handler.set_component_state(INACTIVE, component_name, self._p_id_sync)
-        else:
-            is_component_idle = communication_handler.get_remote_component_state(component_name, self._p_id_sync) == INACTIVE
+            finished = is_component_idle
 
-        return is_component_idle
+            if not finished:
+                self.run_semantics_iteration()
 
+    @track_instruction_number
     def wait_all(self, wait_for_refusing_provide: bool = False):
-        instruction = InternalInstruction.build_wait_all(wait_for_refusing_provide)
-        self.instruction_num_attribution.attribute_num(instruction)
-        self.add_instruction(instruction)
+        finished = False
+        while not finished:
+            all_local_idle = len(self._p_act_components) is 0
+            if all_local_idle:
+                # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
+                if not wait_for_refusing_provide:
+                    communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
+                all_remote_idle = all(
+                    communication_handler.get_remote_component_state(assembly_name, self._p_id_sync) == INACTIVE
+                    for assembly_name in self._remote_assemblies_names
+                )
+            else:
+                all_remote_idle = False
 
-    def _wait_all(self, wait_for_refusing_provide=False):
-        all_local_idle = len(self._p_act_components) is 0
-        if all_local_idle:
-            # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
-            if not wait_for_refusing_provide:
-                communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
-            all_remote_idle = all(
-                communication_handler.get_remote_component_state(assembly_name, self._p_id_sync) == INACTIVE
-                for assembly_name in self._remote_assemblies_names
-            )
-        else:
-            all_remote_idle = False
+            finished = all_local_idle and all_remote_idle
 
-        return all_local_idle and all_remote_idle
+            if not finished:
+                self.run_semantics_iteration()
 
     def synchronize(self, debug=False):
         if debug:
@@ -568,61 +571,16 @@ class Assembly(object):
     OPERATIONAL SEMANTICS
     """
 
-    def is_reconfiguration_finished(self):
-        return self._p_instructions_queue.empty() and self._p_current_instruction is None
-
     def finish_reconfiguration(self):
         Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{dir_paths.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
-        exit()
 
-    def loop_smeantics(self):
-        while self.alive:
-            try:
-                if self.is_reconfiguration_finished():
-                    self.finish_reconfiguration()
-                self.semantics()
-            except Exception:
-                log.error(traceback.format_exc())
-
-    def semantics(self):
+    def run_semantics_iteration(self):
         """
         This method runs one semantics iteration by first consuming the list
         of assembly instructions and then by running semantics of each component
         of the assembly.
         """
-        # On commence par exécuter les instructions non bloquantes
-        # TODO refacto this function
-        if self._p_current_instruction is not None:
-            finished = self._p_current_instruction.apply_to(self)
-            if finished:
-                if (self._p_current_instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL]
-                        and not self._p_current_instruction.args['wait_for_refusing_provide']):
-                    # TODO: very ad-hoc solution, to refacto
-                    # Consider that it goes from one reconf (deploy) to another (update)
-                    self.end_reconf_timer()
-                    self._p_id_sync += 1
-                    self.start_reconf_timer()
-                self._p_current_instruction = None
-                self._p_instructions_queue.task_done()
-                self._p_nb_instructions_done += 1
-
-        # Consume instructions queue
-        while (not self._p_instructions_queue.empty()) and (self._p_current_instruction is None):
-            instruction: InternalInstruction = self._p_instructions_queue.get()
-            Printer.st_tprint(f"Current instruction: {instruction.type}_{instruction.num}")
-            finished = instruction.apply_to(self)
-            # Instruction pas finie: wait, waitall
-            if finished:
-                if instruction.type in [InternalInstruction.Type.WAIT, InternalInstruction.Type.WAIT_ALL] and not instruction.args['wait_for_refusing_provide']:
-                    self.end_reconf_timer()
-                    self._p_id_sync += 1
-                    self.start_reconf_timer()
-                self._p_instructions_queue.task_done()
-                self._p_nb_instructions_done += 1
-            else:
-                self._p_current_instruction = instruction
-
         # semantics for each component
         # Dès qu'une instruction est bloquante (e.g. wait, waitall) on exécute
         # les behaviors des composants
@@ -641,10 +599,7 @@ class Assembly(object):
         # Synchrone or asynchrone wait
         # TODO: refacto moment où on log l'endormissement et le end_reconf
         # TODO: voir pour le bug: le end of reconfiguration s'affiche alors que l'assembly est encore en train de tourner (le wait/1/server_assembly est à inactive)
-        if self.is_reconfiguration_finished():
-            self.end_reconf_timer()
-            self.finish_reconfiguration()
-        elif self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
+        if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             self.end_reconf_timer()
             assembly_config.save_config(self)
             Printer.st_tprint("Everyone blocked")
