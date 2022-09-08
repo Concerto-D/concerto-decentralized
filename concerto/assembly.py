@@ -460,7 +460,7 @@ class Assembly(object):
             else:
                 all_remote_idle = False
 
-            wait_finished_assemblies_cond = rest_communication.check_finished_assemblies(self, wait_for_refusing_provide)
+            wait_finished_assemblies_cond = communication_handler.check_finished_assemblies(self, wait_for_refusing_provide)
             finished = all_local_idle and all_remote_idle and wait_finished_assemblies_cond
 
             if not finished:
