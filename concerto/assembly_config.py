@@ -6,7 +6,7 @@ from typing import Dict
 from pathlib import Path
 
 import concerto
-from concerto import time_logger, dir_paths
+from concerto import time_logger, global_variables
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
@@ -44,9 +44,9 @@ class FixedEncoder(json.JSONEncoder):
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
     if is_archive:
-        relative_path = f"{dir_paths.execution_expe_dir}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{global_variables.execution_expe_dir}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
     else:
-        relative_path = f"{dir_paths.execution_expe_dir}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
+        relative_path = f"{global_variables.execution_expe_dir}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
     abs_path = str(Path(relative_path).resolve())
     return abs_path
 

@@ -15,11 +15,12 @@ from typing import Dict, List, Set, Optional
 from threading import Thread
 from queue import Queue
 
-from concerto import communication_handler, assembly_config, time_logger, dir_paths
+from concerto import communication_handler, assembly_config, time_logger, global_variables, rest_communication, exposed_api
 from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
 from concerto.debug_logger import log
+from concerto.global_variables import CONCERTO_D_SYNCHRONOUS
 from concerto.remote_dependency import RemoteDependency
 from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
@@ -32,16 +33,11 @@ from concerto.utility import Messages, COLORS, Printer, TimeManager
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
 
-
 def track_instruction_number(func):
     def _track_instruction_number(self, *args, **kwargs):
-        log.debug(f"current_nb_instructions_done: {self.current_nb_instructions_done}")
-        log.debug(f"_p_global_nb_instructions_done: {self._p_global_nb_instructions_done}")
         if self.current_nb_instructions_done >= self._p_global_nb_instructions_done:
-            log.debug(f"DOING {func}")
             result = func(self, *args, **kwargs)
         else:
-            log.debug(f"ALREADY DID {func}, skipping")
             result = None
         self.current_nb_instructions_done += 1
         return result
@@ -60,7 +56,7 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, waiting_rate):
+    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, waiting_rate, concerto_d_version):
         self.time_manager = TimeManager(waiting_rate)
         self.components_types = components_types
         # dict of Component objects: id => object
@@ -108,6 +104,14 @@ class Assembly(object):
 
         self.error_reports: List[str] = []
         self._reprise_previous_config(reconf_config_dict)
+        global_variables.concerto_d_version = concerto_d_version
+        if concerto_d_version == CONCERTO_D_SYNCHRONOUS:
+            self._p_components_states = {}
+            self._p_remote_confirmations: Set[str] = set()
+
+            rest_communication.parse_inventory_file()
+            rest_communication.load_communication_cache(self.get_name())
+            exposed_api.run_api_in_thread(self)
 
     @property
     def _p_id(self):
@@ -431,9 +435,9 @@ class Assembly(object):
 
                 # Si le component a terminé, on prévient les autres assemblies
                 if is_component_idle:
-                    communication_handler.set_component_state(INACTIVE, component_name, self._p_id_sync)
+                    communication_handler.set_component_state(self, INACTIVE, component_name, self._p_id_sync)
             else:
-                is_component_idle = communication_handler.get_remote_component_state(component_name, self._p_id_sync) == INACTIVE
+                is_component_idle = communication_handler.get_remote_component_state(self.get_name(), component_name, self._p_id_sync) == INACTIVE
 
             finished = is_component_idle
 
@@ -448,15 +452,16 @@ class Assembly(object):
             if all_local_idle:
                 # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
                 if not wait_for_refusing_provide:
-                    communication_handler.set_component_state(INACTIVE, self.name, self._p_id_sync)
+                    communication_handler.set_component_state(self, INACTIVE, self.name, self._p_id_sync)
                 all_remote_idle = all(
-                    communication_handler.get_remote_component_state(assembly_name, self._p_id_sync) == INACTIVE
+                    communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE
                     for assembly_name in self._remote_assemblies_names
                 )
             else:
                 all_remote_idle = False
 
-            finished = all_local_idle and all_remote_idle
+            wait_finished_assemblies_cond = rest_communication.check_finished_assemblies(self, wait_for_refusing_provide)
+            finished = all_local_idle and all_remote_idle and wait_finished_assemblies_cond
 
             if not finished:
                 self.run_semantics_iteration()
@@ -485,7 +490,7 @@ class Assembly(object):
         if component_name in self._p_components.keys():
             return component_name not in self._p_act_components
         else:
-            return communication_handler.get_remote_component_state(component_name, self._p_id_sync) == INACTIVE
+            return communication_handler.get_remote_component_state(self.get_name(), component_name, self._p_id_sync) == INACTIVE
 
     def get_component(self, name: str) -> Component:
         if name in self._p_components:
@@ -543,7 +548,7 @@ class Assembly(object):
 
     def finish_reconfiguration(self):
         Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
-        Path(f"{dir_paths.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
+        Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
 
     def run_semantics_iteration(self):
         # Execute semantic iterator
