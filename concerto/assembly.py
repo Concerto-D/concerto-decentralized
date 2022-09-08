@@ -508,6 +508,9 @@ class Assembly(object):
     def get_error_reports(self) -> List[str]:
         return self.error_reports
 
+    def add_to_remote_confirmations(self, assembly_name):
+        self._p_remote_confirmations.add(assembly_name)
+
     """
     CHECK ASSEMBLY
     """
