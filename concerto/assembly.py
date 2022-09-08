@@ -574,6 +574,7 @@ class Assembly(object):
         assembly_config.save_config(self)
         time_to_log = TimeToSave.END_DEPLOY if self._p_id_sync == 0 else TimeToSave.END_UPDATE
         time_logger.log_time_value(time_to_log)
+        time_logger.log_time_value(TimeToSave.SLEEP_TIME)
         exit()
 
 
