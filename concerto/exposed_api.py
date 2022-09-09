@@ -6,6 +6,7 @@ from threading import Thread
 
 from concerto.debug_logger import log
 from concerto.rest_communication import ACTIVE
+import logging
 
 # TODO: refacto with rest_communication
 CONN = "CONN"
@@ -57,15 +58,15 @@ def run_flask_api(assembly):
     @app.route("/get_refusing_state/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_refusing_state(component_name: str, dependency_name: str):
-        log.debug(f"API Request: get_refusing_state for {component_name}, {dependency_name}")
+        # log.debug(f"API Request: get_refusing_state for {component_name}, {dependency_name}")
         for conn in set(assembly._p_component_connections[component_name]):
             if conn._use_dep.get_name() == dependency_name:
                 result = str(conn._use_dep._p_is_refusing)
-                log.debug(f"API Response: {result}")
+                # log.debug(f"API Response: {result}")
                 return result
             if conn._provide_dep.get_name() == dependency_name:
                 result = str(conn._provide_dep._p_is_refusing)
-                log.debug(f"API Response: {result}")
+                # log.debug(f"API Response: {result}")
                 return result
 
     @app.route("/get_data_dependency/<component_name>/<dependency_name>")
@@ -80,7 +81,7 @@ def run_flask_api(assembly):
     @app.route("/is_conn_synced/<syncing_component>/<component_to_sync>/<dep_to_sync>/<syncing_dep>/<action>")
     @catch_exceptions
     def is_conn_synced(syncing_component: str, component_to_sync: str, dep_to_sync: str, syncing_dep: str, action: str):
-        log.debug(f"API Request: is_conn_synced {syncing_component} {component_to_sync} {dep_to_sync} {syncing_dep} {action}")
+        # log.debug(f"API Request: is_conn_synced {syncing_component} {component_to_sync} {dep_to_sync} {syncing_dep} {action}")
         for conn in set(assembly._p_component_connections[component_to_sync]):
             use, provide = (conn.get_use_dep(), conn.get_provide_dep())
             # log.debug("---- Checking for conn with: -----")
@@ -94,10 +95,10 @@ def run_flask_api(assembly):
             and use.get_name() in [dep_to_sync, syncing_dep]
             and provide.get_name() in [dep_to_sync, syncing_dep]):
                 result = str(action == CONN)
-                log.debug(f"API Response: {result}")
+                # log.debug(f"API Response: {result}")
                 return result
         result = str(action == DECONN)
-        log.debug(f"API Response: {result}")
+        # log.debug(f"API Response: {result}")
         return result
 
     @app.route("/get_remote_component_state/<component_name>/<id_sync>")
@@ -116,4 +117,7 @@ def run_flask_api(assembly):
 
     print("lets go app")
 
+    # Remove logging of each HTTP transactions
+    werkzeug_log = logging.getLogger('werkzeug')
+    werkzeug_log.setLevel(logging.ERROR)
     app.run(host='0.0.0.0', port=PORT_BY_ASSEMBLY[assembly.get_name()])

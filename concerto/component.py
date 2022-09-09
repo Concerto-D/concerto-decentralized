@@ -770,11 +770,11 @@ class Component(object, metaclass=ABCMeta):
         places_to_remove: Set[Place] = set()
 
         for place in self._p_act_places:
-            log.debug(f"Need to process {place} for place_to_odocks")
+            # log.debug(f"Need to process {place} for place_to_odocks")
             if place in self._p_visited_places:
                 continue
             odocks = place.get_output_docks(self._p_act_behavior)
-            log.debug(f"odocks to deal with {odocks}")
+            # log.debug(f"odocks to deal with {odocks}")
             if len(odocks) is 0:
                 continue
 
@@ -785,7 +785,7 @@ class Component(object, metaclass=ABCMeta):
             for dep in self._p_place_dependencies[place.get_name()]:
                 if dep.get_type() is DepType.PROVIDE:
                     if dep.is_locked():
-                        log.debug(f"Dep {dep} is locked to leave the place {place}")
+                        # log.debug(f"Dep {dep} is locked to leave the place {place}")
                         can_leave = False
                         break
             if not can_leave:
@@ -800,7 +800,7 @@ class Component(object, metaclass=ABCMeta):
                 if group.is_deactivating(group_operation):
                     for dep in self._p_group_dependencies[group.get_name()]:
                         if (dep.get_type() is DepType.PROVIDE) and dep.is_locked():
-                            log.debug(f"Dep {dep} is locked to leave the group {group}")
+                            # log.debug(f"Dep {dep} is locked to leave the group {group}")
                             can_leave = False
                             break
                     deactivating_groups_operation[group] = group_operation
@@ -839,14 +839,14 @@ class Component(object, metaclass=ABCMeta):
         docks_to_remove: Set[Dock] = set()
 
         for od in self._p_act_odocks:
-            log.debug(f"Need to process {od} for start_transition")
+            # log.debug(f"Need to process {od} for start_transition")
             trans = od.get_transition()
             enabled = True
 
             for dep in self._p_trans_dependencies[trans.get_name()]:
                 # Necessarily USE or DATA_USE
                 if not dep.is_served():
-                    log.debug(f"Dep {dep} is not served")
+                    # log.debug(f"Dep {dep} is not served")
                     enabled = False
                     break
 
@@ -914,7 +914,7 @@ class Component(object, metaclass=ABCMeta):
         # be activated.
 
         for dock in self._p_act_idocks:
-            log.debug(f"Need to process {dock._p_id} for idocks_to_place")
+            # log.debug(f"Need to process {dock._p_id} for idocks_to_place")
             place: Place = dock.get_place()
             if place in self._p_act_places:
                 continue
@@ -940,11 +940,11 @@ class Component(object, metaclass=ABCMeta):
                 for dep in self._p_place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
                         if not dep.is_served():
-                            log.debug(f"Place dep {dep.get_name()} is not served")
+                            # log.debug(f"Place dep {dep.get_name()} is not served")
                             ready = False
                             break
                         if not dep.is_allowed():
-                            log.debug(f"Place dep {dep.get_name()} is not allowed")
+                            # log.debug(f"Place dep {dep.get_name()} is not allowed")
                             ready = False
                             break
                 if not ready:
@@ -960,10 +960,10 @@ class Component(object, metaclass=ABCMeta):
                     if group.is_activating(group_operation):
                         for dep in self._p_group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
-                                if not dep.is_served():
-                                    log.debug(f"Group dep {dep.get_name()} is not served")
-                                if not dep.is_allowed():
-                                    log.debug(f"Group dep {dep.get_name()} is not allowed")
+                                # if not dep.is_served():
+                                    # log.debug(f"Group dep {dep.get_name()} is not served")
+                                # if not dep.is_allowed():
+                                    # log.debug(f"Group dep {dep.get_name()} is not allowed")
                                 ready = False
                                 break
                         activating_groups_operation[group] = group_operation
