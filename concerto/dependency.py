@@ -215,6 +215,9 @@ class Dependency(object):
                 return True
         return False
 
+    def __str__(self):
+        return self._p_name
+
     def __eq__(self, other):
         if type(other) != type(self):
             return False

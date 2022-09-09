@@ -11,7 +11,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
-from concerto.debug_logger import log
+from concerto.debug_logger import log, log_component
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition
@@ -750,6 +750,7 @@ class Component(object, metaclass=ABCMeta):
         # Deps attached to place
         for dep in self._p_place_dependencies[place.get_name()]:
             if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+                log.debug(f"Provide dep {str(dep)} is now refusing")
                 dep.set_refusing_state(True)
 
         # Deps attached to the group of the place
@@ -759,6 +760,7 @@ class Component(object, metaclass=ABCMeta):
             if group.is_deactivating(group_operation):
                 for dep in self._p_group_dependencies[group.get_name()]:
                     if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+                        log.debug(f"Provide dep {str(dep)} is now refusing")
                         dep.set_refusing_state(True)
 
     def _place_to_odocks(self) -> bool:
@@ -770,11 +772,10 @@ class Component(object, metaclass=ABCMeta):
         places_to_remove: Set[Place] = set()
 
         for place in self._p_act_places:
-            # log.debug(f"Need to process {place} for place_to_odocks")
             if place in self._p_visited_places:
                 continue
             odocks = place.get_output_docks(self._p_act_behavior)
-            # log.debug(f"odocks to deal with {odocks}")
+            log_component.debug(f"Move from place to odocks ({place.get_name()})")
             if len(odocks) is 0:
                 continue
 
@@ -785,7 +786,7 @@ class Component(object, metaclass=ABCMeta):
             for dep in self._p_place_dependencies[place.get_name()]:
                 if dep.get_type() is DepType.PROVIDE:
                     if dep.is_locked():
-                        # log.debug(f"Dep {dep} is locked to leave the place {place}")
+                        log_component.debug(f"Provide dependency {str(dep)} is locked and cannot leave the place {place}")
                         can_leave = False
                         break
             if not can_leave:
@@ -800,7 +801,7 @@ class Component(object, metaclass=ABCMeta):
                 if group.is_deactivating(group_operation):
                     for dep in self._p_group_dependencies[group.get_name()]:
                         if (dep.get_type() is DepType.PROVIDE) and dep.is_locked():
-                            # log.debug(f"Dep {dep} is locked to leave the group {group}")
+                            log_component.debug(f"Provide dependency {str(dep)} is locked and cannot leave the group {group}")
                             can_leave = False
                             break
                     deactivating_groups_operation[group] = group_operation
@@ -839,14 +840,13 @@ class Component(object, metaclass=ABCMeta):
         docks_to_remove: Set[Dock] = set()
 
         for od in self._p_act_odocks:
-            # log.debug(f"Need to process {od} for start_transition")
             trans = od.get_transition()
             enabled = True
 
             for dep in self._p_trans_dependencies[trans.get_name()]:
                 # Necessarily USE or DATA_USE
                 if not dep.is_served():
-                    # log.debug(f"Dep {dep} is not served")
+                    log_component.debug(f"Use dependency {str(dep)} of the transition {trans.get_name()} not served, transition cannot start")
                     enabled = False
                     break
 
@@ -914,8 +914,8 @@ class Component(object, metaclass=ABCMeta):
         # be activated.
 
         for dock in self._p_act_idocks:
-            # log.debug(f"Need to process {dock._p_id} for idocks_to_place")
             place: Place = dock.get_place()
+            log_component.debug(f"Move from idocks to place ({place.get_name()})")
             if place in self._p_act_places:
                 continue
 
@@ -940,11 +940,13 @@ class Component(object, metaclass=ABCMeta):
                 for dep in self._p_place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
                         if not dep.is_served():
-                            # log.debug(f"Place dep {dep.get_name()} is not served")
+                            log_component.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not served. "
+                                                "cannot go into it")
                             ready = False
                             break
                         if not dep.is_allowed():
-                            # log.debug(f"Place dep {dep.get_name()} is not allowed")
+                            log_component.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not allowed. "
+                                                "cannot go into it")
                             ready = False
                             break
                 if not ready:
@@ -960,10 +962,12 @@ class Component(object, metaclass=ABCMeta):
                     if group.is_activating(group_operation):
                         for dep in self._p_group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
-                                # if not dep.is_served():
-                                    # log.debug(f"Group dep {dep.get_name()} is not served")
-                                # if not dep.is_allowed():
-                                    # log.debug(f"Group dep {dep.get_name()} is not allowed")
+                                if not dep.is_served():
+                                    log_component.debug(f"Use dep {dep.get_name()} from the group {place.get_name()} is not served. "
+                                                        "cannot go into it")
+                                if not dep.is_allowed():
+                                    log_component.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not allowed. "
+                                                        "cannot go into it")
                                 ready = False
                                 break
                         activating_groups_operation[group] = group_operation

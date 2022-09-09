@@ -33,7 +33,12 @@ from concerto.utility import Messages, COLORS, Printer, TimeManager
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
 
+
 def track_instruction_number(func):
+    """
+    Keep track of the number of instruction executed, and ignore the instructions that
+    are already executed
+    """
     def _track_instruction_number(self, *args, **kwargs):
         if self.current_nb_instructions_done >= self._p_global_nb_instructions_done:
             result = func(self, *args, **kwargs)
@@ -93,7 +98,7 @@ class Assembly(object):
 
         self._p_waiting_rate = waiting_rate
 
-        self.verbosity: int = 0
+        self.verbosity: int = 2
         self.print_time: bool = False
         self.dryrun: bool = False
         self.gantt: Optional[GanttRecord] = None
