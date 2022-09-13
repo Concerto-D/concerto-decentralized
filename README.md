@@ -27,11 +27,10 @@ password: "<g5k_password>"
 ```
 verify_ssl: /etc/ssl/certs/ca-certificates.crt
 ```
-Cf https://msimonin.gitlabpages.inria.fr/python-grid5000/#installation-and-examples for more
-informations
+More informations here: https://msimonin.gitlabpages.inria.fr/python-grid5000/#installation-and-examples
 
 *Set g5k access*
-- Make you have your **grid5000 ssh private key** put in .ssh folder
+- The **grid5000 ssh private key** has to be in the ```~/.ssh``` folder
 The evaluation code uses the ssh config file to configure its access to g5k:
 - Create or modify the file ```~/.ssh/config``` and add the following rules:
 ```
@@ -42,7 +41,7 @@ Host g5k
   ForwardAgent no
   
   # The following entries are added for local execution to use only one ssh connection to g5k. Enoslib by default
-  # create as many ssh connection as the number of node it reserves
+  # create as many ssh connection as the number of node it reserves which makes g5k to refuse some of the connections
   ControlMaster auto
   ControlPath /dev/shm/ssh-g5k-master
 
@@ -63,10 +62,12 @@ Host g5k
 - Clone the **evaluation** repository: 
   - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
   - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
-
+  
 *Configure the experiment parameters*
-The file **evaluation/expe_template.yaml** contains the differents parameters of the experiments. It is an example
-of a configuration but you are free to modify this file and to define the parameters that you want.
+
+The file **evaluation/expe_template.yaml** contains the differents parameters of the experiments. This will be fed to the
+python script that starts the experiment. This file contains an example of a configuration. **For each experiments** to run,
+this has to be **adapted** before being passed as a parameter to the script.
 Each parameter is directly explained in the file.
 
 *Install apt deps*
@@ -74,10 +75,10 @@ Each parameter is directly explained in the file.
 - ```sudo apt install python3-pip virtualenv```
 
 *Set up Python evaluation project:*
-- ```cd evaluation``` go in the repository
-- ```virtualenv venv``` create a Python virtual environment
-- ```source venv/bin/activate``` activate the environment
-- ```pip install -r requirements.txt``` install the dependencies of the project
+- ```cd evaluation```
+- ```virtualenv venv```
+- ```source venv/bin/activate```
+- ```pip install -r requirements.txt```
 
 ### Execution
 Assuming the previous step were executed.
@@ -86,22 +87,29 @@ Assuming the previous step were executed.
 - ```python experiment/execution_experiment.py expe_template.yaml```
 
 ### Gather results
-The logs files of the execution are located on g5k in **<remote_project_dir>/execution-<expe_name>-<datetime_expe_execution>**
+There are two dir created for the execution: local dir and remote dir.
 
-The global experiments dir is located in **<local_project_dir>/global-<expe_name>-dir**
-The result for each experiment is located in **<local_project_dir>/global-<expe_name>-dir/execution-<expe_name>-<datetime_expe_execution>**.
-The files located in **<local_project_dir>/global-<expe_name>-dir/execution-<expe_name>-<datetime_expe_execution>/log_files_assemblies**
-output the time for each part of the execution of the reconfiguration of each assembly, which serves to compute the global
-result at the end.
-The global result for an experiment is computed in this file: **<local_project_dir>/global-<expe_name>-dir/execution-<expe_name>-<datetime_expe_execution>/results_<concerto_d_version>_T<transition_time_id>_perc-<min_overlap>-<max_overlap>_expe_<waiting_rate>.json**   # TODO: à modifier le nom n'est plus d'actu
+The remote dir is at ```<remote_project_dir>/execution-<expe_name>-<datetime_expe_execution>/``` and is always on g5k.
+It contains mainly the log files of the assemblies for **debugging purposes**. 
 
-The log of the execution the controller of all the experiment is in **<local_project_dir>/global-<expe_name>-dir/experiment_logs/experiment_logs_<datetime_controller_execution>.txt**
-
-In **<local_project_dir>/global-<expe_name>-dir/sweeps** the state of the sweeper is preserved. The sweeper is part of the
+The local dir is under the folder ```<local_project_dir>/global-<expe_name>-dir/``` can be either on g5k or in your computer,
+depending if you executed the script on g5k or locally. It contains:
+- The execution dirs for each experiment: ```execution-<expe_name>-<datetime_expe_execution>``` which in turn contains:
+  - The timestamp of each step of the reconfiguration in ```log_files_assemblies/```. These
+  files serve to compute the global result at the end.
+  - The global result of the experiment, computed in the file: ```results_<concerto_d_version>_T<transition_time_id>_perc-<min_overlap>-<max_overlap>_expe_<waiting_rate>.json```
+- The log of the execution the controller of all the experiment is in ```experiment_logs/experiment_logs_<datetime_controller_execution>.txt```
+- The state of the ParamSweeper in ````sweeps/````. The sweeper is part of the
 execo python library and keeps track of the current state of the execution of experiments. In our case, it marks experiments
 as either *todo* if it has to be done *done* if finished correctly, *in_progress* if in progress(or if the whole process crash) and 
-*skipped* if an exception occurs during the execution. More informations here: https://mimbert.gitlabpages.inria.fr/execo/execo_engine.html?highlight=paramsweeper#execo_engine.sweep.ParamSweeper
+*skipped* if an exception occurs during the execution.\More informations here: https://mimbert.gitlabpages.inria.fr/execo/execo_engine.html?highlight=paramsweeper#execo_engine.sweep.ParamSweeper
+
+### After the execution
+If some experiments has been skipped or if not all experiments were run, it is possible to **launch again** the script
+with **the same parameter file** (expe_template.yaml). Thanks to the param sweeper, it will automatically run the missing
+experiments. However, it will **not** relaunch the experiments that are already done.
 
 # TODO:
 - Bien précisé ce que c'est qu'une experiment
+- Modifier le expe_template en expe_parameters
 - put projects in public and remove gitlab deploy keys etc
