@@ -10,15 +10,16 @@ and the code of the synthetic use case.
 **Note:** the project has only be tested on **Linux** machines.
 
 # Experiment
-This is to reproduce the experiment to get the results from the paper. It can be run
-locally on your computer or remotely on g5k. The setup is common for both cases except for few exceptions that
-will be pointed out.
+This part deals with the re-execution of the experiments done with the synthetic use case presented in the paper. \ 
+The execution can done either locally or remotely directly on g5k. The former is good for testing or debugging purposes,
+the latter is better for long-term experiments.\
+The setup is similar for both cases, with few differences. 
 
 **Note:** To run the experiment locally or remotely you need a **g5k account**.
 
 ### Setup g5k credentials and access
 *Set g5k credentials*
-- If local: create the file ```~/.python-grid5000.yaml``` with the following content:
+- If the execution is local: create the file ```~/.python-grid5000.yaml``` with the following content:
 ```
 username: <g5k_username>
 password: "<g5k_password>"
@@ -27,11 +28,12 @@ password: "<g5k_password>"
 ```
 verify_ssl: /etc/ssl/certs/ca-certificates.crt
 ```
-More informations here: https://msimonin.gitlabpages.inria.fr/python-grid5000/#installation-and-examples
+More informations on python-grid5000 here: https://msimonin.gitlabpages.inria.fr/python-grid5000/#installation-and-examples
 
+**For local execution:** 
 *Set g5k access*
-- The **grid5000 ssh private key** has to be in the ```~/.ssh``` folder
-The evaluation code uses the ssh config file to configure its access to g5k:
+- The **grid5000 ssh private key** is needed to access g5k. Then, it is required to add or modify some rules in the **ssh config 
+file** as the evaluation code uses the ssh config file to configure its access to g5k:
 - Create or modify the file ```~/.ssh/config``` and add the following rules:
 ```
 Host g5k
@@ -53,9 +55,9 @@ Host g5k
 ```
 
 ### Setup experiment
-*Create a empty dir and clone the repositories inside*
-- ```mkdir concerto_d_evaluation```
-- ```cd concerto_d_evaluation```
+*Create a project dir and clone the repositories*
+- ```mkdir <local_project_dir>```
+- ```cd <local_project_dir>```
 - - Clone the **experiment_files** repository:
   - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
   - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
@@ -65,7 +67,7 @@ Host g5k
   
 *Configure the experiment parameters*
 
-The file **evaluation/expe_template.yaml** contains the differents parameters of the experiments. This will be fed to the
+The file ```evaluation/expe_template.yaml``` contains the differents parameters of the experiments. This will be fed to the
 python script that starts the experiment. This file contains an example of a configuration. **For each experiments** to run,
 this has to be **adapted** before being passed as a parameter to the script.
 Each parameter is directly explained in the file.
@@ -87,12 +89,12 @@ Assuming the previous step were executed.
 - ```python experiment/execution_experiment.py expe_template.yaml```
 
 ### Gather results
-There are two dir created for the execution: local dir and remote dir.
+There are two dirs created for the execution: **local dir** and **remote dir**.
 
-The remote dir is at ```<remote_project_dir>/execution-<expe_name>-<datetime_expe_execution>/``` and is always on g5k.
+The **remote dir** is ```<remote_project_dir>/execution-<expe_name>-<datetime_expe_execution>/``` and is always on g5k.
 It contains mainly the log files of the assemblies for **debugging purposes**. 
 
-The local dir is under the folder ```<local_project_dir>/global-<expe_name>-dir/``` can be either on g5k or in your computer,
+The **local dir** is under the folder ```<local_project_dir>/global-<expe_name>-dir/``` can be either on g5k or in your computer,
 depending if you executed the script on g5k or locally. It contains:
 - The execution dirs for each experiment: ```execution-<expe_name>-<datetime_expe_execution>``` which in turn contains:
   - The timestamp of each step of the reconfiguration in ```log_files_assemblies/```. These
@@ -107,7 +109,8 @@ as either *todo* if it has to be done *done* if finished correctly, *in_progress
 ### After the execution
 If some experiments has been skipped or if not all experiments were run, it is possible to **launch again** the script
 with **the same parameter file** (expe_template.yaml). Thanks to the param sweeper, it will automatically run the missing
-experiments. However, it will **not** relaunch the experiments that are already done.
+experiments. However, it will **not** relaunch the experiments that are already done. To do that, you will need to change the
+value of **<expe_name>**, because the sweeper base itself on it.
 
 # TODO:
 - Bien précisé ce que c'est qu'une experiment
