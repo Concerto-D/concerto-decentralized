@@ -10,8 +10,8 @@ and the code of the synthetic use case.
 **Note:** the project has only be tested on **Linux** machines.
 
 # Experiment
-This part deals with the re-execution of the experiments done with the synthetic use case presented in the paper. \ 
-The execution can done either locally or remotely directly on g5k. The former is good for testing or debugging purposes,
+This part deals with the re-execution of the experiments done with the synthetic use case presented in the paper.\ 
+The execution can be done either locally or remotely directly on g5k. The former is good for testing or debugging purposes,
 the latter is better for long-term experiments.\
 The setup is similar for both cases, with few differences. 
 
@@ -100,17 +100,24 @@ depending if you executed the script on g5k or locally. It contains:
   - The timestamp of each step of the reconfiguration in ```log_files_assemblies/```. These
   files serve to compute the global result at the end.
   - The global result of the experiment, computed in the file: ```results_<concerto_d_version>_T<transition_time_id>_perc-<min_overlap>-<max_overlap>_expe_<waiting_rate>.json```
-- The log of the execution the controller of all the experiment is in ```experiment_logs/experiment_logs_<datetime_controller_execution>.txt```
+- The log of the execution of the controller of all the experiment is in ```experiment_logs/experiment_logs_<datetime_controller_execution>.txt```
 - The state of the ParamSweeper in ````sweeps/````. The sweeper is part of the
-execo python library and keeps track of the current state of the execution of experiments. In our case, it marks experiments
-as either *todo* if it has to be done *done* if finished correctly, *in_progress* if in progress(or if the whole process crash) and 
-*skipped* if an exception occurs during the execution.\More informations here: https://mimbert.gitlabpages.inria.fr/execo/execo_engine.html?highlight=paramsweeper#execo_engine.sweep.ParamSweeper
+```execo``` python library and keeps track of the current state of the execution of experiments. In our case, it marks experiments
+as either *todo* if it has to be done *done* if finished correctly, *in_progress* if in progress (or if the whole process crash) and 
+*skipped* if an exception occurs during the execution.\ 
+More informations here: https://mimbert.gitlabpages.inria.fr/execo/execo_engine.html?highlight=paramsweeper#execo_engine.sweep.ParamSweeper
 
 ### After the execution
 If some experiments has been skipped or if not all experiments were run, it is possible to **launch again** the script
 with **the same parameter file** (expe_template.yaml). Thanks to the param sweeper, it will automatically run the missing
 experiments. However, it will **not** relaunch the experiments that are already done. To do that, you will need to change the
 value of **<expe_name>**, because the sweeper base itself on it.
+
+# Local execution
+This part explains what to do if the goal is only to **start a reconfiguration manually** for **development or debugging purposes**.
+
+
+
 
 # TODO:
 - Bien précisé ce que c'est qu'une experiment
