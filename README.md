@@ -123,3 +123,4 @@ This part explains what to do if the goal is only to **start a reconfiguration m
 - Bien précisé ce que c'est qu'une experiment
 - Modifier le expe_template en expe_parameters
 - put projects in public and remove gitlab deploy keys etc
+- Mettre concerto-d-synchrone dans la liste au début + faire un test avec le tag ICSOC
