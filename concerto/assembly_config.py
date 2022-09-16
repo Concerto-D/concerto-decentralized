@@ -2,15 +2,12 @@ import json
 import queue
 import shutil
 import os
-from typing import Dict
-from pathlib import Path
 
 import concerto
 from concerto import time_logger, global_variables
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
-from concerto.internal_instruction import InternalInstruction
 from concerto.debug_logger import log
 from concerto.place import Dock, Place
 from concerto.time_logger import TimeToSave
@@ -26,7 +23,7 @@ class FixedEncoder(json.JSONEncoder):
     field.
     """
     def default(self, obj):
-        if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, InternalInstruction, Group]):
+        if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, Group]):
             d = obj.__dict__
             output = {}
             for k, v in d.items():
@@ -35,7 +32,7 @@ class FixedEncoder(json.JSONEncoder):
             if any(isinstance(obj, k) for k in [Component, Connection, Dock]):
                 output["_p_id"] = obj._p_id
             return output
-        elif isinstance(obj, DepType) or isinstance(obj, InternalInstruction.Type):
+        elif isinstance(obj, DepType):
             return obj.name
         elif isinstance(obj, set):
             return list(obj)

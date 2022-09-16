@@ -5,14 +5,10 @@
 .. module:: assembly
    :synopsis: this file contains the Assembly class.
 """
-import os
-import sys
 import time
-import traceback
 from os.path import exists
 from pathlib import Path
 from typing import Dict, List, Set, Optional
-from queue import Queue
 
 from concerto import communication_handler, assembly_config, time_logger, global_variables, rest_communication, exposed_api
 from concerto.communication_handler import CONN, DECONN, INACTIVE
@@ -24,9 +20,8 @@ from concerto.remote_dependency import RemoteDependency
 from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.connection import Connection
-from concerto.internal_instruction import InternalInstructionNumAttribution
 from concerto.gantt_record import GanttRecord
-from concerto.utility import Messages, COLORS, TimeManager, GoingSleepingException
+from concerto.utility import COLORS, TimeManager, GoingSleepingException
 
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
