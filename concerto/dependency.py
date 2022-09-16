@@ -132,15 +132,6 @@ class Dependency(object):
         self.check_write_data_is_provide()
         self._p_data = data
 
-    def is_connected(self) -> bool:
-        """
-        This method indicates if the dependency is connected or not, ie if it is
-        already connected to another dependency within the assembly
-
-        :return: True if connected, False otherwise
-        """
-        return len(self._p_connections) > 0
-
     def connect(self, c):
         """
         This method set self.free to False to indicate that the dependency

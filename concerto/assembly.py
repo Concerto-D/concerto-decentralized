@@ -12,7 +12,6 @@ import traceback
 from os.path import exists
 from pathlib import Path
 from typing import Dict, List, Set, Optional
-from threading import Thread
 from queue import Queue
 
 from concerto import communication_handler, assembly_config, time_logger, global_variables, rest_communication, exposed_api
@@ -25,8 +24,7 @@ from concerto.remote_dependency import RemoteDependency
 from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
 from concerto.connection import Connection
-from concerto.internal_instruction import InternalInstruction, InternalInstructionNumAttribution
-from concerto.reconfiguration import Reconfiguration
+from concerto.internal_instruction import InternalInstructionNumAttribution
 from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages, COLORS, TimeManager, GoingSleepingException
 
@@ -87,14 +85,7 @@ class Assembly(object):
         # this is used to improve performance of the semantics
         self._p_component_connections: Dict[str, Set[Connection]] = {}
 
-        # Operational semantics
-
         # TODO: checker pk le debug crash au bout d'un temps sur WSL (timeout ?)
-        # queue of instructions (synchronized with semantics thread)
-        self._p_instructions_queue = Queue()  # thread-safe  # PERSIST
-        self._p_current_instruction = None  # PERSIST
-        self.instruction_num_attribution = InternalInstructionNumAttribution()
-
         # set of active components
         self._p_act_components: Set[str] = set()  # PERSIST
 
@@ -201,56 +192,6 @@ class Assembly(object):
         for component_name in self._p_act_components:
             debug_info += self._p_components[component_name].get_debug_info()
         return debug_info
-
-    def terminate(self, debug=False):
-        if debug:
-            Printer.st_err_tprint("DEBUG terminate:\n%s" % self.get_debug_info())
-        for component_name in self._p_act_components:
-            self.wait(component_name)
-            if debug:
-                Printer.st_err_tprint("DEBUG terminate: waiting component '%s'" % component_name)
-        self.synchronize()
-        self.alive = False
-        self.semantics_thread.join()
-
-    def force_terminate(self):
-        self.synchronize()
-        self.alive = False
-        self.semantics_thread.join()
-
-    def kill(self):
-        """Warning: use only as last resort, anything run by the assembly will be killed, not exiting properly code
-        run by the transitions """
-        self.alive = False
-        self.semantics_thread.join()
-
-    def print(self, string: str):
-        if self.verbosity < 0:
-            return
-        if self.name is None:
-            name = "Assembly"
-        else:
-            name = self.name
-        message: str = "[%s] %s" % (name, string)
-        if self.print_time:
-            Printer.st_tprint(message)
-        else:
-            Printer.print(message)
-
-    def add_instruction(self, instruction: InternalInstruction):
-        # Check if instruction has been done already
-        # Do not add it to the queue if its the case
-        if instruction.num < self._p_global_nb_instructions_done:
-            return
-
-        if self.dump_program:
-            self.program_str += (str(instruction) + "\n")
-
-        self._p_instructions_queue.put(instruction)
-
-    def run_reconfiguration(self, reconfiguration: Reconfiguration):
-        for instr in reconfiguration._get_instructions():
-            self.add_instruction(instr)
 
     def add_to_active_components(self, component_name: str):
         self._p_act_components.add(component_name)
@@ -512,26 +453,6 @@ class Assembly(object):
                 if not wait_for_refusing_provide:
                     self._p_id_sync += 1
 
-    def synchronize(self, debug=False):
-        if debug:
-            # TODO Remove access to internal queue of instructions_queue (not part of API)
-            Printer.st_err_tprint("Synchronizing. %d unfinished tasks:\n- %s (in progress)\n%s\n" % (
-                self._p_instructions_queue.unfinished_tasks, str(self._p_current_instruction),
-                "\n".join(["- %s" % str(ins) for ins in self._p_instructions_queue.queue])))
-        self._p_instructions_queue.join()
-
-    def synchronize_timeout(self, time: int):
-        from concerto.utility import timeout
-        finished = False
-        with timeout(time):
-            self.synchronize()
-            finished = True
-
-        if finished:
-            return True, None
-        else:
-            return False, self.get_debug_info()
-
     def is_component_idle(self, component_name: str) -> bool:
         if component_name in self._p_components.keys():
             return component_name not in self._p_act_components
@@ -556,44 +477,6 @@ class Assembly(object):
 
     def add_to_remote_confirmations(self, assembly_name):
         self._p_remote_confirmations.add(assembly_name)
-
-    """
-    CHECK ASSEMBLY
-    """
-
-    def check_warnings(self):
-        """
-        This method check WARNINGS in the structure of an assembly.
-
-        :return: false if some WARNINGS have been detected, true otherwise
-        """
-        check = True
-        check_dep = True
-
-        # Check warnings
-        for comp in self.get_components():
-            check = comp.check_warnings()
-            check_dep = comp.check_connections()
-
-        if not check:
-            Printer.print(Messages.warning() + "WARNING - some WARNINGS have been "
-                                       "detected in your components, please "
-                                       "check them so as to not get unwilling "
-                                       "behaviors in your deployment cordination"
-                  + Messages.endc())
-
-        if not check_dep:
-            Printer.print(Messages.warning() + "WARNING - some dependencies are not "
-                                       "connected within the assembly. This "
-                                       "could lead to unwilling behaviors in "
-                                       "your deployment coordination."
-                  + Messages.endc())
-
-        return check and check_dep
-
-    """
-    OPERATIONAL SEMANTICS
-    """
 
     def finish_reconfiguration(self):
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
@@ -627,15 +510,3 @@ class Assembly(object):
     def go_to_sleep(self):
         assembly_config.save_config(self)
         raise GoingSleepingException()
-
-
-    def is_idle(self) -> bool:
-        """
-        This method checks if the current reconfiguration is finished
-
-        :return: True if the reconfiguration is finished, False otherwise
-        """
-
-        # the deployment cannot be finished if at least all components have
-        # not reached a place
-        return len(self._p_act_components) == 0

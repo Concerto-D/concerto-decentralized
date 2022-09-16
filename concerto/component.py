@@ -540,15 +540,6 @@ class Component(object, metaclass=ABCMeta):
         else:
             log.debug(message)
 
-    # TODO: Rewrite
-    def is_connected(self, name: str):
-        """
-        This method is used to know if a given dependency is connected or not
-        :param name: name of the dependency
-        :return: True if connected, False otherwise
-        """
-        return not self._p_st_dependencies[name].is_free()
-
     """
     READ / WRITE DEPENDENCIES
     """
@@ -568,38 +559,6 @@ class Component(object, metaclass=ABCMeta):
 
     def thread_safe_report_error(self, transition: Transition, error: str):
         self._assembly.thread_safe_report_error(self, transition, error)
-
-    """
-    CHECK COMPONENT
-    """
-
-    def check_warnings(self):
-        """
-        This method check WARNINGS in the structure of the component.
-
-        :return: False if some WARNINGS have been detected, True otherwise.
-        """
-        check = True
-
-        return check
-
-    # TODO: Rewrite
-    def check_connections(self):
-        """
-        This method check connections once the component has been
-        instanciated and connected in an assembly. This method is called by
-        the engine -> assembly
-
-        :return: True if all dependencies of a component are connected, False otherwise
-        """
-
-        result = True
-
-        for dep in self._p_st_dependencies:
-            if self._p_st_dependencies[dep].is_free():
-                result = False
-
-        return result
 
     """
     RECONFIGURATION
@@ -657,13 +616,6 @@ class Component(object, metaclass=ABCMeta):
     # old_idocks the set of previous iteration active input docks of the component
     # old_odocks the set of previous iteration active output docks of the component
     # old_my_connections
-
-    def is_idle(self):
-        """
-        This method returns a boolean stating if the component is idle.
-        :return: a boolean stating if the component is idle
-        """
-        return self.get_active_behavior() is None
 
     def init(self):
         from concerto.utility import empty_transition
