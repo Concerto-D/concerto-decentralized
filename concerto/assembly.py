@@ -36,8 +36,8 @@ FREQUENCE_POLLING = 0.1
 
 def track_instruction_number(func):
     """
-    Keep track of the number of instruction executed, and ignore the instructions that
-    are already executed
+    Keep track of the number of instruction executed, and ignore the instructions that have been
+    already executed
     """
     def _track_instruction_number(self, *args, **kwargs):
         if self.current_nb_instructions_done >= self._p_global_nb_instructions_done:

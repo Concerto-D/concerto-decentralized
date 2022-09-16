@@ -11,7 +11,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
-from concerto.debug_logger import log, log_component
+from concerto.debug_logger import log, log_once
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition
@@ -126,7 +126,7 @@ class Component(object, metaclass=ABCMeta):
 
     def __init__(self):
         self.name: str = ""
-        self.color: str = ''
+        self.color: str = ''  # TODO: save comp color
         self._verbosity: int = 0
         self.forced_verbosity: Optional[int] = None
         self.print_time: bool = False
@@ -775,7 +775,7 @@ class Component(object, metaclass=ABCMeta):
             if place in self._p_visited_places:
                 continue
             odocks = place.get_output_docks(self._p_act_behavior)
-            log_component.debug(f"Move from place to odocks ({place.get_name()})")
+            log_once.debug(f"Move from place to odocks ({place.get_name()})")
             if len(odocks) is 0:
                 continue
 
@@ -786,7 +786,7 @@ class Component(object, metaclass=ABCMeta):
             for dep in self._p_place_dependencies[place.get_name()]:
                 if dep.get_type() is DepType.PROVIDE:
                     if dep.is_locked():
-                        log_component.debug(f"Provide dependency {str(dep)} is locked and cannot leave the place {place}")
+                        log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the place {place}")
                         can_leave = False
                         break
             if not can_leave:
@@ -801,7 +801,7 @@ class Component(object, metaclass=ABCMeta):
                 if group.is_deactivating(group_operation):
                     for dep in self._p_group_dependencies[group.get_name()]:
                         if (dep.get_type() is DepType.PROVIDE) and dep.is_locked():
-                            log_component.debug(f"Provide dependency {str(dep)} is locked and cannot leave the group {group}")
+                            log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the group {group}")
                             can_leave = False
                             break
                     deactivating_groups_operation[group] = group_operation
@@ -846,7 +846,7 @@ class Component(object, metaclass=ABCMeta):
             for dep in self._p_trans_dependencies[trans.get_name()]:
                 # Necessarily USE or DATA_USE
                 if not dep.is_served():
-                    log_component.debug(f"Use dependency {str(dep)} of the transition {trans.get_name()} not served, transition cannot start")
+                    log_once.debug(f"Use dependency {str(dep)} of the transition {trans.get_name()} not served, transition cannot start")
                     enabled = False
                     break
 
@@ -915,7 +915,7 @@ class Component(object, metaclass=ABCMeta):
 
         for dock in self._p_act_idocks:
             place: Place = dock.get_place()
-            log_component.debug(f"Move from idocks to place ({place.get_name()})")
+            log_once.debug(f"Move from idocks to place ({place.get_name()})")
             if place in self._p_act_places:
                 continue
 
@@ -940,12 +940,12 @@ class Component(object, metaclass=ABCMeta):
                 for dep in self._p_place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
                         if not dep.is_served():
-                            log_component.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not served. "
+                            log_once.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not served. "
                                                 "cannot go into it")
                             ready = False
                             break
                         if not dep.is_allowed():
-                            log_component.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not allowed. "
+                            log_once.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not allowed. "
                                                 "cannot go into it")
                             ready = False
                             break
@@ -963,10 +963,10 @@ class Component(object, metaclass=ABCMeta):
                         for dep in self._p_group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
                                 if not dep.is_served():
-                                    log_component.debug(f"Use dep {dep.get_name()} from the group {place.get_name()} is not served. "
+                                    log_once.debug(f"Use dep {dep.get_name()} from the group {place.get_name()} is not served. "
                                                         "cannot go into it")
                                 if not dep.is_allowed():
-                                    log_component.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not allowed. "
+                                    log_once.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not allowed. "
                                                         "cannot go into it")
                                 ready = False
                                 break

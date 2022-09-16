@@ -1,14 +1,15 @@
 import logging
 import sys
+import time
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(stream=sys.stdout)
 log.addHandler(handler)
 
-log_component = logging.getLogger("components_semantics")
-log_component.setLevel(logging.DEBUG)
-log_component.addHandler(handler)
+log_once = logging.getLogger("logger_once")
+log_once.setLevel(logging.DEBUG)
+log_once.addHandler(handler)
 
 
 class LogMessageOnce(logging.Filter):
@@ -17,14 +18,20 @@ class LogMessageOnce(logging.Filter):
     prevent msg flooding due to the loop
     """
     msg_logged = set()
+    time_period = time.time()
+
     def filter(self, record):
+        if time.time() - self.time_period >= 5:
+            self.msg_logged = set()
+            self.time_period = time.time()
+
         if record.msg in self.msg_logged:
             return False
         self.msg_logged.add(record.msg)
         return True
 
 
-log_component.addFilter(LogMessageOnce())
+log_once.addFilter(LogMessageOnce())
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):

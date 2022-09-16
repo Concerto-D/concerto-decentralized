@@ -6,7 +6,7 @@ from os.path import exists
 import yaml
 import requests
 
-from concerto.debug_logger import log
+from concerto.debug_logger import log, log_once
 from concerto import global_variables
 
 config = {}
@@ -69,19 +69,22 @@ def _is_url_accessible(url):
         requests.head(url)
         return True
     except requests.exceptions.ConnectionError:
-        # log.debug(f"{url} is not available at this moment")
         return False
 
 
 def get_results_from_request(key_cache, url, default_value, params=None):
+    log_once.debug(f"Calling {url}")
     try:
         if _is_url_accessible(url):
             result = requests.get(url, params=params).text
             communications_cache[key_cache] = result
         else:
+            log_once.debug(f"{url} is not accessible")
             result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.ConnectionError as e:
+        log_once.debug(e)
         result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
+    log_once.debug(f"Request result: {result}")
     return result
 
 
