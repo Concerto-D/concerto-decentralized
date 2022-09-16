@@ -56,8 +56,8 @@ Host g5k
 
 ### Setup experiment
 *Create a project dir and clone the repositories*
-- ```mkdir <local_project_dir>```
-- ```cd <local_project_dir>```
+- ```mkdir <all_experiments_results_dir>```
+- ```cd <all_experiments_results_dir>```
 - - Clone the **experiment_files** repository:
   - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
   - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
@@ -91,10 +91,10 @@ Assuming the previous step were executed.
 ### Gather results
 There are two dirs created for the execution: **local dir** and **remote dir**.
 
-The **remote dir** is ```<remote_project_dir>/execution-<expe_name>-<datetime_expe_execution>/``` and is always on g5k.
+The **remote dir** is ```<g5k_executions_expe_logs_dir>/execution-<expe_name>-<datetime_expe_execution>/``` and is always on g5k.
 It contains mainly the log files of the assemblies for **debugging purposes**. 
 
-The **local dir** is under the folder ```<local_project_dir>/global-<expe_name>-dir/``` can be either on g5k or in your computer,
+The **local dir** is under the folder ```<all_experiments_results_dir>/global-<expe_name>-dir/``` can be either on g5k or in your computer,
 depending if you executed the script on g5k or locally. It contains:
 - The execution dirs for each experiment: ```execution-<expe_name>-<datetime_expe_execution>``` which in turn contains:
   - The timestamp of each step of the reconfiguration in ```log_files_assemblies/```. These
