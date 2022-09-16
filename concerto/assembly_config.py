@@ -22,6 +22,10 @@ REPRISE_DIR_NAME = "reprise_configs"
 
 
 class FixedEncoder(json.JSONEncoder):
+    """
+    Control how to dump each fields of the json object. Each call to the default method correspond to one
+    field.
+    """
     def default(self, obj):
         if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, InternalInstruction, Group]):
             d = obj.__dict__
@@ -43,12 +47,8 @@ class FixedEncoder(json.JSONEncoder):
 
 
 def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
-    if is_archive:
-        relative_path = f"{global_variables.execution_expe_dir}/{ARCHIVE_DIR_NAME}/saved_config_{assembly_name}.json"
-    else:
-        relative_path = f"{global_variables.execution_expe_dir}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
-    abs_path = str(Path(relative_path).resolve())
-    return abs_path
+    dir_to_search = ARCHIVE_DIR_NAME if is_archive else REPRISE_DIR_NAME
+    return f"{global_variables.execution_expe_dir}/{dir_to_search}/saved_config_{assembly_name}.json"
 
 
 def save_config(assembly):
@@ -78,11 +78,11 @@ def load_previous_config(assembly):
     return result
 
 
-def restore_previous_config(assembly, previous_config, reconf_configuration: Dict):
+def restore_previous_config(assembly, previous_config):
     # Restore components
     components_dicts = previous_config['_p_components']
     components_names = components_dicts.keys()
-    components = _instanciate_components(assembly, previous_config, reconf_configuration)
+    components = _instanciate_components(assembly, previous_config)
     for comp_values in components_dicts.values():
         component = _restore_component(assembly, comp_values, components_names, components)
         assembly._p_components[component._p_id] = component
@@ -108,20 +108,13 @@ def restore_previous_config(assembly, previous_config, reconf_configuration: Dic
     assembly._p_waiting_rate = previous_config['_p_waiting_rate']
 
 
-def _instanciate_components(assembly, previous_config, reconf_configuration: Dict):
+def _instanciate_components(assembly, previous_config, ):
     components_dicts = previous_config['_p_components']
     components = {}
     for comp_values in components_dicts.values():
         comp_id = comp_values['_p_id']
         comp_type = comp_values['_p_component_type']
-        component_params = reconf_configuration['transitions_time'][comp_id]
-        # TODO: à refacto
-        if "server" in comp_id:
-            component = assembly.components_types[comp_type](nb_deps=reconf_configuration['nb_deps_tot'], **component_params)
-        else:
-            component = assembly.components_types[comp_type](**component_params)
-        component.set_name(comp_id)
-        component.set_assembly(assembly)
+        component = assembly.instanciate_component(comp_id, comp_type)
         components[comp_id] = component
 
     return components

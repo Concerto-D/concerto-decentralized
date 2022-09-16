@@ -73,82 +73,70 @@ def _is_url_accessible(url):
 
 
 def get_results_from_request(key_cache, url, default_value, params=None):
-    log_once.debug(f"Calling {url}")
     try:
         if _is_url_accessible(url):
             result = requests.get(url, params=params).text
             communications_cache[key_cache] = result
+            log_once.debug(f"{url} accessible, result: {result}")
         else:
-            log_once.debug(f"{url} is not accessible")
             result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
+            log_once.debug(f"{url} is not accessible, using cache result: {result} instead")
     except requests.exceptions.ConnectionError as e:
         log_once.debug(e)
         result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-    log_once.debug(f"Request result: {result}")
+        log_once.debug(f"{url} raised an exception, using cache result: {result} instead")
     return result
 
 
 # TODO: refacto les routes
 def get_nb_dependency_users(component_name: str, dependency_name: str) -> int:
-    # log.debug(f"Request: get_nb_dependency_users({component_name}, {dependency_name})")
     endpoint_name = "get_nb_dependency_users"
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}/{dependency_name}"
     key_cache = endpoint_name + component_name + dependency_name
     result = int(get_results_from_request(key_cache, url, 0))
-    # log.debug(f"Result: {result}")
     return result
 
 
 def get_refusing_state(component_name: str, dependency_name: str) -> int:
-    # log.debug(f"Request: get_refusing_state({component_name}, {dependency_name})")
     endpoint_name = "get_refusing_state"
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}/{dependency_name}"
     key_cache = endpoint_name + component_name + dependency_name
     result = get_results_from_request(key_cache, url, "False") == "True"
-    # log.debug(f"Result: {result}")
     return result
 
 
 def get_data_dependency(component_name: str, dependency_name: str):
-    # log.debug(f"Request: get_data_dependency({component_name}, {dependency_name})")
     endpoint_name = "get_data_dependency"
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}/{dependency_name}"
     key_cache = endpoint_name + component_name + dependency_name
     result = get_results_from_request(key_cache, url, "")
-    # log.debug(f"Result: {result}")
     return result
 
 
 def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str):
-    # log.debug(f"Request: is_conn_synced({syncing_component}, {component_to_sync}, {dep_provide}, {dep_use}, {action})")
     endpoint_name = "is_conn_synced"
     target_host = inventory[component_to_sync]
     url = f"http://{target_host}/{endpoint_name}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}/{action}"
     key_cache = endpoint_name + syncing_component + component_to_sync + dep_provide + dep_use + action
     result = get_results_from_request(key_cache, url, "False") == "True"
-    # log.debug(f"Result: {result}")
     return result
 
 
 def get_remote_component_state(component_name: str, id_sync: int, calling_assembly_name: str) -> [ACTIVE, INACTIVE]:
-    # log.debug(f"Request: get_remote_component_state({component_name}, {id_sync})")
     endpoint_name = "get_remote_component_state"
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}/{id_sync}"
     key_cache = component_name + str(id_sync)
     params = {"calling_assembly_name": calling_assembly_name}
     result = get_results_from_request(key_cache, url, ACTIVE, params=params)
-    # log.debug(f"Result: {result}")
     return result
 
 
 def check_finished_assemblies(assembly, wait_for_refusing_provide):
     wait_finished_assemblies_cond = True
     if assembly._p_id_sync == 1 and not wait_for_refusing_provide:
-        # log.debug(
-        #     f"Waiting for finished reconf: {assembly._p_remote_confirmations}{len(assembly._p_remote_confirmations)} {assembly._remote_assemblies_names}{len(assembly._remote_assemblies_names)}")
         wait_finished_assemblies_cond = len(assembly._p_remote_confirmations) == len(assembly._remote_assemblies_names)
     return wait_finished_assemblies_cond

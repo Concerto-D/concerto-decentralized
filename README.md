@@ -67,7 +67,7 @@ Host g5k
   
 *Configure the experiment parameters*
 
-The file ```evaluation/expe_template.yaml``` contains the differents parameters of the experiments. This will be fed to the
+The file ```evaluation/expe_parameters.yaml``` contains the differents parameters of the experiments. This will be fed to the
 python script that starts the experiment. This file contains an example of a configuration. **For each experiments** to run,
 this has to be **adapted** before being passed as a parameter to the script.
 Each parameter is directly explained in the file.
@@ -86,7 +86,7 @@ Each parameter is directly explained in the file.
 Assuming the previous step were executed.
 - If local execution: ```ssh g5k``` create a dummy ssh connection to g5k. Every other connections to g5k will go through this one.
 - ```source set_python_path.sh```
-- ```python experiment/execution_experiment.py expe_template.yaml```
+- ```python experiment/execution_experiment.py expe_parameters.yaml```
 
 ### Gather results
 There are two dirs created for the execution: **local dir** and **remote dir**.
@@ -109,7 +109,7 @@ More informations here: https://mimbert.gitlabpages.inria.fr/execo/execo_engine.
 
 ### After the execution
 If some experiments has been skipped or if not all experiments were run, it is possible to **launch again** the script
-with **the same parameter file** (expe_template.yaml). Thanks to the param sweeper, it will automatically run the missing
+with **the same parameter file** (expe_parameters.yaml). Thanks to the param sweeper, it will automatically run the missing
 experiments. However, it will **not** relaunch the experiments that are already done. To do that, you will need to change the
 value of **<expe_name>**, because the sweeper base itself on it.
 

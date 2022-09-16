@@ -61,7 +61,15 @@ class Assembly(object):
     BUILD ASSEMBLY
     """
 
-    def __init__(self, name, components_types, remote_component_names, remote_assemblies_names, reconf_config_dict, waiting_rate, concerto_d_version):
+    def __init__(
+            self,
+            name,
+            components_types,
+            remote_assemblies_names,
+            transitions_times,
+            waiting_rate,
+            concerto_d_version
+    ):
         self.time_manager = TimeManager(waiting_rate)
         self.components_types = components_types
         # dict of Component objects: id => object
@@ -69,8 +77,8 @@ class Assembly(object):
         # list of connection tuples. A connection tuple is of the form (component1, dependency1,
         # component2, dependency2)
         self._p_connections: Dict[str, Connection] = {}
+        self._p_transitions_times = transitions_times
 
-        self._remote_components_names: Set[str] = remote_component_names
         self._remote_assemblies_names: Set[str] = remote_assemblies_names
 
         # a dictionary to store at the assembly level a list of connections for
@@ -108,7 +116,7 @@ class Assembly(object):
         self.program_str: str = ""
 
         self.error_reports: List[str] = []
-        self._reprise_previous_config(reconf_config_dict)
+        self._reprise_previous_config()
         global_variables.concerto_d_version = concerto_d_version
         if concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             self._p_components_states = {}
@@ -122,7 +130,7 @@ class Assembly(object):
     def _p_id(self):
         return self.name
 
-    def _reprise_previous_config(self, reconf_config_dict: Dict):
+    def _reprise_previous_config(self):
         """
         Check if the previous programm went to sleep (i.e. if a saved config file exists)
         and restore the previous config if so
@@ -132,7 +140,7 @@ class Assembly(object):
         if exists(assembly_config.build_saved_config_file_path(self.name)):
             log.debug(f"\33[33m --- conf found at {assembly_config.build_saved_config_file_path(self.name)} ----\033[0m")
             previous_config = assembly_config.load_previous_config(self)
-            assembly_config.restore_previous_config(self, previous_config, reconf_config_dict)
+            assembly_config.restore_previous_config(self, previous_config)
         else:
             log.debug("'\33[33m'----- Previous config doesn't NOT exists, starting from zero ----'\033[0m'")
             log.debug(f"'\33[33m'----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----'\033[0m'")
@@ -249,10 +257,8 @@ class Assembly(object):
     def remove_from_active_components(self, idle_components: Set[str]):
         self._p_act_components.difference_update(idle_components)
 
-    @track_instruction_number
-    def add_component(self, name: str, comp: Component):
-        if name in self._p_components:
-            raise Exception("Trying to add '%s' as a component while it is already a component" % name)
+    def instanciate_component(self, name, comp_type: str):
+        comp = self.components_types[comp_type](**self._p_transitions_times[name])
         comp.set_name(name)
         comp.set_color(COLORS[len(self._p_components) % len(COLORS)])
         comp.set_verbosity(self.verbosity)
@@ -260,6 +266,14 @@ class Assembly(object):
         comp.set_dryrun(self.dryrun)
         comp.set_gantt_record(self.gantt)
         comp.set_assembly(self)
+
+        return comp
+
+    @track_instruction_number
+    def add_component(self, name: str, comp_type: str):
+        if name in self._p_components:
+            raise Exception("Trying to add '%s' as a component while it is already a component" % name)
+        comp = self.instanciate_component(name, comp_type)
         self._p_components[name] = comp
         self._p_component_connections[name] = set()
         self.add_to_active_components(name)  # _init
