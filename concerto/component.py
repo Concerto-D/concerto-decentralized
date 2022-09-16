@@ -16,7 +16,7 @@ from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
 from concerto.transition import Transition
 from concerto.gantt_record import GanttRecord
-from concerto.utility import Messages, Printer
+from concerto.utility import Messages
 
 
 class Group(object):
@@ -536,9 +536,9 @@ class Component(object, metaclass=ABCMeta):
             return
         message: str = "%s[%s] %s%s" % (self.get_color(), self.get_name(), string, Messages.endc())
         if self.print_time:
-            Printer.st_tprint(message)
+            log.debug(message)
         else:
-            Printer.print(message)
+            log.debug(message)
 
     # TODO: Rewrite
     def is_connected(self, name: str):
@@ -704,16 +704,16 @@ class Component(object, metaclass=ABCMeta):
         did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans = False, False, False, False
         # Exécution des transitions
         if self._p_act_idocks:
-            # Printer.st_tprint("Doing idocks_to_place")
-            # Printer.st_tprint("Active idocks: " + "".join([str(s) for s in self._p_act_idocks]))
+            # log.debug("Doing idocks_to_place")
+            # log.debug("Active idocks: " + "".join([str(s) for s in self._p_act_idocks]))
             did_smthg_idocks = self._idocks_to_place()
         if self._p_act_places:
-            # Printer.st_tprint("Doing place_to_odocks")
-            # Printer.st_tprint("Active places: " + "".join([str(s) for s in self._p_act_places]))
+            # log.debug("Doing place_to_odocks")
+            # log.debug("Active places: " + "".join([str(s) for s in self._p_act_places]))
             did_smthg_places = self._place_to_odocks()
         if self._p_act_odocks:
-            # Printer.st_tprint("Doing start_transition")
-            # Printer.st_tprint("Active odocks: " + "".join([str(s) for s in self._p_act_odocks]))
+            # log.debug("Doing start_transition")
+            # log.debug("Active odocks: " + "".join([str(s) for s in self._p_act_odocks]))
             did_smthg_odocks = self._start_transition()
         if self._p_act_transitions:
             did_smthg_trans = self._end_transition()

@@ -3,7 +3,6 @@ import time
 import zenoh
 
 from concerto import zenoh_communication, rest_communication, global_variables
-from concerto.utility import Printer
 
 config = {}
 

@@ -15,7 +15,6 @@ from concerto.debug_logger import log
 from concerto.place import Dock, Place
 from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
-from concerto.utility import Printer
 
 ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
@@ -52,7 +51,7 @@ def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -
 
 
 def save_config(assembly):
-    Printer.st_tprint("Saving current conf ...")
+    log.debug("Saving current conf ...")
     time_logger.log_time_value(TimeToSave.START_SAVING_STATE)
     assembly._p_global_nb_instructions_done = assembly.current_nb_instructions_done
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
@@ -61,20 +60,20 @@ def save_config(assembly):
 
 
 def load_previous_config(assembly):
-    Printer.st_tprint("Retrieving previous conf ...")
+    log.debug("Retrieving previous conf ...")
     file_path = build_saved_config_file_path(assembly.name)
     with open(file_path, "r") as infile:
         result = json.load(infile)
-        Printer.st_tprint("done")
+        log.debug("done")
 
-    Printer.st_tprint(f"Archiving file in {build_saved_config_file_path(assembly.name, is_archive=True)}")
+    log.debug(f"Archiving file in {build_saved_config_file_path(assembly.name, is_archive=True)}")
     shutil.copyfile(
         file_path,
         build_saved_config_file_path(assembly.name, is_archive=True)
     )
-    Printer.st_tprint(f"Removing previous conf ...")
+    log.debug(f"Removing previous conf ...")
     os.remove(file_path)
-    Printer.st_tprint("done")
+    log.debug("done")
     return result
 
 

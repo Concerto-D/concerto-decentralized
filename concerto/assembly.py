@@ -28,7 +28,7 @@ from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction, InternalInstructionNumAttribution
 from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
-from concerto.utility import Messages, COLORS, Printer, TimeManager, GoingSleepingException
+from concerto.utility import Messages, COLORS, TimeManager, GoingSleepingException
 
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
@@ -310,12 +310,12 @@ class Assembly(object):
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
         finished = False
-        Printer.st_tprint(f"Creating connection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
+        log.debug(f"Creating connection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
         while not finished:
             dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
             connection_id = Connection.build_id_from_dependencies(dep1, dep2)
             if connection_id in self._p_connections:
-                # Printer.st_tprint(f"Connection already done: Waiting connection from {comp2_name}")
+                # log.debug(f"Connection already done: Waiting connection from {comp2_name}")
                 finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
             else:
                 finished = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
@@ -355,9 +355,9 @@ class Assembly(object):
                 # un check est fait sur le nb d'utilisateur
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
                 is_conn_synced = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
-                Printer.st_tprint("Connection done locally, waiting for the connection message from:"
+                log.debug("Connection done locally, waiting for the connection message from:"
                                   f"{comp1_name} {comp2_name} {dep2_name} {dep1_name}")
-                # Printer.st_tprint(f"Is conn synced between {comp1_name} and {comp2_name} ? (for {dep1_name} and {dep2_name}): {is_conn_synced}")
+                # log.debug(f"Is conn synced between {comp1_name} and {comp2_name} ? (for {dep1_name} and {dep2_name}): {is_conn_synced}")
                 return is_conn_synced
             return True
 
@@ -399,7 +399,7 @@ class Assembly(object):
         :param dep2_name:  The name of the dependency of the second component to connect
         """
         finished = False
-        Printer.st_tprint(f"Creating disconnection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
+        log.debug(f"Creating disconnection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
         while not finished:
             dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
             connection_id = Connection.build_id_from_dependencies(dep1, dep2)
@@ -436,7 +436,7 @@ class Assembly(object):
             # je n'ai pas besoin de savoir si les autres se sont déco (si on suppose un programme valide)
             if is_remote_disconnection:
                 communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
-                Printer.st_tprint("Disconnection done locally, waiting for the disconnection message from:"
+                log.debug("Disconnection done locally, waiting for the disconnection message from:"
                                   f"{comp1_name} {comp2_name} {dep2_name} {dep1_name}")
                 return communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
 
@@ -454,7 +454,7 @@ class Assembly(object):
     @track_instruction_number
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
         finished = False
-        Printer.st_tprint(f"Waiting for component {component_name} to finish its behaviors execution")
+        log.debug(f"Waiting for component {component_name} to finish its behaviors execution")
         while not finished:
             is_local_component = component_name in self._p_components.keys()
             if is_local_component:
@@ -462,7 +462,7 @@ class Assembly(object):
 
                 # Si le component a terminé, on prévient les autres assemblies
                 if is_component_idle:
-                    Printer.st_tprint(f"Local component {component_name} finished its behavior, sending a message in"
+                    log.debug(f"Local component {component_name} finished its behavior, sending a message in"
                                       f"{component_name} {self._p_id_sync} to warn others")
                     communication_handler.set_component_state(self, INACTIVE, component_name, self._p_id_sync)
             else:
@@ -483,18 +483,18 @@ class Assembly(object):
         before receiving order to wait for the provide port to reconfigure itself.
         """
         finished = False
-        Printer.st_tprint("Waiting for all components to finish their behaviors")
+        log.debug("Waiting for all components to finish their behaviors")
         msg_idle_sent = False
         while not finished:
             all_local_idle = len(self._p_act_components) is 0
             if all_local_idle:
                 # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
                 if not wait_for_refusing_provide and not msg_idle_sent:
-                    Printer.st_tprint("Finished local behavior, sending INACTIVE msg in"
+                    log.debug("Finished local behavior, sending INACTIVE msg in"
                                       f"{self.name} (assembly name) {self._p_id_sync} (id sync)")
                     communication_handler.set_component_state(self, INACTIVE, self.name, self._p_id_sync)
                     assemblies_to_wait = [(assembly_name, self._p_id_sync) for assembly_name in self._remote_assemblies_names]
-                    Printer.st_tprint(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
+                    log.debug(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
                     msg_idle_sent = True
                 all_remote_idle = all(
                     communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE
@@ -596,7 +596,7 @@ class Assembly(object):
     """
 
     def finish_reconfiguration(self):
-        Printer.print("---------------------- END OF RECONFIGURATION GG -----------------------")
+        log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self._p_id}").touch()  # Create a file that serves as a flag
 
     def run_semantics_iteration(self):
@@ -614,12 +614,12 @@ class Assembly(object):
 
         # Check for sleeping conditions
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
-            Printer.st_tprint("Everyone blocked")
-            Printer.st_tprint("Going sleeping bye")
+            log.debug("Everyone blocked")
+            log.debug("Going sleeping bye")
             self.go_to_sleep()
         elif self.time_manager.is_initial_time_up() and not are_active_transitions:
-            Printer.st_tprint("Time's up")
-            Printer.st_tprint("Go sleep")
+            log.debug("Time's up")
+            log.debug("Go sleep")
             self.go_to_sleep()
         else:
             time.sleep(FREQUENCE_POLLING)
