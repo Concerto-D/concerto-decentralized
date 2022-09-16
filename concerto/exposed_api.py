@@ -81,24 +81,15 @@ def run_flask_api(assembly):
     @app.route("/is_conn_synced/<syncing_component>/<component_to_sync>/<dep_to_sync>/<syncing_dep>/<action>")
     @catch_exceptions
     def is_conn_synced(syncing_component: str, component_to_sync: str, dep_to_sync: str, syncing_dep: str, action: str):
-        # log.debug(f"API Request: is_conn_synced {syncing_component} {component_to_sync} {dep_to_sync} {syncing_dep} {action}")
         for conn in set(assembly._p_component_connections[component_to_sync]):
             use, provide = (conn.get_use_dep(), conn.get_provide_dep())
-            # log.debug("---- Checking for conn with: -----")
-            # log.debug(f"use comp name: {use.get_component_name()}")
-            # log.debug(f"provide comp name: {provide.get_component_name()}")
-            # log.debug(f"use name: {use.get_name()}")
-            # log.debug(f"provide name: {provide.get_name()}")
-            # log.debug(f"action: {action}, CONN: {CONN}, action==CONN: {str(action == CONN)}")
             if (use.get_component_name() in [component_to_sync, syncing_component]
             and provide.get_component_name() in [component_to_sync, syncing_component]
             and use.get_name() in [dep_to_sync, syncing_dep]
             and provide.get_name() in [dep_to_sync, syncing_dep]):
                 result = str(action == CONN)
-                # log.debug(f"API Response: {result}")
                 return result
         result = str(action == DECONN)
-        # log.debug(f"API Response: {result}")
         return result
 
     @app.route("/get_remote_component_state/<component_name>/<id_sync>")
@@ -114,8 +105,6 @@ def run_flask_api(assembly):
                 if calling_assembly_name is not None:
                     assembly.add_to_remote_confirmations(calling_assembly_name)
             return assembly._p_components_states[component_name + str(id_sync)]
-
-    print("lets go app")
 
     # Remove logging of each HTTP transactions
     werkzeug_log = logging.getLogger('werkzeug')

@@ -21,7 +21,6 @@ INACTIVE = "INACTIVE"
 inventory: each component should be associated with an ip/port
 """
 INVENTORY_FILE_PATH = "inventory.yaml"
-COMMUNICATION_CACHE_FILE = f"{global_variables.execution_expe_dir}/communication_cache"
 inventory = {}
 communications_cache = {}
 
@@ -34,15 +33,21 @@ def parse_inventory_file():
             inventory[ass_comp_name] = host
 
 
+def _communication_cache_file_path():
+    return f"{global_variables.execution_expe_dir}/communication_cache"
+
+
 def save_communication_cache(assembly_name):
-    log.debug(f"Saving communication cache here {COMMUNICATION_CACHE_FILE}")
-    os.makedirs(COMMUNICATION_CACHE_FILE, exist_ok=True)
-    with open(f"{COMMUNICATION_CACHE_FILE}/{assembly_name}.json", "w") as f:
+    communication_cache_file = _communication_cache_file_path()
+    log.debug(f"Saving communication cache here {communication_cache_file}")
+    os.makedirs(communication_cache_file, exist_ok=True)
+    with open(f"{communication_cache_file}/{assembly_name}.json", "w") as f:
         json.dump(communications_cache, f)
 
 
 def load_communication_cache(assembly_name):
-    file_name = f"{COMMUNICATION_CACHE_FILE}/{assembly_name}.json"
+    communication_cache_file = _communication_cache_file_path()
+    file_name = f"{communication_cache_file}/{assembly_name}.json"
     log.debug(f"Loading communication cache from {file_name}")
     if not exists(file_name):
         return
@@ -59,7 +64,8 @@ def clear_communication_cache(assembly_name):
     """TODO: ne pas clear tout le cache, car besoin certainement des infos sur les connexions si on fait des deconn"""
     log.debug("Go from one reconf to another: CLEARING CACHE")
     communications_cache.clear()
-    file_name = f"{COMMUNICATION_CACHE_FILE}/{assembly_name}.json"
+    communication_cache_file = _communication_cache_file_path()
+    file_name = f"{communication_cache_file}/{assembly_name}.json"
     if exists(file_name):
         os.remove(file_name)
 

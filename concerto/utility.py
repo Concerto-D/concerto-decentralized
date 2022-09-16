@@ -145,3 +145,8 @@ def timeout(time):
 
 def raise_timeout(signum, frame):
     raise TimeoutError
+
+
+class GoingSleepingException(Exception):
+    def __init__(self):
+        super(GoingSleepingException, self).__init__()

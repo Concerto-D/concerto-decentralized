@@ -28,7 +28,7 @@ from concerto.connection import Connection
 from concerto.internal_instruction import InternalInstruction, InternalInstructionNumAttribution
 from concerto.reconfiguration import Reconfiguration
 from concerto.gantt_record import GanttRecord
-from concerto.utility import Messages, COLORS, Printer, TimeManager
+from concerto.utility import Messages, COLORS, Printer, TimeManager, GoingSleepingException
 
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
@@ -38,6 +38,7 @@ def track_instruction_number(func):
     """
     Keep track of the number of instruction executed, and ignore the instructions that have been
     already executed
+    self is passed as argument since we decorate methods of the class
     """
     def _track_instruction_number(self, *args, **kwargs):
         if self.current_nb_instructions_done >= self._p_global_nb_instructions_done:
@@ -471,9 +472,16 @@ class Assembly(object):
 
             if not finished:
                 self.run_semantics_iteration()
+            else:
+                self._p_id_sync += 1
 
     @track_instruction_number
     def wait_all(self, wait_for_refusing_provide: bool = False):
+        """
+        :params wait_for_refusing_provide: Used to specify that the assembly need to wait for the provides
+        ports connected to it that they finish their reconfiguration. Else the use port might reconfigure itself
+        before receiving order to wait for the provide port to reconfigure itself.
+        """
         finished = False
         Printer.st_tprint("Waiting for all components to finish their behaviors")
         msg_idle_sent = False
@@ -500,6 +508,9 @@ class Assembly(object):
 
             if not finished:
                 self.run_semantics_iteration()
+            else:
+                if not wait_for_refusing_provide:
+                    self._p_id_sync += 1
 
     def synchronize(self, debug=False):
         if debug:
@@ -615,10 +626,7 @@ class Assembly(object):
 
     def go_to_sleep(self):
         assembly_config.save_config(self)
-        time_to_log = TimeToSave.END_DEPLOY if self._p_id_sync == 0 else TimeToSave.END_UPDATE
-        time_logger.log_time_value(time_to_log)
-        time_logger.log_time_value(TimeToSave.SLEEP_TIME)
-        exit()
+        raise GoingSleepingException()
 
 
     def is_idle(self) -> bool:
