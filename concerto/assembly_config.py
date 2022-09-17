@@ -103,7 +103,7 @@ def restore_previous_config(assembly, previous_config):
     assembly._p_global_nb_instructions_done = previous_config['_p_global_nb_instructions_done']
     assembly._p_waiting_rate = previous_config['_p_waiting_rate']
     assembly._p_components_states = previous_config['_p_components_states']
-    assembly._p_remote_confirmations = previous_config['_p_remote_confirmations']
+    assembly._p_remote_confirmations = set(previous_config['_p_remote_confirmations'])
 
 
 def _instanciate_components(assembly, previous_config, ):
