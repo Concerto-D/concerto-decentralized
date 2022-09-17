@@ -435,10 +435,10 @@ class Assembly(object):
                     assemblies_to_wait = [(assembly_name, self._p_id_sync) for assembly_name in self._remote_assemblies_names]
                     log.debug(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
                     msg_idle_sent = True
-                all_remote_idle = all(
-                    communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE
-                    for assembly_name in self._remote_assemblies_names
-                )
+                all_remote_idle = True
+                for assembly_name in self._remote_assemblies_names:
+                    if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE:
+                        all_remote_idle = False
             else:
                 all_remote_idle = False
 
