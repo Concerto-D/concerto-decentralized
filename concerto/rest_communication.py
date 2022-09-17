@@ -50,8 +50,9 @@ def load_communication_cache(assembly_name):
     file_name = f"{communication_cache_file}/{assembly_name}.json"
     log.debug(f"Loading communication cache from {file_name}")
     if not exists(file_name):
+        log.debug("Cache DOES NOT exists")
         return
-
+    log.debug("Cache EXISTS")
     with open(file_name, "r") as f:
         loaded_json = json.load(f)
         for key_cache, value in loaded_json.items():

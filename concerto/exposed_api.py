@@ -1,6 +1,7 @@
 import traceback
 from functools import wraps
 
+import yaml
 from flask import Flask, request
 from threading import Thread
 
@@ -13,12 +14,6 @@ CONN = "CONN"
 DECONN = "DECONN"
 
 
-PORT_BY_ASSEMBLY = {
-    "server_assembly": 5000,
-    **{f"dep_assembly_{i}": 5001+i for i in range(20)}  # TODO: change magic number of deps
-}
-
-
 def run_api_in_thread(assembly):
     thread = Thread(target=run_flask_api, args=(assembly,))
     thread.setDaemon(True)  # Required to make the program exit when main thread exit
@@ -29,8 +24,6 @@ def catch_exceptions(func):
     """
     Permet de catcher les exceptions des routes TODO: comprendre pk need de les catcher explicitement
     """
-    # wraps: Permet de renommer la fonction, pour ne pas avoir de redondance quand on utilise
-    # plusieurs fois le même décorateur dans le code
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -109,4 +102,9 @@ def run_flask_api(assembly):
     # Remove logging of each HTTP transactions
     werkzeug_log = logging.getLogger('werkzeug')
     werkzeug_log.setLevel(logging.ERROR)
-    app.run(host='0.0.0.0', port=PORT_BY_ASSEMBLY[assembly.get_name()])
+
+    with open("inventory.yaml") as f:
+        loaded_inventory = yaml.safe_load(f)
+    _, port = loaded_inventory[assembly.get_name()].split(":")
+
+    app.run(host='0.0.0.0', port=port)
