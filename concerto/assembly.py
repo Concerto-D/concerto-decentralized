@@ -494,10 +494,12 @@ class Assembly(object):
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             log.debug("Everyone blocked")
             log.debug("Going sleeping bye")
+            log.debug("\n")
             self.go_to_sleep()
         elif self.time_manager.is_initial_time_up() and not are_active_transitions:
             log.debug("Time's up")
             log.debug("Go sleep")
+            log.debug("\n")
             self.go_to_sleep()
         else:
             time.sleep(FREQUENCE_POLLING)
