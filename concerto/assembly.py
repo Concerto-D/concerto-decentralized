@@ -103,12 +103,15 @@ class Assembly(object):
         self.program_str: str = ""
 
         self.error_reports: List[str] = []
-        self._reprise_previous_config()
-        global_variables.concerto_d_version = concerto_d_version
-        if concerto_d_version == CONCERTO_D_SYNCHRONOUS:
-            self._p_components_states = {}
-            self._p_remote_confirmations: Set[str] = set()
 
+        self._p_components_states = {}
+        self._p_remote_confirmations: Set[str] = set()
+
+        global_variables.concerto_d_version = concerto_d_version
+
+        self._reprise_previous_config()
+
+        if concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             rest_communication.parse_inventory_file()
             rest_communication.load_communication_cache(self.get_name())
             exposed_api.run_api_in_thread(self)
