@@ -504,4 +504,6 @@ class Assembly(object):
 
     def go_to_sleep(self):
         assembly_config.save_config(self)
+        if global_variables.concerto_d_version == CONCERTO_D_SYNCHRONOUS:
+            rest_communication.save_communication_cache(self.get_name())
         raise GoingSleepingException()
