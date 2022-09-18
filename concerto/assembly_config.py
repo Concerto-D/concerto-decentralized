@@ -2,6 +2,7 @@ import json
 import queue
 import shutil
 import os
+from datetime import datetime
 
 import concerto
 from concerto import time_logger, global_variables
@@ -42,9 +43,15 @@ class FixedEncoder(json.JSONEncoder):
             return obj
 
 
-def build_saved_config_file_path(assembly_name: str, is_archive: bool = False) -> str:
-    dir_to_search = ARCHIVE_DIR_NAME if is_archive else REPRISE_DIR_NAME
-    return f"{global_variables.execution_expe_dir}/{dir_to_search}/saved_config_{assembly_name}.json"
+def build_saved_config_file_path(assembly_name: str) -> str:
+    return f"{global_variables.execution_expe_dir}/{REPRISE_DIR_NAME}/saved_config_{assembly_name}.json"
+
+
+def build_archive_config_file_path(assembly_name: str) -> str:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    path_dir = f"{global_variables.execution_expe_dir}/{ARCHIVE_DIR_NAME}/{assembly_name}"
+    os.makedirs(path_dir, exist_ok=True)
+    return f"{path_dir}/saved_config_{timestamp}.json"
 
 
 def save_config(assembly):
@@ -63,10 +70,10 @@ def load_previous_config(assembly):
         result = json.load(infile)
         log.debug("done")
 
-    log.debug(f"Archiving file in {build_saved_config_file_path(assembly.name, is_archive=True)}")
+    log.debug(f"Archiving file in {build_archive_config_file_path(assembly.get_name())}")
     shutil.copyfile(
         file_path,
-        build_saved_config_file_path(assembly.name, is_archive=True)
+        build_archive_config_file_path(assembly.get_name())
     )
     log.debug(f"Removing previous conf ...")
     os.remove(file_path)
