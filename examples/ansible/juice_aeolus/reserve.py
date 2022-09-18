@@ -175,7 +175,7 @@ def run_experiment(nb_db_entries, conf, working_directory='.', provider='g5k', f
         remote_location= "~/.ssh"
     ).run()
     run_cmd = "cd concertonode/madpp;"+\
-              "source source_dir.sh;"+\
+              "source set_python_path.sh;"+\
               "cd examples/ansible/juice_aeolus/;"+\
               "python3 galera_assembly.py >stdout 2>stderr"
     print("Executing commands: %s"%run_cmd)

@@ -123,7 +123,7 @@ class ConcertoG5k:
                     remote_location="~/.ssh"
                 )
             run_cmd = "cd %s;" % self.full_concerto_dir +\
-                      "source source_dir.sh;" +\
+                      "source set_python_path.sh;" +\
                       "cd %s;" % self.full_remote_exp_dir
             if timeout:
                 run_cmd += "timeout -k %s %s python3 %s >stdout 2>stderr" % (timeout_graceful_exit_time,

@@ -422,7 +422,6 @@ class Assembly(object):
         before receiving order to wait for the provide port to reconfigure itself.
         """
         finished = False
-        log.debug("Waiting for all components to finish their behaviors")
         msg_idle_sent = False
         while not finished:
             all_local_idle = len(self._p_act_components) is 0

@@ -116,11 +116,58 @@ value of **<expe_name>**, because the sweeper base itself on it.
 # Local execution
 This part explains what to do if the goal is only to **start a reconfiguration manually** for **development or debugging purposes**.
 
+### Setup local environment
+*Create a project dir and clone the repositories*
+- ```mkdir <all_projects_dir>```
+- ```cd <all_projects_dir>```
+- Clone the **concerto-decentralized** repository: 
+  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git```
+  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/concerto-decentralized.git````
+- - Clone the **experiment_files** repository:
+  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
+  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
+- Clone the **evaluation** repository: 
+  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
+  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
 
+*Install apt deps*
+- ```sudo apt update```
+- ```sudo apt install python3-pip virtualenv```
 
+*Set up Python evaluation project:*
+- ```cd concerto-decentralized```
+- ```virtualenv venv```
+- ```source venv/bin/activate```
+- ```pip install -r requirements.txt```
+
+### Start execution of a script
+Position in concerto-decentralized dir and activate environment **if not already done**:
+```
+cd concerto-decentralized
+source venv/bin/activate
+source source_dir.sh
+```
+There is no orchestrator in local, scripts has to be started manually. The call of a script is like this:
+```
+# Start the server
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_server.py <config_file_path> <uptime_duration> <waiting_rate> <timestamp_log_dir> <execution_expe_dir> <version_concerto_d> &
+
+# Start a dependency (need an additionnal <dep_num> arg)
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py <config_file_path> <uptime_duration> <waiting_rate> <timestamp_log_dir> <execution_expe_dir> <version_concerto_d> <dep_num> &
+```
+Example of calls 1 serv and 3 deps
+```
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_server.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous &    # Server
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 0 &    # Dep 0
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 1 &    # Dep 1
+python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 2 &    # Dep 2
+```
+**Notes:** 
+- The **number of deps launched** has to match **all the <nb_deps_tot> variables** present in <config_file_path>. Here
+in the example with 3 deps it has to be <nb_deps_tot> equal to 3 in the config file. It cannot go beyond 12 deps.
+- Launching scripts like this is the equivalent of having **100% overlap** between units.
+- The results are not computed here (total reconf time, etc).
 
 # TODO:
-- Bien précisé ce que c'est qu'une experiment
-- Modifier le expe_template en expe_parameters
 - put projects in public and remove gitlab deploy keys etc
 - Mettre concerto-d-synchrone dans la liste au début + faire un test avec le tag ICSOC
