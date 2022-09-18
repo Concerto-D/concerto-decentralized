@@ -51,16 +51,11 @@ def run_flask_api(assembly):
     @app.route("/get_refusing_state/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_refusing_state(component_name: str, dependency_name: str):
-        # log.debug(f"API Request: get_refusing_state for {component_name}, {dependency_name}")
         for conn in set(assembly._p_component_connections[component_name]):
             if conn._use_dep.get_name() == dependency_name:
-                result = str(conn._use_dep._p_is_refusing)
-                # log.debug(f"API Response: {result}")
-                return result
+                return str(conn._use_dep._p_is_refusing)
             if conn._provide_dep.get_name() == dependency_name:
-                result = str(conn._provide_dep._p_is_refusing)
-                # log.debug(f"API Response: {result}")
-                return result
+                return str(conn._provide_dep._p_is_refusing)
 
     @app.route("/get_data_dependency/<component_name>/<dependency_name>")
     @catch_exceptions
@@ -77,13 +72,11 @@ def run_flask_api(assembly):
         for conn in set(assembly._p_component_connections[component_to_sync]):
             use, provide = (conn.get_use_dep(), conn.get_provide_dep())
             if (use.get_component_name() in [component_to_sync, syncing_component]
-            and provide.get_component_name() in [component_to_sync, syncing_component]
-            and use.get_name() in [dep_to_sync, syncing_dep]
-            and provide.get_name() in [dep_to_sync, syncing_dep]):
-                result = str(action == CONN)
-                return result
-        result = str(action == DECONN)
-        return result
+                and provide.get_component_name() in [component_to_sync, syncing_component]
+                and use.get_name() in [dep_to_sync, syncing_dep]
+                and provide.get_name() in [dep_to_sync, syncing_dep]):
+                return str(action == CONN)
+        return str(action == DECONN)
 
     @app.route("/get_remote_component_state/<component_name>/<id_sync>")
     @catch_exceptions

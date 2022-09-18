@@ -73,7 +73,7 @@ class Assembly(object):
         self._p_connections: Dict[str, Connection] = {}
         self._p_transitions_times = transitions_times
 
-        self._remote_assemblies_names: Set[str] = remote_assemblies_names
+        self._remote_assemblies_names: List[str] = remote_assemblies_names
 
         # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
@@ -435,10 +435,14 @@ class Assembly(object):
                     assemblies_to_wait = [(assembly_name, self._p_id_sync) for assembly_name in self._remote_assemblies_names]
                     log.debug(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
                     msg_idle_sent = True
-                all_remote_idle = True
-                for assembly_name in self._remote_assemblies_names:
-                    if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE:
-                        all_remote_idle = False
+                # all_remote_idle = True
+                # for assembly_name in self._remote_assemblies_names:
+                #     if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE:
+                #         all_remote_idle = False
+                all_remote_idle = all(
+                    communication_handler.get_remote_component_state(self.get_name(), assembly_name, self._p_id_sync) == INACTIVE
+                    for assembly_name in self._remote_assemblies_names
+                )
             else:
                 all_remote_idle = False
 
