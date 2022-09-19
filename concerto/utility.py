@@ -100,7 +100,7 @@ class TimeManager:
     def start(self, duration: float):
         self.duration = duration  # TODO: see if it's useful to set it
         self.initial_ending_time = time.time() + duration
-        self.waiting_rate_ending_time = self.initial_ending_time * self.waiting_rate
+        self.waiting_rate_ending_time = time.time() + duration * self.waiting_rate
 
     def get_time_left(self):
         return round(self.initial_ending_time - time.time(), 2)
