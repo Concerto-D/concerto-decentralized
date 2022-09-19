@@ -86,10 +86,9 @@ def run_flask_api(assembly):
             return ACTIVE
         else:
             # TODO: ad-hoc, to refacto
-            if str(id_sync) == "1":
-                calling_assembly_name = request.args.get("calling_assembly_name")
-                if calling_assembly_name is not None:
-                    assembly.add_to_remote_confirmations(calling_assembly_name)
+            calling_assembly_name = request.args.get("calling_assembly_name")
+            if calling_assembly_name is not None:
+                assembly.add_to_remote_confirmations((calling_assembly_name, id_sync))
             return assembly.components_states[component_name + str(id_sync)]
 
     # Remove logging of each HTTP transactions

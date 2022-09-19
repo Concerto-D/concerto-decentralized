@@ -437,7 +437,7 @@ class Assembly(object):
         finished = False
         msg_idle_sent = False
         while not finished:
-            all_local_idle = len(self.act_components) is 0
+            all_local_idle = len(self.act_components) == 0
             if all_local_idle:
                 # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
                 if not wait_for_refusing_provide and not msg_idle_sent:
@@ -451,15 +451,19 @@ class Assembly(object):
                 # for assembly_name in self._remote_assemblies_names:
                 #     if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE:
                 #         all_remote_idle = False
+                assemblies_to_wait = list(self._remote_assemblies_names)
+                for assembly_name, id_sync in self.remote_confirmations:
+                    if self.id_sync == id_sync:
+                        assemblies_to_wait.remove(assembly_name)
+
                 all_remote_idle = all(
                     communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE
-                    for assembly_name in self._remote_assemblies_names
+                    for assembly_name in assemblies_to_wait
                 )
             else:
                 all_remote_idle = False
 
-            wait_finished_assemblies_cond = communication_handler.check_finished_assemblies(self, wait_for_refusing_provide)
-            finished = all_local_idle and all_remote_idle and wait_finished_assemblies_cond
+            finished = all_local_idle and all_remote_idle
 
             if not finished:
                 self.run_semantics_iteration()

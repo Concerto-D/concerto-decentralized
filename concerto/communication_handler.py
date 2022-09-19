@@ -81,10 +81,3 @@ def get_remote_component_state(assembly_name: str, component_name: str, id_sync:
         return zenoh_communication.get_remote_component_state(component_name, id_sync)
     else:
         return rest_communication.get_remote_component_state(component_name, id_sync, assembly_name)
-
-
-def check_finished_assemblies(assembly, wait_for_refusing_provide):
-    if global_variables.is_concerto_d_asynchronous():
-        return True
-    else:
-        return rest_communication.check_finished_assemblies(assembly, wait_for_refusing_provide)
