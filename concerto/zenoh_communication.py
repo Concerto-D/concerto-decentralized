@@ -68,7 +68,6 @@ def write_data_dependency(component_name: str, dependency_name: str, data, works
 
 @zenoh_session
 def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
-    log.debug(f"Sending {action}: {syncing_component}_{dep_provide}-{component_to_sync}_{dep_use}")
     workspace.put(f"/{action}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}", action)
 
 
@@ -80,7 +79,6 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
 
 @zenoh_session
 def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, id_sync: int, workspace=None):
-    log.debug(f"{component_name} is now {state}")
     workspace.put(f"/wait/{id_sync}/{component_name}", state)
 
 
