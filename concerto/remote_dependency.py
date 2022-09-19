@@ -22,7 +22,7 @@ class RemoteDependency(Dependency):
         """
         On fait dans le topic plutôt qu'en local car la dépendance est remote
         """
-        return communication_handler.get_nb_dependency_users(self.remote_component_name, self._p_name) > 0
+        return communication_handler.get_nb_dependency_users(self.remote_component_name, self.dependency_name) > 0
 
     def is_refusing(self):
         return communication_handler.get_refusing_state(self.get_component_name(), self.get_name())
@@ -36,8 +36,8 @@ class RemoteDependency(Dependency):
         return communication_handler.write_data_dependency(self.get_name(), self.get_component_name(), data)
 
     @property
-    def _p_id(self):
-        return f"{self.remote_component_name}-{self._p_name}"
+    def obj_id(self):
+        return f"{self.remote_component_name}-{self.dependency_name}"
 
     def get_component_name(self):
         return self.remote_component_name
@@ -45,7 +45,7 @@ class RemoteDependency(Dependency):
     def __eq__(self, other):
         if type(other) != type(self):
             return False
-        return self._p_name == other._p_name and self.remote_component_name == other.remote_component_name
+        return self.dependency_name == other.dependency_name and self.remote_component_name == other.remote_component_name
 
     def __hash__(self):
-        return hash((self._p_name, self.remote_component_name))
+        return hash((self.dependency_name, self.remote_component_name))

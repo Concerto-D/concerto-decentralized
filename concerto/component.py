@@ -38,11 +38,17 @@ class Group(object):
         self.component_name: str = component_name
         self.name: str = name
         self.elements: Set[str] = set()
-        self._p_nb_tokens: int = 0
+        self.nb_tokens: int = 0
 
     @property
-    def _p_id(self):
+    def obj_id(self):
         return f"{self.component_name}_{self.name}"
+
+    def to_json(self):
+        return {
+            "obj_id": self.obj_id,
+            "nb_tokens": self.nb_tokens
+        }
 
     def get_name(self) -> str:
         return self.name
@@ -97,17 +103,17 @@ class Group(object):
         return (not self.is_active()) and (operation.delta > 0)
 
     def is_deactivating(self, operation: Operation) -> bool:
-        return self.is_active() and (self._p_nb_tokens + operation.delta is 0)
+        return self.is_active() and (self.nb_tokens + operation.delta is 0)
 
     def is_active(self):
-        return self._p_nb_tokens > 0
+        return self.nb_tokens > 0
 
     def apply(self, operation: Operation):
-        if self._p_nb_tokens + operation.delta < 0:
+        if self.nb_tokens + operation.delta < 0:
             raise Exception(
                 "Logic error: trying to remove %d tokens to group '%s' while its number of tokens is only %d." % (
-                    operation.delta, self.name, self._p_nb_tokens))
-        self._p_nb_tokens += operation.delta
+                    operation.delta, self.name, self.nb_tokens))
+        self.nb_tokens += operation.delta
 
 
 class Component(object, metaclass=ABCMeta):
@@ -139,31 +145,31 @@ class Component(object, metaclass=ABCMeta):
         self.groups: Dict[str, List[str]] = {}
         self.dependencies: Dict[str, Tuple] = {}
         self.initial_place: Optional[str] = None
-        self._p_component_type: str = type(self).__name__  # In order to reinstanciate it later
+        self.component_type: str = type(self).__name__  # In order to reinstanciate it later
 
-        self._p_st_places: Dict[str, Place] = {}
-        self._p_st_transitions: Dict[str, Transition] = {}
-        self._p_st_switches: Set[str] = set()
-        self._p_st_dependencies: Dict[str, Dependency] = {}
-        self._p_st_groups: Dict[str, Group] = {}
-        self._p_st_behaviors: Set[str] = set()
+        self.st_places: Dict[str, Place] = {}
+        self.st_transitions: Dict[str, Transition] = {}
+        self.st_switches: Set[str] = set()
+        self.st_dependencies: Dict[str, Dependency] = {}
+        self.st_groups: Dict[str, Group] = {}
+        self.st_behaviors: Set[str] = set()
 
-        self._p_trans_dependencies: Dict[str, List[Dependency]] = {}
-        self._p_place_dependencies: Dict[str, List[Dependency]] = {}
-        self._p_group_dependencies: Dict[str, List[Dependency]] = {}
-        self._p_place_groups: Dict[str, List[Group]] = {}  # PERSIST NB_TOKENS
+        self.trans_dependencies: Dict[str, List[Dependency]] = {}
+        self.place_dependencies: Dict[str, List[Dependency]] = {}
+        self.group_dependencies: Dict[str, List[Dependency]] = {}
+        self.place_groups: Dict[str, List[Group]] = {}  # PERSIST NB_TOKENS
 
         ### PERSIST
-        self._p_act_places: Set[Place] = set()
-        self._p_act_transitions: Set[Transition] = set()
-        self._p_act_odocks: Set[Dock] = set()
-        self._p_act_idocks: Set[Dock] = set()
-        self._p_act_behavior: str = "_init"
-        self._p_queued_behaviors: Queue = Queue()
-        self._p_visited_places: Set[Place] = set()
+        self.act_places: Set[Place] = set()
+        self.act_transitions: Set[Transition] = set()
+        self.act_odocks: Set[Dock] = set()
+        self.act_idocks: Set[Dock] = set()
+        self.act_behavior: str = "_init"
+        self.queued_behaviors: Queue = Queue()
+        self.visited_places: Set[Place] = set()
         ###
 
-        self._p_initialized: bool = False
+        self.initialized: bool = False
         self.create()
         self.add_places(self.places)
         self.add_switches(self.switches)
@@ -172,8 +178,32 @@ class Component(object, metaclass=ABCMeta):
         self.add_dependencies(self.dependencies)
 
     @property
-    def _p_id(self):
+    def obj_id(self):
         return self.name
+
+    def to_json(self):
+        return {
+            "obj_id": self.obj_id,
+            "component_type": self.component_type,
+            "st_places": self.st_places,
+            "st_transitions": self.st_transitions,
+            "st_switches": self.st_switches,
+            "st_dependencies": self.st_dependencies,
+            "st_groups": self.st_groups,
+            "st_behaviors": self.st_behaviors,
+            "trans_dependencies": self.trans_dependencies,
+            "place_dependencies": self.place_dependencies,
+            "group_dependencies": self.group_dependencies,
+            "place_groups": self.place_groups,
+            "act_places": self.act_places,
+            "act_transitions": self.act_transitions,
+            "act_odocks": self.act_odocks,
+            "act_idocks": self.act_idocks,
+            "act_behavior": self.act_behavior,
+            "queued_behaviors": self.queued_behaviors,
+            "visited_places": self.visited_places,
+            "initialized": self.initialized
+        }
 
     def set_assembly(self, assembly):
         self._assembly = assembly
@@ -226,15 +256,15 @@ class Component(object, metaclass=ABCMeta):
         :param name: the name of the place to add
         :param initial: whether the place is the initial place of the component (default: False)
         """
-        if name in self._p_st_places:
+        if name in self.st_places:
             raise Exception("Trying to add '%s' as a place while it is already a place" % name)
-        elif name in self._p_st_transitions:
+        elif name in self.st_transitions:
             raise Exception("Trying to add '%s' as a place while it is already a transition" % name)
-        elif name in self._p_st_groups:
+        elif name in self.st_groups:
             raise Exception("Trying to add '%s' as a place while it is already a group" % name)
-        self._p_st_places[name] = Place(self, name)
-        self._p_place_dependencies[name] = []
-        self._p_place_groups[name] = []
+        self.st_places[name] = Place(self, name)
+        self.place_dependencies[name] = []
+        self.place_groups[name] = []
 
         if initial:
             self.set_initial_place(name)
@@ -255,16 +285,16 @@ class Component(object, metaclass=ABCMeta):
         :param initial: whether the place is the initial place of the component (default: False)
         """
         (name, override_f) = tuple
-        if name in self._p_st_places:
+        if name in self.st_places:
             raise Exception("Trying to add '%s' as a place while it is already a place" % name)
-        elif name in self._p_st_transitions:
+        elif name in self.st_transitions:
             raise Exception("Trying to add '%s' as a place while it is already a transition" % name)
-        elif name in self._p_st_groups:
+        elif name in self.st_groups:
             raise Exception("Trying to add '%s' as a place while it is already a group" % name)
-        self._p_st_places[name] = Place(self, name, override_f, cp=self)  # TODO: Remove cp
-        self._p_place_dependencies[name] = []
-        self._p_place_groups[name] = []
-        self._p_st_switches.add(name)
+        self.st_places[name] = Place(self, name, override_f, cp=self)  # TODO: Remove cp
+        self.place_dependencies[name] = []
+        self.place_groups[name] = []
+        self.st_switches.add(name)
 
         if initial:
             self.set_initial_place(name)
@@ -274,15 +304,15 @@ class Component(object, metaclass=ABCMeta):
             self.add_group(name, groups[name])
 
     def add_group(self, name: str, places: List[str]):
-        if name in self._p_st_places:
+        if name in self.st_places:
             raise Exception("Trying to add '%s' as a group while it is already a place" % name)
-        elif name in self._p_st_transitions:
+        elif name in self.st_transitions:
             raise Exception("Trying to add '%s' as a group while it is already a transition" % name)
-        elif name in self._p_st_groups:
+        elif name in self.st_groups:
             raise Exception("Trying to add '%s' as a group while it is already a group" % name)
 
         for place_name in places:
-            if place_name not in self._p_st_places:
+            if place_name not in self.st_places:
                 raise Exception("Error: trying to add non-existing place '%s' to group '%s'" % (place_name, name))
             elif place_name is self.initial_place:
                 raise Exception(
@@ -290,11 +320,11 @@ class Component(object, metaclass=ABCMeta):
                     "cannot be in a group, for now...)" % (
                         place_name, name))
 
-        self._p_st_groups[name] = Group(self.get_name(), name)
-        self._p_group_dependencies[name] = []
-        self._p_st_groups[name].add_places(places)
+        self.st_groups[name] = Group(self.get_name(), name)
+        self.group_dependencies[name] = []
+        self.st_groups[name].add_places(places)
         for place_name in places:
-            self._p_place_groups[place_name].append(self._p_st_groups[name])
+            self.place_groups[place_name].append(self.st_groups[name])
 
     def add_transitions(self, transitions: Dict[str, Tuple]):
         """
@@ -317,13 +347,13 @@ class Component(object, metaclass=ABCMeta):
     def _force_add_transition(self, name: str, src_name: Optional[str], dst_name: str, bhv: str, idset: int, func, args=()):
         src = None
         if src_name is not None:
-            src = self._p_st_places[src_name]
-        self._p_st_transitions[name] = Transition(name, src, self._p_st_places[dst_name], bhv, idset, func, args, self)
-        self._p_trans_dependencies[name] = []
-        self._p_st_behaviors.add(bhv)
-        for group in self._p_st_groups:
-            if self._p_st_groups[group].contains_place(src_name) and self._p_st_groups[group].contains_place(dst_name):
-                self._p_st_groups[group].add_transition(name)
+            src = self.st_places[src_name]
+        self.st_transitions[name] = Transition(name, src, self.st_places[dst_name], bhv, idset, func, args, self)
+        self.trans_dependencies[name] = []
+        self.st_behaviors.add(bhv)
+        for group in self.st_groups:
+            if self.st_groups[group].contains_place(src_name) and self.st_groups[group].contains_place(dst_name):
+                self.st_groups[group].add_transition(name)
 
     def add_transition(self, name: str, src_name: str, dst_name: str, bhv: str, idset: int, func, args=()):
         """
@@ -338,19 +368,19 @@ class Component(object, metaclass=ABCMeta):
         :param func: a functor created by the user
         :param args: optional tuple of arguments to give to the functor
         """
-        if name in self._p_st_places:
+        if name in self.st_places:
             raise Exception("Trying to add '%s' as a transition while it is already a place" % name)
-        if name in self._p_st_transitions:
+        if name in self.st_transitions:
             raise Exception("Trying to add '%s' as a transition while it is already a transition" % name)
-        if name in self._p_st_groups:
+        if name in self.st_groups:
             raise Exception("Trying to add '%s' as a transition while it is already a group" % name)
         if name is "_init":
             raise Exception("Cannot name a transition '_init' (used internally)")
         if bhv is "_init":
             raise Exception("Cannot name a behavior '_init' (used internally)")
-        if src_name not in self._p_st_places:
+        if src_name not in self.st_places:
             raise Exception("Trying to add transition '%s' starting from unexisting place '%s'" % (name, src_name))
-        if dst_name not in self._p_st_places:
+        if dst_name not in self.st_places:
             raise Exception("Trying to add transition '%s' going to unexisting place '%s'" % (name, dst_name))
 
         self._force_add_transition(name, src_name, dst_name, bhv, idset, func, args)
@@ -393,73 +423,73 @@ class Component(object, metaclass=ABCMeta):
             transitions = []
             switches = []
             for bind in bindings:
-                if bind in self._p_st_transitions:
+                if bind in self.st_transitions:
                     transitions.append(bind)
-                elif bind in self._p_st_switches:
+                elif bind in self.st_switches:
                     switches.append(bind)
                 else:
                     raise Exception(
                         "Trying to bind dependency %s (of type %s) to something else than a transition or a switch" % (
                             name, str(type)))
 
-            self._p_st_dependencies[name] = Dependency(self, name, type)
+            self.st_dependencies[name] = Dependency(self, name, type)
             for transition_name in transitions:
-                self._p_trans_dependencies[transition_name].append(self._p_st_dependencies[name])
+                self.trans_dependencies[transition_name].append(self.st_dependencies[name])
             for switch_name in switches:
-                self._p_place_dependencies[switch_name].append(self._p_st_dependencies[name])
+                self.place_dependencies[switch_name].append(self.st_dependencies[name])
 
         elif type == DepType.USE:
             places = []
             transitions = []
             groups = []
             for bind in bindings:
-                if bind in self._p_st_transitions:
+                if bind in self.st_transitions:
                     transitions.append(bind)
-                elif bind in self._p_st_places:
+                elif bind in self.st_places:
                     places.append(bind)
-                elif bind in self._p_st_groups:
+                elif bind in self.st_groups:
                     groups.append(bind)
                 else:
                     raise Exception(
                         "Trying to bind dependency %s (of type %s) to something else than a place, a transition or a group" % (
                             name, str(type)))
 
-            self._p_st_dependencies[name] = Dependency(self, name, type)
+            self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in places:
-                self._p_place_dependencies[place_name].append(self._p_st_dependencies[name])
+                self.place_dependencies[place_name].append(self.st_dependencies[name])
             for transition_name in transitions:
-                self._p_trans_dependencies[transition_name].append(self._p_st_dependencies[name])
+                self.trans_dependencies[transition_name].append(self.st_dependencies[name])
             for group_name in groups:
-                self._p_group_dependencies[group_name].append(self._p_st_dependencies[name])
+                self.group_dependencies[group_name].append(self.st_dependencies[name])
 
         elif type == DepType.DATA_PROVIDE:
             for bind in bindings:
-                if bind not in self._p_st_places:
+                if bind not in self.st_places:
                     raise Exception(
                         "Trying to bind dependency %s (of type %s) to something else than a place" % (name, str(type)))
 
-            self._p_st_dependencies[name] = Dependency(self, name, type)
+            self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in bindings:
-                self._p_place_dependencies[place_name].append(self._p_st_dependencies[name])
+                self.place_dependencies[place_name].append(self.st_dependencies[name])
 
         elif type == DepType.PROVIDE:
             places = []
             groups = []
             for bind in bindings:
-                if bind in self._p_st_places:
+                if bind in self.st_places:
                     places.append(bind)
-                elif bind in self._p_st_groups:
+                elif bind in self.st_groups:
                     groups.append(bind)
                 else:
                     raise Exception(
                         "Trying to bind dependency %s (of type %s) to something else than a place or a group" % (
                             name, str(type)))
 
-            self._p_st_dependencies[name] = Dependency(self, name, type)
+            self.st_dependencies[name] = Dependency(self, name, type)
             for place_name in places:
-                self._p_place_dependencies[place_name].append(self._p_st_dependencies[name])
+                self.place_dependencies[place_name].append(self.st_dependencies[name])
             for group_name in groups:
-                self._p_group_dependencies[group_name].append(self._p_st_dependencies[name])
+                self.group_dependencies[group_name].append(self.st_dependencies[name])
 
     def set_initial_place(self, name: str):
         """
@@ -469,7 +499,7 @@ class Component(object, metaclass=ABCMeta):
         :param name: the name of the place to mark initial
         """
 
-        if name not in self._p_st_places:
+        if name not in self.st_places:
             raise Exception(
                 "Trying to set non-existant place %s as intial place of component %s." % (name, self.get_name()))
         if self.initial_place is not None:
@@ -482,9 +512,9 @@ class Component(object, metaclass=ABCMeta):
         """
         This method returns the dictionary of places of the component
 
-        :return: self._p_st_places the dictionary of places
+        :return: self.st_places the dictionary of places
         """
-        return self._p_st_places
+        return self.st_places
 
     def get_dependency(self, name: str) -> Dependency:
         """
@@ -494,7 +524,7 @@ class Component(object, metaclass=ABCMeta):
         :param name: the name (string) of the dependency to get
         :return: the dependency object associated to the name
         """
-        return self._p_st_dependencies[name]
+        return self.st_dependencies[name]
 
     def get_dependency_type(self, name: str) -> DepType:
         return self.get_dependency(name).get_type()
@@ -545,7 +575,7 @@ class Component(object, metaclass=ABCMeta):
     """
 
     def read(self, name: str):
-        return self._p_st_dependencies[name].read()
+        return self.st_dependencies[name].read()
 
     def write(self, name: str, val):
         # keep trace of the line below to check wether the calling method has
@@ -555,7 +585,7 @@ class Component(object, metaclass=ABCMeta):
         # provide is associated to a place in the model. This has to be
         # corrected somewhere.
         # print(sys._getframe().f_back.f_code.co_name)
-        self._p_st_dependencies[name].write(val)
+        self.st_dependencies[name].write(val)
 
     def thread_safe_report_error(self, transition: Transition, error: str):
         self._assembly.thread_safe_report_error(self, transition, error)
@@ -567,33 +597,33 @@ class Component(object, metaclass=ABCMeta):
     # reconfiguration of the component by changing its current behavior
 
     def set_behavior(self, behavior: Optional[str]):
-        if behavior not in self._p_st_behaviors and behavior is not None:
+        if behavior not in self.st_behaviors and behavior is not None:
             raise Exception(
                 "Trying to set behavior %s in component %s while this behavior does not exist in this component." % (
                     behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
-        self._p_act_behavior = behavior
+        self.act_behavior = behavior
         if self.gantt is not None:
             self.gantt.push_b(self.get_name(), behavior, time.perf_counter())
-        self._p_visited_places = set()
+        self.visited_places = set()
         if self.get_verbosity() >= 1:
             self.print_color("Changing behavior to '%s'" % behavior)
 
     def get_behaviors(self):
-        return self._p_st_behaviors
+        return self.st_behaviors
 
     def get_active_behavior(self):
-        return self._p_act_behavior
+        return self.act_behavior
 
     def queue_behavior(self, behavior: str):
         if self.get_active_behavior() is None:
             self.set_behavior(behavior)
         else:
-            if behavior not in self._p_st_behaviors and behavior is not None:
+            if behavior not in self.st_behaviors and behavior is not None:
                 raise Exception(
                     "Trying to queue behavior %s in component %s while this behavior does not exist in this component." % (
                         behavior, self.get_name()))
-            self._p_queued_behaviors.put(behavior)
+            self.queued_behaviors.put(behavior)
             if self.get_verbosity() >= 1:
                 self.print_color("Queing behavior '%s'" % behavior)
 
@@ -622,13 +652,13 @@ class Component(object, metaclass=ABCMeta):
         """
         This method initializes the component and returns the set of active places
         """
-        if self._p_initialized:
+        if self.initialized:
             raise Exception("Trying to initialize component '%s' a second time" % self.get_name())
 
         self._force_add_transition("_init", None, self.initial_place, "_init", 0, empty_transition)
-        self._p_act_transitions.add(self._p_st_transitions["_init"])
+        self.act_transitions.add(self.st_transitions["_init"])
 
-        self._p_initialized = True
+        self.initialized = True
 
     def semantics(self) -> Tuple[bool, bool, bool]:
         """
@@ -637,53 +667,53 @@ class Component(object, metaclass=ABCMeta):
         """
 
         # Ajout d'une transition de départ vers la place initiale (donc sans source)
-        if not self._p_initialized:
+        if not self.initialized:
             self.init()
 
         # done = False
 
-        # if self._p_act_places:
+        # if self.act_places:
         # done = self._place_to_odocks()
-        # if (not done) and self._p_act_odocks:
+        # if (not done) and self.act_odocks:
         # done = self._start_transition()
-        # if (not done) and self._p_act_transitions:
+        # if (not done) and self.act_transitions:
         # done = self._end_transition()
-        # if (not done) and self._p_act_idocks:
+        # if (not done) and self.act_idocks:
         # done = self._idocks_to_place()
 
         # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
         #  provide is not stable it doesn't get activated)
         did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans = False, False, False, False
         # Exécution des transitions
-        if self._p_act_idocks:
+        if self.act_idocks:
             # log.debug("Doing idocks_to_place")
-            # log.debug("Active idocks: " + "".join([str(s) for s in self._p_act_idocks]))
+            # log.debug("Active idocks: " + "".join([str(s) for s in self.act_idocks]))
             did_smthg_idocks = self._idocks_to_place()
-        if self._p_act_places:
+        if self.act_places:
             # log.debug("Doing place_to_odocks")
-            # log.debug("Active places: " + "".join([str(s) for s in self._p_act_places]))
+            # log.debug("Active places: " + "".join([str(s) for s in self.act_places]))
             did_smthg_places = self._place_to_odocks()
-        if self._p_act_odocks:
+        if self.act_odocks:
             # log.debug("Doing start_transition")
-            # log.debug("Active odocks: " + "".join([str(s) for s in self._p_act_odocks]))
+            # log.debug("Active odocks: " + "".join([str(s) for s in self.act_odocks]))
             did_smthg_odocks = self._start_transition()
-        if self._p_act_transitions:
+        if self.act_transitions:
             did_smthg_trans = self._end_transition()
 
         did_something = any([did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans])
         # Checks if the component is IDLE
-        idle = not self._p_act_transitions and not self._p_act_odocks and not self._p_act_idocks
+        idle = not self.act_transitions and not self.act_odocks and not self.act_idocks
         # Check s'il y a des output docks associés au behavior actif (s'il y a une place à atteindre)
         if idle:
-            for place in self._p_act_places:
-                if place not in self._p_visited_places and len(place.get_output_docks(self._p_act_behavior)) > 0:
+            for place in self.act_places:
+                if place not in self.visited_places and len(place.get_output_docks(self.act_behavior)) > 0:
                     idle = False
                     break
         # Check s'il reste des behaviors à exécuter
         if idle:
-            if not self._p_queued_behaviors.empty():
+            if not self.queued_behaviors.empty():
                 idle = False
-                self.set_behavior(self._p_queued_behaviors.get())
+                self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 
         # Ajoute un behavior "de fin" (?) si c'est le cas
@@ -692,26 +722,26 @@ class Component(object, metaclass=ABCMeta):
             if self.get_verbosity() >= 1:
                 self.print_color("Going IDLE")
 
-        doing_something = did_something or (len(self._p_act_transitions) > 0)
-        return idle, doing_something, len(self._p_act_transitions) > 0
+        doing_something = did_something or (len(self.act_transitions) > 0)
+        return idle, doing_something, len(self.act_transitions) > 0
 
     def _put_provide_deps_in_refusing_state(self, place: Place):
         """
         TODO: duplicated code with _place_to_odocks
         """
         # Deps attached to place
-        for dep in self._p_place_dependencies[place.get_name()]:
-            if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+        for dep in self.place_dependencies[place.get_name()]:
+            if dep.get_type() is DepType.PROVIDE and not dep.is_refusing:
                 log.debug(f"Provide dep {str(dep)} is now refusing")
                 dep.set_refusing_state(True)
 
         # Deps attached to the group of the place
-        odocks = place.get_output_docks(self._p_act_behavior)
-        for group in self._p_place_groups[place.get_name()]:
+        odocks = place.get_output_docks(self.act_behavior)
+        for group in self.place_groups[place.get_name()]:
             group_operation = group.leave_place_operation(odocks)
             if group.is_deactivating(group_operation):
-                for dep in self._p_group_dependencies[group.get_name()]:
-                    if dep.get_type() is DepType.PROVIDE and not dep.is_refusing():
+                for dep in self.group_dependencies[group.get_name()]:
+                    if dep.get_type() is DepType.PROVIDE and not dep.is_refusing:
                         log.debug(f"Provide dep {str(dep)} is now refusing")
                         dep.set_refusing_state(True)
 
@@ -723,10 +753,10 @@ class Component(object, metaclass=ABCMeta):
         did_something = False
         places_to_remove: Set[Place] = set()
 
-        for place in self._p_act_places:
-            if place in self._p_visited_places:
+        for place in self.act_places:
+            if place in self.visited_places:
                 continue
-            odocks = place.get_output_docks(self._p_act_behavior)
+            odocks = place.get_output_docks(self.act_behavior)
             log_once.debug(f"Move from place to odocks ({place.get_name()})")
             if len(odocks) is 0:
                 continue
@@ -735,7 +765,7 @@ class Component(object, metaclass=ABCMeta):
 
             can_leave: bool = True
             # Checking place dependencies
-            for dep in self._p_place_dependencies[place.get_name()]:
+            for dep in self.place_dependencies[place.get_name()]:
                 if dep.get_type() is DepType.PROVIDE:
                     if dep.is_locked():
                         log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the place {place}")
@@ -746,12 +776,12 @@ class Component(object, metaclass=ABCMeta):
 
             # Checking group dependencies if in a group
             deactivating_groups_operation: Dict[Group, Group.Operation] = {}
-            for group in self._p_place_groups[place.get_name()]:
+            for group in self.place_groups[place.get_name()]:
                 if not can_leave:
                     break
                 group_operation = group.leave_place_operation(odocks)
                 if group.is_deactivating(group_operation):
-                    for dep in self._p_group_dependencies[group.get_name()]:
+                    for dep in self.group_dependencies[group.get_name()]:
                         if (dep.get_type() is DepType.PROVIDE) and dep.is_locked():
                             log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the group {group}")
                             can_leave = False
@@ -763,24 +793,24 @@ class Component(object, metaclass=ABCMeta):
             did_something = True
             if self.get_verbosity() >= 1:
                 self.print_color("Leaving place '%s'" % (place.get_name()))
-            for dep in self._p_place_dependencies[place.get_name()]:
+            for dep in self.place_dependencies[place.get_name()]:
                 if dep.get_type() is not DepType.DATA_PROVIDE:
                     dep.stop_using()
                     if self.get_verbosity() >= 2:
                         self.print_color("Stopping to use place dependency '%s'" % dep.get_name())
             for group in deactivating_groups_operation:
                 group.apply(deactivating_groups_operation[group])
-                for dep in self._p_group_dependencies[group.get_name()]:
+                for dep in self.group_dependencies[group.get_name()]:
                     dep.stop_using()
                     if self.get_verbosity() >= 2:
                         self.print_color("Stopping to use group dependency '%s'" % dep.get_name())
                 if self.get_verbosity() >= 2:
                     self.print_color("Deactivating group '%s'" % (group.get_name()))
-            self._p_act_odocks.update(odocks)
+            self.act_odocks.update(odocks)
             places_to_remove.add(place)
-            self._p_visited_places.add(place)
+            self.visited_places.add(place)
 
-        self._p_act_places.difference_update(places_to_remove)
+        self.act_places.difference_update(places_to_remove)
 
         return did_something
 
@@ -791,11 +821,11 @@ class Component(object, metaclass=ABCMeta):
         did_something = False
         docks_to_remove: Set[Dock] = set()
 
-        for od in self._p_act_odocks:
+        for od in self.act_odocks:
             trans = od.get_transition()
             enabled = True
 
-            for dep in self._p_trans_dependencies[trans.get_name()]:
+            for dep in self.trans_dependencies[trans.get_name()]:
                 # Necessarily USE or DATA_USE
                 if not dep.is_served():
                     log_once.debug(f"Use dependency {str(dep)} of the transition {trans.get_name()} not served, transition cannot start")
@@ -808,19 +838,19 @@ class Component(object, metaclass=ABCMeta):
             did_something = True
             if self.get_verbosity() >= 1:
                 self.print_color("Starting transition '%s'" % (trans.get_name()))
-            for dep in self._p_trans_dependencies[trans.get_name()]:
+            for dep in self.trans_dependencies[trans.get_name()]:
                 dep.start_using()
                 if self.get_verbosity() >= 2:
                     self.print_color("Starting to use transition dependency '%s'" % dep.get_name())
             if self.gantt is None:
                 gantt_tuple = None
             else:
-                gantt_tuple = (self.gantt, (self.name, self._p_act_behavior, trans.get_name(), time.perf_counter()))
+                gantt_tuple = (self.gantt, (self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
             trans.start_thread(gantt_tuple, self.dryrun)
-            self._p_act_transitions.add(trans)
+            self.act_transitions.add(trans)
             docks_to_remove.add(od)
 
-        self._p_act_odocks.difference_update(docks_to_remove)
+        self.act_odocks.difference_update(docks_to_remove)
         return did_something
 
     def _end_transition(self) -> bool:
@@ -831,28 +861,28 @@ class Component(object, metaclass=ABCMeta):
         transitions_to_remove: Set[Transition] = set()
 
         # check if some of these running transitions are finished
-        for trans in self._p_act_transitions:
+        for trans in self.act_transitions:
             if trans.get_name() is not "_init":
                 if self.gantt is None:
                     gantt_tuple = None
                 else:
-                    gantt_tuple = (self.gantt, (self.name, self._p_act_behavior, trans.get_name(), time.perf_counter()))
+                    gantt_tuple = (self.gantt, (self.name, self.act_behavior, trans.get_name(), time.perf_counter()))
                 joined = trans.join_thread(gantt_tuple, self.dryrun)
                 # get the new set of activated input docks
                 if not joined:
                     continue
 
             did_something = True
-            for dep in self._p_trans_dependencies[trans.get_name()]:
+            for dep in self.trans_dependencies[trans.get_name()]:
                 dep.stop_using()
                 if self.get_verbosity() >= 2:
                     self.print_color("Stopping to use transition dependency '%s'" % dep.get_name())
             if self.get_verbosity() >= 1:
                 self.print_color("Ending transition '%s'" % (trans.get_name()))
-            self._p_act_idocks.add(trans.get_dst_dock())
+            self.act_idocks.add(trans.get_dst_dock())
             transitions_to_remove.add(trans)
 
-        self._p_act_transitions.difference_update(transitions_to_remove)
+        self.act_transitions.difference_update(transitions_to_remove)
         return did_something
 
     def _idocks_to_place(self):
@@ -865,15 +895,15 @@ class Component(object, metaclass=ABCMeta):
         # if not all input docks are enabled for a place, the place will not
         # be activated.
 
-        for dock in self._p_act_idocks:
+        for dock in self.act_idocks:
             place: Place = dock.get_place()
             log_once.debug(f"Move from idocks to place ({place.get_name()})")
-            if place in self._p_act_places:
+            if place in self.act_places:
                 continue
 
             # On récupère tous les input docks associés au behavior actif de la fin des transitions
             # allant vers cette place
-            grp_inp_docks = place.get_groups_of_input_docks(self._p_act_behavior)
+            grp_inp_docks = place.get_groups_of_input_docks(self.act_behavior)
             for inp_docks in grp_inp_docks:
                 if len(inp_docks) is 0:
                     continue
@@ -881,7 +911,7 @@ class Component(object, metaclass=ABCMeta):
                 # On regarde si tous les input docks on reçu le jeton
                 ready = True
                 for dock2 in inp_docks:
-                    if dock2 not in self._p_act_idocks:
+                    if dock2 not in self.act_idocks:
                         ready = False
                         break
                 # Si ce n'est pas le cas on attend
@@ -889,7 +919,7 @@ class Component(object, metaclass=ABCMeta):
                     continue
 
                 # Checking place dependencies
-                for dep in self._p_place_dependencies[place.get_name()]:
+                for dep in self.place_dependencies[place.get_name()]:
                     if dep.get_type() is DepType.USE or dep.get_type() is DepType.DATA_USE:
                         if not dep.is_served():
                             log_once.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not served. "
@@ -906,13 +936,13 @@ class Component(object, metaclass=ABCMeta):
 
                 # Checking group dependencies
                 activating_groups_operation: Dict[Group, Group.Operation] = {}
-                for group in self._p_place_groups[place.get_name()]:
+                for group in self.place_groups[place.get_name()]:
                     if not ready:
                         break
                     # A vérifier: on regarde combien de input dock manquants n'ont pas le jeton
                     group_operation = group.enter_place_operation(inp_docks)
                     if group.is_activating(group_operation):
-                        for dep in self._p_group_dependencies[group.get_name()]:
+                        for dep in self.group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
                                 if not dep.is_served():
                                     log_once.debug(f"Use dep {dep.get_name()} from the group {place.get_name()} is not served. "
@@ -932,39 +962,39 @@ class Component(object, metaclass=ABCMeta):
                     if self.get_verbosity() >= 2:
                         self.print_color("Activating group '%s'" % (group.get_name()))
                     group.apply(activating_groups_operation[group])
-                    for dep in self._p_group_dependencies[group.get_name()]:
+                    for dep in self.group_dependencies[group.get_name()]:
                         dep.start_using()
-                        if dep.is_refusing():
+                        if dep.is_refusing:
                             dep.set_refusing_state(False)
                         if self.get_verbosity() >= 2:
                             self.print_color("Starting to use group dependency '%s'" % dep.get_name())
                 if self.get_verbosity() >= 1:
                     self.print_color("Entering place '%s'" % (place.get_name()))
-                for dep in self._p_place_dependencies[place.get_name()]:
+                for dep in self.place_dependencies[place.get_name()]:
                     dep.start_using()
-                    if dep.is_refusing():
+                    if dep.is_refusing:
                         dep.set_refusing_state(False)
                     if self.get_verbosity() >= 2:
                         self.print_color("Starting to use place dependency '%s'" % dep.get_name())
-                self._p_act_places.add(place)
+                self.act_places.add(place)
                 docks_to_remove.update(inp_docks)
 
-        self._p_act_idocks.difference_update(docks_to_remove)
+        self.act_idocks.difference_update(docks_to_remove)
         return did_something
 
     def get_active_places(self):
-        return list([p.get_name() for p in self._p_act_places])
+        return list([p.get_name() for p in self.act_places])
 
     def get_debug_info(self) -> str:
         debug_string = "== Component '%s' status ==\n" % self.get_name()
         # TODO: remove access to internal variable queue of queued_behaviors, not in API
-        debug_string += ("  active behaviors: %s + %s\n" % (self._p_act_behavior, self._p_queued_behaviors.queue))
-        debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self._p_act_places]))
-        debug_string += ("  active transitions: %s\n" % ','.join([t.get_name() for t in self._p_act_transitions]))
+        debug_string += ("  active behaviors: %s + %s\n" % (self.act_behavior, self.queued_behaviors.queue))
+        debug_string += ("  active places: %s\n" % ','.join([p.get_name() for p in self.act_places]))
+        debug_string += ("  active transitions: %s\n" % ','.join([t.get_name() for t in self.act_transitions]))
         debug_string += ("  active odocks (transition): %s\n" % ','.join(
-            [d.get_transition().get_name() for d in self._p_act_odocks]))
+            [d.get_transition().get_name() for d in self.act_odocks]))
         debug_string += ("  active idocks (transition): %s\n" % ','.join(
-            [d.get_transition().get_name() for d in self._p_act_idocks]))
+            [d.get_transition().get_name() for d in self.act_idocks]))
         return debug_string
 
     # META ANALYSIS

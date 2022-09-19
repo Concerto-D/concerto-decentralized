@@ -4,7 +4,6 @@ import shutil
 import os
 from datetime import datetime
 
-import concerto
 from concerto import time_logger, global_variables
 from concerto.component import Component, Group
 from concerto.connection import Connection
@@ -13,6 +12,7 @@ from concerto.debug_logger import log
 from concerto.place import Dock, Place
 from concerto.time_logger import TimeToSave
 from concerto.transition import Transition
+import concerto
 
 ARCHIVE_DIR_NAME = "archives_reprises"
 REPRISE_DIR_NAME = "reprise_configs"
@@ -25,14 +25,7 @@ class FixedEncoder(json.JSONEncoder):
     """
     def default(self, obj):
         if any(isinstance(obj, k) for k in [concerto.assembly.Assembly, Component, Dependency, Dock, Connection, Place, Transition, Group]):
-            d = obj.__dict__
-            output = {}
-            for k, v in d.items():
-                if k.startswith("_p_"):
-                    output[k] = v
-            if any(isinstance(obj, k) for k in [Component, Connection, Dock]):
-                output["_p_id"] = obj._p_id
-            return output
+            return obj.to_json()
         elif isinstance(obj, DepType):
             return obj.name
         elif isinstance(obj, set):
@@ -57,7 +50,7 @@ def build_archive_config_file_path(assembly_name: str) -> str:
 def save_config(assembly):
     log.debug("Saving current conf ...")
     time_logger.log_time_value(TimeToSave.START_SAVING_STATE)
-    assembly._p_global_nb_instructions_done = assembly.current_nb_instructions_done
+    assembly.global_nb_instructions_done = assembly.current_nb_instructions_done
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
         json.dump(assembly, outfile, cls=FixedEncoder, indent=4)
     time_logger.log_time_value(TimeToSave.END_SAVING_STATE)
@@ -82,43 +75,47 @@ def load_previous_config(assembly):
 
 
 def restore_previous_config(assembly, previous_config):
+    """
+    This method fill the empty instanciated <assembly> with the values of <previous_config>, that contains
+    the previous state of the assembly (the state he was into before going to sleep)
+    """
     # Restore components
-    components_dicts = previous_config['_p_components']
+    components_dicts = previous_config['components']
     components_names = components_dicts.keys()
     components = _instanciate_components(assembly, previous_config)
     for comp_values in components_dicts.values():
         component = _restore_component(assembly, comp_values, components_names, components)
-        assembly._p_components[component._p_id] = component
+        assembly.components[component.obj_id] = component
 
-    assembly._p_connections = {}
-    # Restore connections
-    for conn_data in previous_config['_p_connections'].keys():
+    assembly.connections = {}
+    # Restore connections between components
+    for conn_data in previous_config['connections'].keys():
         dep1_id, dep2_id = conn_data.split("/")
         comp1_name, dep1_name = dep1_id.split("-")
         comp2_name, dep2_name = dep2_id.split("-")
 
         dep1, dep2 = assembly._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
         conn = Connection(dep1, dep2)
-        if comp1_name in assembly._p_components.keys():
-            assembly._p_component_connections[comp1_name].add(conn)
-        if comp2_name in assembly._p_components.keys():
-            assembly._p_component_connections[comp2_name].add(conn)
-        assembly._p_connections[conn._p_id] = conn
+        if comp1_name in assembly.components.keys():
+            assembly.component_connections[comp1_name].add(conn)
+        if comp2_name in assembly.components.keys():
+            assembly.component_connections[comp2_name].add(conn)
+        assembly.connections[conn.obj_id] = conn
 
-    assembly._p_act_components = set(previous_config['_p_act_components'])
-    assembly._p_id_sync = previous_config['_p_id_sync']
-    assembly._p_global_nb_instructions_done = previous_config['_p_global_nb_instructions_done']
-    assembly._p_waiting_rate = previous_config['_p_waiting_rate']
-    assembly._p_components_states = previous_config['_p_components_states']
-    assembly._p_remote_confirmations = set(previous_config['_p_remote_confirmations'])
+    assembly.act_components = set(previous_config['act_components'])
+    assembly.id_sync = previous_config['id_sync']
+    assembly.global_nb_instructions_done = previous_config['global_nb_instructions_done']
+    assembly.waiting_rate = previous_config['waiting_rate']
+    assembly.components_states = previous_config['components_states']
+    assembly.remote_confirmations = set(previous_config['remote_confirmations'])
 
 
-def _instanciate_components(assembly, previous_config, ):
-    components_dicts = previous_config['_p_components']
+def _instanciate_components(assembly, previous_config):
+    components_dicts = previous_config['components']
     components = {}
     for comp_values in components_dicts.values():
-        comp_id = comp_values['_p_id']
-        comp_type = comp_values['_p_component_type']
+        comp_id = comp_values['obj_id']
+        comp_type = comp_values['component_type']
         component = assembly.instanciate_component(comp_id, comp_type)
         components[comp_id] = component
 
@@ -126,61 +123,61 @@ def _instanciate_components(assembly, previous_config, ):
 
 
 def _restore_component(assembly, comp_values, components_names, components):
-    comp_id = comp_values['_p_id']
+    comp_id = comp_values['obj_id']
     component = components[comp_id]
-    assembly._p_component_connections[comp_id] = set()
-    component._p_initialized = comp_values['_p_initialized']
+    assembly.component_connections[comp_id] = set()
+    component.initialized = comp_values['initialized']
 
     # Restore dependencies
-    for dep_values in comp_values['_p_st_dependencies'].values():
-        dep_comp = component._p_st_dependencies[dep_values['_p_name']]
-        dep_comp._p_is_refusing = dep_values['_p_is_refusing']
-        dep_comp._p_nb_users = dep_values['_p_nb_users']
-        dep_comp._p_data = dep_values['_p_data']
+    for dep_values in comp_values['st_dependencies'].values():
+        dep_comp = component.st_dependencies[dep_values['dependency_name']]
+        dep_comp.is_refusing = dep_values['is_refusing']
+        dep_comp.nb_users = dep_values['nb_users']
+        dep_comp.data = dep_values['data']
 
     # Restore groups
-    for group_name in comp_values['_p_st_groups'].keys():
-        group_comp = component._p_st_groups[group_name]
-        group_vals = comp_values['_p_st_groups'][group_name]
-        group_comp._p_nb_tokens = group_vals['_p_nb_tokens']
+    for group_name in comp_values['st_groups'].keys():
+        group_comp = component.st_groups[group_name]
+        group_vals = comp_values['st_groups'][group_name]
+        group_comp.nb_tokens = group_vals['nb_tokens']
 
     # Restore active places
-    for place_dict in comp_values['_p_act_places']:
-        place_comp = component._p_st_places[place_dict['_p_name']]
-        component._p_act_places.add(place_comp)
+    for place_dict in comp_values['act_places']:
+        place_comp = component.st_places[place_dict['place_name']]
+        component.act_places.add(place_comp)
 
     # Restore active transitions
-    for transitions_dict in comp_values['_p_act_transitions']:
-        transitions_comp = component._p_st_transitions[transitions_dict['_p_name']]
-        component._p_act_transitions.add(transitions_comp)
+    for transitions_dict in comp_values['act_transitions']:
+        transitions_comp = component.st_transitions[transitions_dict['transition_name']]
+        component.act_transitions.add(transitions_comp)
 
     # Restore active odocks
-    for odock in comp_values['_p_act_odocks']:
+    for odock in comp_values['act_odocks']:
 
         # Finding corresponding odock
-        for transition in component._p_st_transitions.values():
-            if transition.src_dock._p_id == odock['_p_id']:
-                component._p_act_odocks.add(transition.src_dock)
+        for transition in component.st_transitions.values():
+            if transition.src_dock.obj_id == odock['obj_id']:
+                component.act_odocks.add(transition.src_dock)
 
     # Restore active idocks
-    for idock in comp_values['_p_act_idocks']:
+    for idock in comp_values['act_idocks']:
 
         # Finding corresponding idock
-        for transition in component._p_st_transitions.values():
-            if transition.dst_dock._p_id == idock['_p_id']:
-                component._p_act_idocks.add(transition.dst_dock)
+        for transition in component.st_transitions.values():
+            if transition.dst_dock.obj_id == idock['obj_id']:
+                component.act_idocks.add(transition.dst_dock)
 
 
     # Restore active behavior
-    component._p_act_behavior = comp_values['_p_act_behavior']
+    component.act_behavior = comp_values['act_behavior']
 
     # Restore queued behaviors
-    for bhv in comp_values['_p_queued_behaviors']:
+    for bhv in comp_values['queued_behaviors']:
         component.queue_behavior(bhv)
 
     # Restore visited places
-    for place_dict in comp_values['_p_visited_places']:
-        place_comp = component._p_st_places[place_dict['_p_name']]
-        component._p_visited_places.add(place_comp)
+    for place_dict in comp_values['visited_places']:
+        place_comp = component.st_places[place_dict['place_name']]
+        component.visited_places.add(place_comp)
 
     return component

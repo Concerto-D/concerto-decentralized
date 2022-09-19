@@ -72,16 +72,26 @@ class Dependency(object):
 
     def __init__(self, component, name: str, dep_type: DepType):
         self._component = component
-        self._p_name = name
-        self._p_type = dep_type
-        self._p_connections: Set = set()
-        self._p_is_refusing: bool = False
-        self._p_nb_users = 0
-        self._p_data = None
+        self.dependency_name = name
+        self.dependency_type = dep_type
+        self.dependency_connections: Set = set()
+        self.is_refusing: bool = False
+        self.nb_users = 0
+        self.data = None
 
     @property
-    def _p_id(self):
-        return f"{self._component.name}-{self._p_name}"
+    def obj_id(self):
+        return f"{self._component.name}-{self.dependency_name}"
+
+    def to_json(self):
+        return {
+            "dependency_name": self.dependency_name,
+            "dependency_type": self.dependency_type,
+            "dependency_connections": self.dependency_connections,
+            "is_refusing": self.is_refusing,
+            "nb_users": self.nb_users,
+            "data": self.data
+        }
 
     def get_component_name(self):
         """
@@ -97,7 +107,7 @@ class Dependency(object):
 
         :return: name
         """
-        return self._p_name
+        return self.dependency_name
 
     def get_type(self) -> DepType:
         """
@@ -105,7 +115,7 @@ class Dependency(object):
 
         :return: type
         """
-        return self._p_type
+        return self.dependency_type
 
     def check_get_data_is_provide(self):
         if self.get_type() is not DepType.DATA_PROVIDE and self.get_type() is not DepType.PROVIDE:
@@ -118,19 +128,19 @@ class Dependency(object):
 
     def get_data(self):
         self.check_get_data_is_provide()
-        return self._p_data
+        return self.data
 
     def read(self):
         if self.get_type() is not DepType.DATA_USE and self.get_type() is not DepType.USE:
             raise Exception("Trying to read from dependency '%s' which is not of type use or data use" % self.get_name())
-        for c in self._p_connections:
+        for c in self.dependency_connections:
             if c.is_active():
                 return c.get_provide_dep().get_data()
         raise Exception("Trying to read from dependency '%s' which is not served" % self.get_name())
 
     def write(self, data):
         self.check_write_data_is_provide()
-        self._p_data = data
+        self.data = data
 
     def connect(self, c):
         """
@@ -141,56 +151,53 @@ class Dependency(object):
 
         :return: self.free
         """
-        self._p_connections.add(c)
+        self.dependency_connections.add(c)
 
     def disconnect(self, c):
-        self._p_connections.remove(c)
+        self.dependency_connections.remove(c)
 
     def is_in_use(self) -> bool:
-        return self._p_nb_users > 0
+        return self.nb_users > 0
 
     def start_using(self):
-        self._p_nb_users += 1
+        self.nb_users += 1
 
         # S'il y a au moins une dépendance remote, il faut la prévenir de la mise à jour du nb_users
-        for conn in self._p_connections:
+        for conn in self.dependency_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
+                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component_name(), self.dependency_name)
 
     def stop_using(self):
-        self._p_nb_users -= 1
+        self.nb_users -= 1
 
         # S'il y a au moins une dépendance remote, il faut la prévenir de la mise à jour du nb_users
-        for conn in self._p_connections:
+        for conn in self.dependency_connections:
             if type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency':
-                communication_handler.send_nb_dependency_users(self._p_nb_users, self.get_component_name(), self._p_name)
-
-    def is_refusing(self):
-        return self._p_is_refusing
+                communication_handler.send_nb_dependency_users(self.nb_users, self.get_component_name(), self.dependency_name)
 
     def is_allowed(self):
-        if self._p_type != DepType.DATA_USE and self._p_type != DepType.USE:
+        if self.dependency_type != DepType.DATA_USE and self.dependency_type != DepType.USE:
             raise Exception("Trying to check if a provide port is allowed")
-        for c in self._p_connections:
-            if c.get_provide_dep().is_refusing():
+        for c in self.dependency_connections:
+            if c.get_provide_dep().is_refusing:
                 return False
         return True
 
     def set_refusing_state(self, value: bool):
-        self._p_is_refusing = value
+        self.is_refusing = value
 
         # S'il y a au moins une dépendance remote, il faut la prévenir du fait que le provide n'accepte
         # plus d'utilisation
-        if any(type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency' for conn in self._p_connections):
-            communication_handler.send_refusing_state(value, self.get_component_name(), self._p_name)
+        if any(type(conn.get_opposite_dependency(self)).__name__ == 'RemoteDependency' for conn in self.dependency_connections):
+            communication_handler.send_refusing_state(value, self.get_component_name(), self.dependency_name)
 
     def is_served(self):
         """
         Est ce que le use port est provisionné ?
         """
-        if self._p_type != DepType.DATA_USE and self._p_type != DepType.USE:
+        if self.dependency_type != DepType.DATA_USE and self.dependency_type != DepType.USE:
             raise Exception("Trying to check if a (data) provide port is served")
-        for c in self._p_connections:
+        for c in self.dependency_connections:
             if c.is_active():
                 return True
         return False
@@ -199,20 +206,20 @@ class Dependency(object):
         """
         Est que le provide port est utilisé par au moins un use port ?
         """
-        if self._p_type != DepType.DATA_PROVIDE and self._p_type != DepType.PROVIDE:
+        if self.dependency_type != DepType.DATA_PROVIDE and self.dependency_type != DepType.PROVIDE:
             raise Exception("Trying to check if a (data) use port is active")
-        for c in self._p_connections:
+        for c in self.dependency_connections:
             if c.is_locked():
                 return True
         return False
 
     def __str__(self):
-        return self._p_name
+        return self.dependency_name
 
     def __eq__(self, other):
         if type(other) != type(self):
             return False
-        return self._p_name == other._p_name and self._component == other._component
+        return self.dependency_name == other.dependency_name and self._component == other._component
 
     def __hash__(self):
-        return hash((self._p_name, self._component))
+        return hash((self.dependency_name, self._component))

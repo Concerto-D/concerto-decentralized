@@ -42,34 +42,34 @@ def run_flask_api(assembly):
     @app.route("/get_nb_dependency_users/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_nb_dependency_users(component_name: str, dependency_name: str):
-        for conn in set(assembly._p_component_connections[component_name]):
+        for conn in set(assembly.component_connections[component_name]):
             if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep._p_nb_users)
+                return str(conn._use_dep.nb_users)
             if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep._p_nb_users)
+                return str(conn._provide_dep.nb_users)
 
     @app.route("/get_refusing_state/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_refusing_state(component_name: str, dependency_name: str):
-        for conn in set(assembly._p_component_connections[component_name]):
+        for conn in set(assembly.component_connections[component_name]):
             if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep._p_is_refusing)
+                return str(conn._use_dep.is_refusing)
             if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep._p_is_refusing)
+                return str(conn._provide_dep.is_refusing)
 
     @app.route("/get_data_dependency/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_data_dependency(component_name: str, dependency_name: str):
-        for conn in set(assembly._p_component_connections[component_name]):
+        for conn in set(assembly.component_connections[component_name]):
             if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep._p_data)
+                return str(conn._use_dep.data)
             if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep._p_data)
+                return str(conn._provide_dep.data)
 
     @app.route("/is_conn_synced/<syncing_component>/<component_to_sync>/<dep_to_sync>/<syncing_dep>/<action>")
     @catch_exceptions
     def is_conn_synced(syncing_component: str, component_to_sync: str, dep_to_sync: str, syncing_dep: str, action: str):
-        for conn in set(assembly._p_component_connections[component_to_sync]):
+        for conn in set(assembly.component_connections[component_to_sync]):
             use, provide = (conn.get_use_dep(), conn.get_provide_dep())
             if (use.get_component_name() in [component_to_sync, syncing_component]
                 and provide.get_component_name() in [component_to_sync, syncing_component]
@@ -82,7 +82,7 @@ def run_flask_api(assembly):
     @catch_exceptions
     def get_remote_component_state(component_name: str, id_sync: int):
         # TODO: to refacto
-        if component_name + str(id_sync) not in assembly._p_components_states.keys():
+        if component_name + str(id_sync) not in assembly.components_states.keys():
             return ACTIVE
         else:
             # TODO: ad-hoc, to refacto
@@ -90,7 +90,7 @@ def run_flask_api(assembly):
                 calling_assembly_name = request.args.get("calling_assembly_name")
                 if calling_assembly_name is not None:
                     assembly.add_to_remote_confirmations(calling_assembly_name)
-            return assembly._p_components_states[component_name + str(id_sync)]
+            return assembly.components_states[component_name + str(id_sync)]
 
     # Remove logging of each HTTP transactions
     werkzeug_log = logging.getLogger('werkzeug')

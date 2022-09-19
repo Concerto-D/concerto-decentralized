@@ -144,6 +144,6 @@ def get_remote_component_state(component_name: str, id_sync: int, calling_assemb
 
 def check_finished_assemblies(assembly, wait_for_refusing_provide):
     wait_finished_assemblies_cond = True
-    if assembly._p_id_sync == 1 and not wait_for_refusing_provide:
-        wait_finished_assemblies_cond = len(assembly._p_remote_confirmations) == len(assembly._remote_assemblies_names)
+    if assembly.id_sync == 1 and not wait_for_refusing_provide:
+        wait_finished_assemblies_cond = len(assembly.remote_confirmations) == len(assembly._remote_assemblies_names)
     return wait_finished_assemblies_cond

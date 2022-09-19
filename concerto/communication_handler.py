@@ -73,7 +73,7 @@ def set_component_state(assembly, state: [ACTIVE, INACTIVE], component_name: str
     if global_variables.is_concerto_d_asynchronous():
         zenoh_communication.set_component_state(state, component_name, id_sync)
     else:
-        assembly._p_components_states[component_name + str(assembly._p_id_sync)] = INACTIVE
+        assembly.components_states[component_name + str(assembly.id_sync)] = INACTIVE
 
 
 def get_remote_component_state(assembly_name: str, component_name: str, id_sync: int) -> [ACTIVE, INACTIVE]:

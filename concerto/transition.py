@@ -25,7 +25,7 @@ class Transition:
     """
 
     def __init__(self, name, src, dst, bhv, idset, func, args, component):
-        self._p_name = name
+        self.transition_name = name
         self.src_place = None
         if src is not None:
             self.src_place = src.get_name()
@@ -42,8 +42,13 @@ class Transition:
         self.thread = None
 
     @property
-    def _p_id(self):
-        return f"{self._component.name}_{self._p_name}"
+    def obj_id(self):
+        return f"{self._component.name}_{self.transition_name}"
+
+    def to_json(self):
+        return {
+            "transition_name": self.transition_name
+        }
 
     def set_name(self, name):
         """
@@ -51,7 +56,7 @@ class Transition:
 
         :param name: tha name (string) to set
         """
-        self._p_name = name
+        self.transition_name = name
 
     def get_name(self):
         """
@@ -59,7 +64,7 @@ class Transition:
 
         :return: name (string)
         """
-        return self._p_name
+        return self.transition_name
     
     def get_dst_idset(self):
         return self.dst_idset

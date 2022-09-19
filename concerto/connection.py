@@ -14,8 +14,13 @@ class Connection:
         self._use_dep.connect(self)
 
     @property
-    def _p_id(self):
+    def obj_id(self):
         return self.build_id_from_dependencies(self._use_dep, self._provide_dep)
+
+    def to_json(self):
+        return {
+            "obj_id": self.obj_id
+        }
 
     def can_remove(self) -> bool:
         return not self.is_locked()
@@ -42,7 +47,7 @@ class Connection:
     @staticmethod
     def build_id_from_dependencies(dep1: Dependency, dep2: Dependency):
         use_dep, provide_dep = Connection.compute_provide_use_deps(dep1, dep2)
-        return f"{use_dep._p_id}/{provide_dep._p_id}"
+        return f"{use_dep.obj_id}/{provide_dep.obj_id}"
 
     @staticmethod
     def compute_provide_use_deps(dep1: Dependency, dep2: Dependency):
