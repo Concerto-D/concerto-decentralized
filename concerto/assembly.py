@@ -493,9 +493,6 @@ class Assembly(object):
     def get_error_reports(self) -> List[str]:
         return self.error_reports
 
-    def add_to_remote_confirmations(self, assembly_name):
-        self.remote_confirmations.add(assembly_name)
-
     def finish_reconfiguration(self):
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self.obj_id}").touch()  # Create a file that serves as a flag

@@ -107,7 +107,7 @@ def restore_previous_config(assembly, previous_config):
     assembly.global_nb_instructions_done = previous_config['global_nb_instructions_done']
     assembly.waiting_rate = previous_config['waiting_rate']
     assembly.components_states = previous_config['components_states']
-    assembly.remote_confirmations = set(previous_config['remote_confirmations'])
+    assembly.remote_confirmations = set(set(remote_conf) for remote_conf in previous_config['remote_confirmations'])
 
 
 def _instanciate_components(assembly, previous_config):
@@ -166,7 +166,6 @@ def _restore_component(assembly, comp_values, components_names, components):
         for transition in component.st_transitions.values():
             if transition.dst_dock.obj_id == idock['obj_id']:
                 component.act_idocks.add(transition.dst_dock)
-
 
     # Restore active behavior
     component.act_behavior = comp_values['act_behavior']
