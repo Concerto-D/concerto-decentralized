@@ -59,11 +59,11 @@ Host g5k
 - ```mkdir <all_experiments_results_dir>```
 - ```cd <all_experiments_results_dir>```
 - - Clone the **experiment_files** repository:
-  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
-  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
+  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
+  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
 - Clone the **evaluation** repository: 
-  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
-  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
+  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
+  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
   
 *Configure the experiment parameters*
 
@@ -121,14 +121,14 @@ This part explains what to do if the goal is only to **start a reconfiguration m
 - ```mkdir <all_projects_dir>```
 - ```cd <all_projects_dir>```
 - Clone the **concerto-decentralized** repository: 
-  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git```
-  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/concerto-decentralized.git````
+  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git```
+  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/concerto-decentralized.git````
 - - Clone the **experiment_files** repository:
-  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
-  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
+  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
+  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
 - Clone the **evaluation** repository: 
-  - ```git clone -b clean git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
-  - or ````git clone -b clean https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
+  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
+  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
 
 *Install apt deps*
 - ```sudo apt update```
