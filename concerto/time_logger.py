@@ -3,12 +3,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import yaml
+
+from concerto.debug_logger import log
+
 LOG_DIR_NAME = "/tmp"
 LOG_DIR_TIMESTAMP = ""
 ASSEMBLY_NAME = ""
 
 
-started_timestamps_set = set()
+all_timestamps_dict = {}
 
 
 def create_timestamp_metric(timestamp_type, is_instruction_method=False):
@@ -18,11 +22,12 @@ def create_timestamp_metric(timestamp_type, is_instruction_method=False):
     """
     def _create_timestamp_metric(func):
         def wrapper(*args, **kwargs):
-            print(args, kwargs)
             if not is_instruction_method:
                 log_args, log_kwargs = (), {}
             else:
-                log_args, log_kwargs = args[1:], kwargs   # args[1:] to ignore self
+                log_args, log_kwargs = tuple(args[1:]), dict(kwargs)   # args[1:] to ignore self
+                if timestamp_type in [TimestampType.TimestampInstruction.WAIT, TimestampType.TimestampInstruction.WAITALL]:
+                    log_kwargs["id_sync"] = args[0].id_sync
 
             log_time_value(timestamp_type, TimestampPeriod.START, *log_args, **log_kwargs)
             result = func(*args, **kwargs)
@@ -71,12 +76,7 @@ def init_time_log_dir(assembly_name: str, timestamp_log_dir: Optional[str] = Non
 
 
 def log_time_value(timestamp_type: str, timestamp_period: str, *args, **kwargs):
-    timestamp_name = register_time_value(timestamp_type, timestamp_period, *args, **kwargs)
-    global started_timestamps_set
-    if timestamp_period == TimestampPeriod.START:
-        started_timestamps_set.add(timestamp_name)
-    else:
-        started_timestamps_set.remove(timestamp_name)
+    register_time_value(timestamp_type, timestamp_period, *args, **kwargs)
 
 
 def register_time_value(timestamp_type: str, timestamp_period: str, *args, **kwargs):
@@ -88,20 +88,33 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, **kwa
     if parameters_kwargs != "":
         timestamp_name += f"_{parameters_kwargs}"
 
-    timestamp_to_save = f"{timestamp_name}_{timestamp_period}"
-    register_log_time_value(timestamp_to_save)
+    if timestamp_period == TimestampPeriod.START:
+        if timestamp_name in all_timestamps_dict:
+            raise Exception(f"Register time value error: {timestamp_name} for {TimestampPeriod.START} already registered")
+        all_timestamps_dict[timestamp_name] = {}
+        all_timestamps_dict[timestamp_name][TimestampPeriod.START] = time.time()
+
+    else:
+        if timestamp_name not in all_timestamps_dict.keys():
+            raise Exception(f"Register time value error: {timestamp_name} never registered")
+        if TimestampPeriod.END in all_timestamps_dict[timestamp_name]:
+            raise Exception(f"Register time value error: {timestamp_name} for {TimestampPeriod.END} already registered")
+        all_timestamps_dict[timestamp_name][TimestampPeriod.END] = time.time()
 
     return timestamp_name
 
 
-def register_log_time_value(timestamp_to_save: str):
+# TODO rename functions
+def register_timestamps_in_file():
     with open(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml", "a") as f:
-        f.write(f"{timestamp_to_save}: {time.time()}\n")
+        yaml.safe_dump(all_timestamps_dict, f)
 
 
 def register_end_all_time_values():
-    for timestamp_name in started_timestamps_set:
-        register_log_time_value(timestamp_name + "_" + TimestampPeriod.END)
+    log.debug(all_timestamps_dict)
+    for timestamp_name, timestamp_values in all_timestamps_dict.items():
+        if TimestampPeriod.END not in timestamp_values.keys():
+            all_timestamps_dict[timestamp_name][TimestampPeriod.END] = time.time()
 
 
 

@@ -538,4 +538,5 @@ class Assembly(object):
         if global_variables.concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             rest_communication.save_communication_cache(self.get_name())
         time_logger.register_end_all_time_values()
+        time_logger.register_timestamps_in_file()
         exit()
