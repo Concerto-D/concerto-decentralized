@@ -11,9 +11,11 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
+from concerto import time_logger
 from concerto.debug_logger import log, log_once
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
+from concerto.time_logger import TimestampType, TimestampPeriod
 from concerto.transition import Transition
 from concerto.gantt_record import GanttRecord
 from concerto.utility import Messages
@@ -159,7 +161,6 @@ class Component(object, metaclass=ABCMeta):
         self.group_dependencies: Dict[str, List[Dependency]] = {}
         self.place_groups: Dict[str, List[Group]] = {}  # PERSIST NB_TOKENS
 
-        ### PERSIST
         self.act_places: Set[Place] = set()
         self.act_transitions: Set[Transition] = set()
         self.act_odocks: Set[Dock] = set()
@@ -167,7 +168,6 @@ class Component(object, metaclass=ABCMeta):
         self.act_behavior: str = "_init"
         self.queued_behaviors: Queue = Queue()
         self.visited_places: Set[Place] = set()
-        ###
 
         self.initialized: bool = False
         self.create()
@@ -603,6 +603,8 @@ class Component(object, metaclass=ABCMeta):
                     behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
+        if behavior is not None and behavior != "_init":
+            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
         if self.gantt is not None:
             self.gantt.push_b(self.get_name(), behavior, time.perf_counter())
         self.visited_places = set()
@@ -670,32 +672,12 @@ class Component(object, metaclass=ABCMeta):
         if not self.initialized:
             self.init()
 
-        # done = False
-
-        # if self.act_places:
-        # done = self._place_to_odocks()
-        # if (not done) and self.act_odocks:
-        # done = self._start_transition()
-        # if (not done) and self.act_transitions:
-        # done = self._end_transition()
-        # if (not done) and self.act_idocks:
-        # done = self._idocks_to_place()
-
-        # TODO: Discuss if best alternative: doing the 4 if possible (starting by idocks to place so that if a
-        #  provide is not stable it doesn't get activated)
         did_smthg_idocks, did_smthg_places, did_smthg_odocks, did_smthg_trans = False, False, False, False
-        # Exécution des transitions
         if self.act_idocks:
-            # log.debug("Doing idocks_to_place")
-            # log.debug("Active idocks: " + "".join([str(s) for s in self.act_idocks]))
             did_smthg_idocks = self._idocks_to_place()
         if self.act_places:
-            # log.debug("Doing place_to_odocks")
-            # log.debug("Active places: " + "".join([str(s) for s in self.act_places]))
             did_smthg_places = self._place_to_odocks()
         if self.act_odocks:
-            # log.debug("Doing start_transition")
-            # log.debug("Active odocks: " + "".join([str(s) for s in self.act_odocks]))
             did_smthg_odocks = self._start_transition()
         if self.act_transitions:
             did_smthg_trans = self._end_transition()
@@ -709,10 +691,13 @@ class Component(object, metaclass=ABCMeta):
                 if place not in self.visited_places and len(place.get_output_docks(self.act_behavior)) > 0:
                     idle = False
                     break
+
         # Check s'il reste des behaviors à exécuter
         if idle:
             if not self.queued_behaviors.empty():
                 idle = False
+                if self.act_behavior != "_init":
+                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior)
                 self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 

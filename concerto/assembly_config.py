@@ -4,13 +4,13 @@ import shutil
 import os
 from datetime import datetime
 
-from concerto import time_logger, global_variables
+from concerto import global_variables
 from concerto.component import Component, Group
 from concerto.connection import Connection
 from concerto.dependency import DepType, Dependency
 from concerto.debug_logger import log
 from concerto.place import Dock, Place
-from concerto.time_logger import TimeToSave
+from concerto.time_logger import create_timestamp_metric, TimestampType
 from concerto.transition import Transition
 import concerto
 
@@ -47,13 +47,12 @@ def build_archive_config_file_path(assembly_name: str) -> str:
     return f"{path_dir}/saved_config_{timestamp}.json"
 
 
+@create_timestamp_metric(TimestampType.TimestampEvent.SAVING_STATE)
 def save_config(assembly):
     log.debug("Saving current conf ...")
-    time_logger.log_time_value(TimeToSave.START_SAVING_STATE)
     assembly.global_nb_instructions_done = assembly.current_nb_instructions_done
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
         json.dump(assembly, outfile, cls=FixedEncoder, indent=4)
-    time_logger.log_time_value(TimeToSave.END_SAVING_STATE)
 
 
 def load_previous_config(assembly):
@@ -107,7 +106,7 @@ def restore_previous_config(assembly, previous_config):
     assembly.global_nb_instructions_done = previous_config['global_nb_instructions_done']
     assembly.waiting_rate = previous_config['waiting_rate']
     assembly.components_states = previous_config['components_states']
-    assembly.remote_confirmations = set(set(remote_conf) for remote_conf in previous_config['remote_confirmations'])
+    assembly.remote_confirmations = set(tuple(remote_conf) for remote_conf in previous_config['remote_confirmations'])
 
 
 def _instanciate_components(assembly, previous_config):

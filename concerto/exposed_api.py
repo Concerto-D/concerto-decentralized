@@ -6,7 +6,7 @@ from flask import Flask, request
 from threading import Thread
 
 from concerto.debug_logger import log
-from concerto.rest_communication import ACTIVE
+from concerto.rest_communication import ACTIVE, INACTIVE
 import logging
 
 # TODO: refacto with rest_communication
@@ -87,7 +87,7 @@ def run_flask_api(assembly):
         else:
             # TODO: ad-hoc, to refacto
             calling_assembly_name = request.args.get("calling_assembly_name")
-            if calling_assembly_name is not None:
+            if calling_assembly_name is not None and assembly.components_states[component_name + str(id_sync)] == INACTIVE:
                 assembly.remote_confirmations.add((calling_assembly_name, id_sync))
             return assembly.components_states[component_name + str(id_sync)]
 

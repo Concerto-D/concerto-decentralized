@@ -14,10 +14,10 @@ from concerto import communication_handler, assembly_config, time_logger, global
 from concerto.communication_handler import CONN, DECONN, INACTIVE
 from concerto.dependency import DepType
 from concerto.component import Component
-from concerto.debug_logger import log
+from concerto.debug_logger import log, log_once
 from concerto.global_variables import CONCERTO_D_SYNCHRONOUS
 from concerto.remote_dependency import RemoteDependency
-from concerto.time_logger import TimeToSave
+from concerto.time_logger import TimestampType, create_timestamp_metric
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.gantt_record import GanttRecord
@@ -133,13 +133,13 @@ class Assembly(object):
             "remote_confirmations": self.remote_confirmations,
         }
 
+p    @create_timestamp_metric(TimestampType.TimestampEvent.LOADING_STATE)
     def _reprise_previous_config(self):
         """
         Check if the previous programm went to sleep (i.e. if a saved config file exists)
         and restore the previous config if so
         """
         # TODO: si on ne reprend pas le state on le log quand même ? Ca peut donner une idée du temps que ça prend sans devoir le récupérer
-        time_logger.log_time_value(TimeToSave.START_LOADING_STATE)
         if exists(assembly_config.build_saved_config_file_path(self.name)):
             log.debug(f"\33[33m --- conf found at {assembly_config.build_saved_config_file_path(self.name)} ----\033[0m")
             previous_config = assembly_config.load_previous_config(self)
@@ -147,7 +147,6 @@ class Assembly(object):
         else:
             log.debug("'\33[33m'----- Previous config doesn't NOT exists, starting from zero ----'\033[0m'")
             log.debug(f"'\33[33m'----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----'\033[0m'")
-        time_logger.log_time_value(TimeToSave.END_LOADING_STATE)
 
     def set_verbosity(self, level: int):
         self.verbosity = level
@@ -223,6 +222,7 @@ class Assembly(object):
         return comp
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.ADD, is_instruction_method=True)
     def add_component(self, name: str, comp_type: str):
         if name in self.components:
             raise Exception("Trying to add '%s' as a component while it is already a component" % name)
@@ -232,6 +232,7 @@ class Assembly(object):
         self.add_to_active_components(name)  # _init
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.DEL, is_instruction_method=True)
     def del_component(self, component_name: str):
         finished = False
         while not finished:
@@ -247,6 +248,7 @@ class Assembly(object):
                 self.run_semantics_iteration()
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.CONN, is_instruction_method=True)
     def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         """
         This method adds a connection between two components dependencies.
@@ -341,6 +343,7 @@ class Assembly(object):
         return dep1, dep2
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.DCONN, is_instruction_method=True)
     def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         """
         This method adds a connection between two components dependencies.
@@ -397,6 +400,7 @@ class Assembly(object):
             return False
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.PUSH_B, is_instruction_method=True)
     def push_b(self, component_name: str, behavior: str):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
@@ -404,6 +408,7 @@ class Assembly(object):
             self.add_to_active_components(component_name)
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.WAIT, is_instruction_method=True)
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
         finished = False
         log.debug(f"Waiting for component {component_name} to finish its behaviors execution")
@@ -428,6 +433,7 @@ class Assembly(object):
                 self.id_sync += 1
 
     @track_instruction_number
+    @create_timestamp_metric(TimestampType.TimestampInstruction.WAITALL, is_instruction_method=True)
     def wait_all(self, wait_for_refusing_provide: bool = False):
         """
         :params wait_for_refusing_provide: Used to specify that the assembly need to wait for the provides
@@ -439,7 +445,6 @@ class Assembly(object):
         while not finished:
             all_local_idle = len(self.act_components) == 0
             if all_local_idle:
-                # TODO: ne pas renvoyer un message quand on se réveille si on l'a déjà fait
                 if not wait_for_refusing_provide and not msg_idle_sent:
                     log.debug("Finished local behavior, sending INACTIVE msg in"
                                       f"{self.name} (assembly name) {self.id_sync} (id sync)")
@@ -447,23 +452,27 @@ class Assembly(object):
                     assemblies_to_wait = [(assembly_name, self.id_sync) for assembly_name in self._remote_assemblies_names]
                     log.debug(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
                     msg_idle_sent = True
-                # all_remote_idle = True
-                # for assembly_name in self._remote_assemblies_names:
-                #     if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE:
-                #         all_remote_idle = False
-                assemblies_to_wait = list(self._remote_assemblies_names)
-                for assembly_name, id_sync in self.remote_confirmations:
-                    if self.id_sync == id_sync:
-                        assemblies_to_wait.remove(assembly_name)
 
-                all_remote_idle = all(
-                    communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE
-                    for assembly_name in assemblies_to_wait
-                )
+                all_remote_idle = True
+                # Need to process every remote assemblies to put their values in cache
+                for assembly_name in self._remote_assemblies_names:
+                    if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE:
+                        all_remote_idle = False
+
+                log_once.debug(f"REMOTE ASSEMBLIES: len: {len(self._remote_assemblies_names)}, {self._remote_assemblies_names}")
+                if not wait_for_refusing_provide:
+                    remote_confirmations_id_sync = [
+                        remote_conf for remote_conf in self.remote_confirmations if int(remote_conf[1]) == self.id_sync
+                    ]
+                    log_once.debug(f"REMOTE CONFIRMATIONS TO SEE: len: {len(remote_confirmations_id_sync)}, {remote_confirmations_id_sync}")
+                    all_remote_fetched_information = len(self._remote_assemblies_names) == len(remote_confirmations_id_sync)
+                else:
+                    all_remote_fetched_information = True
             else:
                 all_remote_idle = False
+                all_remote_fetched_information = False
 
-            finished = all_local_idle and all_remote_idle
+            finished = all_local_idle and all_remote_idle and all_remote_fetched_information
 
             if not finished:
                 self.run_semantics_iteration()
@@ -528,4 +537,5 @@ class Assembly(object):
         assembly_config.save_config(self)
         if global_variables.concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             rest_communication.save_communication_cache(self.get_name())
-        raise GoingSleepingException()
+        time_logger.register_end_all_time_values()
+        exit()
