@@ -21,7 +21,7 @@ from concerto.time_logger import TimestampType, create_timestamp_metric
 from concerto.transition import Transition
 from concerto.connection import Connection
 from concerto.gantt_record import GanttRecord
-from concerto.utility import COLORS, TimeManager, GoingSleepingException
+from concerto.utility import COLORS, TimeManager
 
 # In synchronous execution, how much interval (in seconds) to poll results
 FREQUENCE_POLLING = 0.1
@@ -133,7 +133,7 @@ class Assembly(object):
             "remote_confirmations": self.remote_confirmations,
         }
 
-p    @create_timestamp_metric(TimestampType.TimestampEvent.LOADING_STATE)
+    @create_timestamp_metric(TimestampType.TimestampEvent.LOADING_STATE)
     def _reprise_previous_config(self):
         """
         Check if the previous programm went to sleep (i.e. if a saved config file exists)
