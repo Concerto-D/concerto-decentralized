@@ -604,7 +604,7 @@ class Component(object, metaclass=ABCMeta):
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
         if behavior is not None and behavior != "_init":
-            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
+            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior, id_sync=self._assembly.id_sync)
         if self.gantt is not None:
             self.gantt.push_b(self.get_name(), behavior, time.perf_counter())
         self.visited_places = set()
@@ -697,7 +697,7 @@ class Component(object, metaclass=ABCMeta):
             if not self.queued_behaviors.empty():
                 idle = False
                 if self.act_behavior != "_init":
-                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior)
+                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, id_sync=self._assembly.id_sync)
                 self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 

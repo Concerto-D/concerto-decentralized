@@ -26,8 +26,7 @@ def create_timestamp_metric(timestamp_type, is_instruction_method=False):
                 log_args, log_kwargs = (), {}
             else:
                 log_args, log_kwargs = tuple(args[1:]), dict(kwargs)   # args[1:] to ignore self
-                if timestamp_type in [TimestampType.TimestampInstruction.WAIT, TimestampType.TimestampInstruction.WAITALL]:
-                    log_kwargs["id_sync"] = args[0].id_sync
+                log_kwargs["id_sync"] = args[0].id_sync
 
             log_time_value(timestamp_type, TimestampPeriod.START, *log_args, **log_kwargs)
             result = func(*args, **kwargs)
