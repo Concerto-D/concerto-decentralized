@@ -132,11 +132,10 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
     return result
 
 
-def get_remote_component_state(component_name: str, id_sync: int, calling_assembly_name: str) -> [ACTIVE, INACTIVE]:
+def get_remote_component_state(component_name: str) -> [ACTIVE, INACTIVE]:
     endpoint_name = "get_remote_component_state"
     target_host = inventory[component_name]
-    url = f"http://{target_host}/{endpoint_name}/{component_name}/{id_sync}"
-    key_cache = component_name + str(id_sync)
-    params = {"calling_assembly_name": calling_assembly_name}
-    result = get_results_from_request(key_cache, url, ACTIVE, params=params)
+    url = f"http://{target_host}/{endpoint_name}/{component_name}"
+    key_cache = component_name
+    result = get_results_from_request(key_cache, url, ACTIVE)
     return result

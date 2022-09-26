@@ -69,15 +69,15 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
         return rest_communication.is_conn_synced(syncing_component, component_to_sync, dep_provide, dep_use, action)
 
 
-def set_component_state(assembly, state: [ACTIVE, INACTIVE], component_name: str, id_sync: int):
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str):
     if global_variables.is_concerto_d_asynchronous():
-        zenoh_communication.set_component_state(state, component_name, id_sync)
+        zenoh_communication.set_component_state(state, component_name)
     else:
-        assembly.components_states[component_name + str(assembly.id_sync)] = INACTIVE
+        return
 
 
-def get_remote_component_state(assembly_name: str, component_name: str, id_sync: int) -> [ACTIVE, INACTIVE]:
+def get_remote_component_state(component_name: str) -> [ACTIVE, INACTIVE]:
     if global_variables.is_concerto_d_asynchronous():
-        return zenoh_communication.get_remote_component_state(component_name, id_sync)
+        return zenoh_communication.get_remote_component_state(component_name)
     else:
-        return rest_communication.get_remote_component_state(component_name, id_sync, assembly_name)
+        return rest_communication.get_remote_component_state(component_name)

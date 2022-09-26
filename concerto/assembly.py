@@ -34,11 +34,11 @@ def track_instruction_number(func):
     self is passed as argument since we decorate methods of the class
     """
     def _track_instruction_number(self, *args, **kwargs):
-        if self.current_nb_instructions_done >= self.global_nb_instructions_done:
+        if global_variables.current_nb_instructions_done >= self.global_nb_instructions_done[global_variables.reconfiguration_name]:
             result = func(self, *args, **kwargs)
         else:
             result = None
-        self.current_nb_instructions_done += 1
+        global_variables.current_nb_instructions_done += 1
         return result
 
     return _track_instruction_number
@@ -59,10 +59,11 @@ class Assembly(object):
             self,
             name,
             components_types,
-            remote_assemblies_names,
+            remote_assemblies,
             transitions_times,
             waiting_rate,
-            concerto_d_version
+            concerto_d_version,
+            reconfiguration_name
     ):
         self.time_manager = TimeManager(waiting_rate)
         self.components_types = components_types
@@ -73,23 +74,18 @@ class Assembly(object):
         self.connections: Dict[str, Connection] = {}
         self.transitions_times = transitions_times
 
-        self._remote_assemblies_names: List[str] = remote_assemblies_names
+        self._remote_assemblies: List[str] = remote_assemblies
 
         # a dictionary to store at the assembly level a list of connections for
         # each component (name) of the assembly
         # this is used to improve performance of the semantics
         self.component_connections: Dict[str, Set[Connection]] = {}
 
-        # TODO: checker pk le debug crash au bout d'un temps sur WSL (timeout ?)
         # set of active components
-        self.act_components: Set[str] = set()  # PERSIST
-
-        # Identifiant permettant de synchronizer les wait et waitall
-        self.id_sync = 0  #PERSIST
+        self.act_components: Set[str] = set()
 
         # Nombre permettant de savoir à partir de quelle instruction reprendre le programme
-        self.current_nb_instructions_done = 0
-        self.global_nb_instructions_done = 0
+        self.global_nb_instructions_done: Dict[str, int] = {reconfiguration_name: 0}
 
         self.waiting_rate = waiting_rate
 
@@ -108,6 +104,8 @@ class Assembly(object):
         self.remote_confirmations: Set[str] = set()
 
         global_variables.concerto_d_version = concerto_d_version
+        global_variables.reconfiguration_name = reconfiguration_name
+        global_variables.current_nb_instructions_done = 0
 
         self._reprise_previous_config()
 
@@ -126,7 +124,6 @@ class Assembly(object):
             "connections": self.connections,
             "component_connections": self.component_connections,
             "act_components": self.act_components,
-            "id_sync": self.id_sync,
             "global_nb_instructions_done": self.global_nb_instructions_done,
             "waiting_rate": self.waiting_rate,
             "components_states": self.components_states,
@@ -409,82 +406,59 @@ class Assembly(object):
 
     @track_instruction_number
     @create_timestamp_metric(TimestampType.TimestampInstruction.WAIT, is_instruction_method=True)
-    def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
+    def wait(self, component_name: str):
         finished = False
-        log.debug(f"Waiting for component {component_name} to finish its behaviors execution")
         while not finished:
-            is_local_component = component_name in self.components.keys()
-            if is_local_component:
+            log_once.debug(f"Waiting for component {component_name} to finish its behaviors execution")
+            if component_name in self.components.keys():  # Local component
                 is_component_idle = component_name not in self.act_components
-
-                # Si le component a terminé, on prévient les autres assemblies
-                if is_component_idle:
-                    log.debug(f"Local component {component_name} finished its behavior, sending a message in"
-                                      f"{component_name} {self.id_sync} to warn others")
-                    communication_handler.set_component_state(self, INACTIVE, component_name, self.id_sync)
-            else:
-                is_component_idle = communication_handler.get_remote_component_state(self.get_name(), component_name, self.id_sync) == INACTIVE
+            else:                                         # Remote component
+                is_component_idle = communication_handler.get_remote_component_state(component_name) == INACTIVE
 
             finished = is_component_idle
 
             if not finished:
                 self.run_semantics_iteration()
-            else:
-                self.id_sync += 1
 
     @track_instruction_number
     @create_timestamp_metric(TimestampType.TimestampInstruction.WAITALL, is_instruction_method=True)
-    def wait_all(self, wait_for_refusing_provide: bool = False):
+    def wait_all(self):
         """
+        Global synchronization
         :params wait_for_refusing_provide: Used to specify that the assembly need to wait for the provides
         ports connected to it that they finish their reconfiguration. Else the use port might reconfigure itself
         before receiving order to wait for the provide port to reconfigure itself.
         """
         finished = False
-        msg_idle_sent = False
         while not finished:
-            all_local_idle = len(self.act_components) == 0
-            if all_local_idle:
-                if not wait_for_refusing_provide and not msg_idle_sent:
-                    log.debug("Finished local behavior, sending INACTIVE msg in"
-                                      f"{self.name} (assembly name) {self.id_sync} (id sync)")
-                    communication_handler.set_component_state(self, INACTIVE, self.name, self.id_sync)
-                    assemblies_to_wait = [(assembly_name, self.id_sync) for assembly_name in self._remote_assemblies_names]
-                    log.debug(f"Waiting for other assemblies to finish: {assemblies_to_wait}")
-                    msg_idle_sent = True
-
-                all_remote_idle = True
-                # Need to process every remote assemblies to put their values in cache
-                for assembly_name in self._remote_assemblies_names:
-                    if not communication_handler.get_remote_component_state(self.get_name(), assembly_name, self.id_sync) == INACTIVE:
-                        all_remote_idle = False
-
-                log_once.debug(f"REMOTE ASSEMBLIES: len: {len(self._remote_assemblies_names)}, {self._remote_assemblies_names}")
-                if not wait_for_refusing_provide:
-                    remote_confirmations_id_sync = [
-                        remote_conf for remote_conf in self.remote_confirmations if int(remote_conf[1]) == self.id_sync
-                    ]
-                    log_once.debug(f"REMOTE CONFIRMATIONS TO SEE: len: {len(remote_confirmations_id_sync)}, {remote_confirmations_id_sync}")
-                    all_remote_fetched_information = len(self._remote_assemblies_names) == len(remote_confirmations_id_sync)
-                else:
-                    all_remote_fetched_information = True
+            finished = True
+            if not len(self.act_components) == 0:
+                finished = False
             else:
-                all_remote_idle = False
-                all_remote_fetched_information = False
-
-            finished = all_local_idle and all_remote_idle and all_remote_fetched_information
+                log_once.debug(f"Assemblies already in INACTIVE state: {self.remote_confirmations}")
+                assemblies_to_wait = [remote_assembly for remote_assembly in self._remote_assemblies if remote_assembly not in self.remote_confirmations]
+                log_once.debug(f"Other assemblies to wait: {assemblies_to_wait}")
+                for ass_name in assemblies_to_wait:
+                    assembly_idle = communication_handler.get_remote_component_state(ass_name) == INACTIVE
+                    if not assembly_idle:
+                        finished = False
 
             if not finished:
                 self.run_semantics_iteration()
-            else:
-                if not wait_for_refusing_provide:
-                    self.id_sync += 1
+
+        # End of global synchronization, reset all fields used for it
+        self.remote_confirmations.clear()
 
     def is_component_idle(self, component_name: str) -> bool:
-        if component_name in self.components.keys():
+        if component_name == self.get_name():
+            return self.is_idle()
+        elif component_name in self.components.keys():
             return component_name not in self.act_components
         else:
-            return communication_handler.get_remote_component_state(self.get_name(), component_name, self.id_sync) == INACTIVE
+            raise Exception(f"Tried to call is_component_idle on a non-local component {component_name}")
+
+    def is_idle(self):
+        return len(self.act_components) == 0
 
     def get_component(self, name: str) -> Component:
         if name in self.components:
@@ -505,8 +479,7 @@ class Assembly(object):
     def finish_reconfiguration(self):
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self.obj_id}").touch()  # Create a file that serves as a flag
-        self.register_timestamps()
-        exit()
+        self.go_to_sleep()
 
     def run_semantics_iteration(self):
         # Execute semantic iterator
@@ -537,11 +510,9 @@ class Assembly(object):
         assembly_config.save_config(self)
         if global_variables.concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             rest_communication.save_communication_cache(self.get_name())
-        self.register_timestamps()
+        time_logger.register_end_all_time_values()
+        time_logger.register_timestamps_in_file()
         log.debug("")  # To separate differents sleeping rounds
         exit()
 
 
-    def register_timestamps(self):
-        time_logger.register_end_all_time_values()
-        time_logger.register_timestamps_in_file()

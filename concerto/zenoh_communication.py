@@ -80,15 +80,14 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
 
 
 @zenoh_session
-def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, id_sync: int, workspace=None):
-    workspace.put(f"/wait/{id_sync}/{component_name}", state)
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, workspace=None):
+    workspace.put(f"/wait/{component_name}", state)
 
 
 @zenoh_session
-def get_remote_component_state(component_name: str, id_sync: int, workspace=None) -> [ACTIVE, INACTIVE]:
-    result = workspace.get(f"/wait/{id_sync}/{component_name}")
-    log_once.debug(f"Wait for component state of {component_name}, {id_sync}...")
-    # log.debug(f"Checking /wait/{id_sync}/{component_name}: " + (result[0].value.get_content() if result else "NONE (considered ACTIVE)"))
+def get_remote_component_state(component_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
+    result = workspace.get(f"/wait/{component_name}")
+    log_once.debug(f"Wait for component state of {component_name}...")
     if len(result) <= 0:
         return ACTIVE
     else:

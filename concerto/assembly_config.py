@@ -50,7 +50,7 @@ def build_archive_config_file_path(assembly_name: str) -> str:
 @create_timestamp_metric(TimestampType.TimestampEvent.SAVING_STATE)
 def save_config(assembly):
     log.debug("Saving current conf ...")
-    assembly.global_nb_instructions_done = assembly.current_nb_instructions_done
+    assembly.global_nb_instructions_done[global_variables.reconfiguration_name] = global_variables.current_nb_instructions_done
     with open(build_saved_config_file_path(assembly.name), "w") as outfile:
         json.dump(assembly, outfile, cls=FixedEncoder, indent=4)
 
@@ -102,11 +102,11 @@ def restore_previous_config(assembly, previous_config):
         assembly.connections[conn.obj_id] = conn
 
     assembly.act_components = set(previous_config['act_components'])
-    assembly.id_sync = previous_config['id_sync']
-    assembly.global_nb_instructions_done = previous_config['global_nb_instructions_done']
+    for k, v in previous_config['global_nb_instructions_done'].items():
+        assembly.global_nb_instructions_done[k] = v
     assembly.waiting_rate = previous_config['waiting_rate']
     assembly.components_states = previous_config['components_states']
-    assembly.remote_confirmations = set(tuple(remote_conf) for remote_conf in previous_config['remote_confirmations'])
+    assembly.remote_confirmations = set(remote_conf for remote_conf in previous_config['remote_confirmations'])
 
 
 def _instanciate_components(assembly, previous_config):

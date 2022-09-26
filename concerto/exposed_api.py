@@ -78,18 +78,14 @@ def run_flask_api(assembly):
                 return str(action == CONN)
         return str(action == DECONN)
 
-    @app.route("/get_remote_component_state/<component_name>/<id_sync>")
+    @app.route("/get_remote_component_state/<component_name>")
     @catch_exceptions
-    def get_remote_component_state(component_name: str, id_sync: int):
-        # TODO: to refacto
-        if component_name + str(id_sync) not in assembly.components_states.keys():
-            return ACTIVE
+    def get_remote_component_state(component_name: str):
+        if assembly.is_component_idle(component_name):
+            assembly.remote_confirmations.add(component_name)
+            return INACTIVE
         else:
-            # TODO: ad-hoc, to refacto
-            calling_assembly_name = request.args.get("calling_assembly_name")
-            if calling_assembly_name is not None and assembly.components_states[component_name + str(id_sync)] == INACTIVE:
-                assembly.remote_confirmations.add((calling_assembly_name, id_sync))
-            return assembly.components_states[component_name + str(id_sync)]
+            return ACTIVE
 
     # Remove logging of each HTTP transactions
     werkzeug_log = logging.getLogger('werkzeug')

@@ -1,10 +1,10 @@
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import yaml
 
+from concerto import global_variables
 from concerto.debug_logger import log
 
 LOG_DIR_NAME = "/tmp"
@@ -25,8 +25,8 @@ def create_timestamp_metric(timestamp_type, is_instruction_method=False):
             if not is_instruction_method:
                 log_args, log_kwargs = (), {}
             else:
-                log_args, log_kwargs = tuple(args[1:]), dict(kwargs)   # args[1:] to ignore self
-                log_kwargs["id_sync"] = args[0].id_sync
+                current_instruction_num = str(global_variables.current_nb_instructions_done)
+                log_args, log_kwargs = (current_instruction_num, *args[1:]), dict(kwargs)   # args[1:] to ignore self
 
             log_time_value(timestamp_type, TimestampPeriod.START, *log_args, **log_kwargs)
             result = func(*args, **kwargs)

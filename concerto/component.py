@@ -11,7 +11,8 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
-from concerto import time_logger
+from concerto import time_logger, communication_handler
+from concerto.communication_handler import INACTIVE, ACTIVE
 from concerto.debug_logger import log, log_once
 from concerto.place import Dock, Place
 from concerto.dependency import DepType, Dependency
@@ -603,8 +604,9 @@ class Component(object, metaclass=ABCMeta):
                     behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
+        communication_handler.set_component_state(ACTIVE, self.get_name())
         if behavior is not None and behavior != "_init":
-            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior, id_sync=self._assembly.id_sync)
+            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
         if self.gantt is not None:
             self.gantt.push_b(self.get_name(), behavior, time.perf_counter())
         self.visited_places = set()
@@ -697,18 +699,25 @@ class Component(object, metaclass=ABCMeta):
             if not self.queued_behaviors.empty():
                 idle = False
                 if self.act_behavior != "_init":
-                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, id_sync=self._assembly.id_sync)
+                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior)
                 self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 
-        # Ajoute un behavior "de fin" (?) si c'est le cas
         if idle:
-            self.set_behavior(None)
-            if self.get_verbosity() >= 1:
-                self.print_color("Going IDLE")
+            self._go_idle()
 
         doing_something = did_something or (len(self.act_transitions) > 0)
         return idle, doing_something, len(self.act_transitions) > 0
+
+    def _go_idle(self):
+        # Ajoute un behavior "de fin" (?) si c'est le cas
+        communication_handler.set_component_state(INACTIVE, self.get_name())
+        self.set_behavior(None)
+        if self.get_verbosity() >= 1:
+            self.print_color("Going IDLE")
+
+    def is_idle(self):
+        return self.act_behavior is None
 
     def _put_provide_deps_in_refusing_state(self, place: Place):
         """
