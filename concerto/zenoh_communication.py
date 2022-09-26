@@ -2,6 +2,8 @@ import time
 
 import zenoh
 
+from concerto.debug_logger import log_once
+
 config = {}
 
 CONN = "CONN"
@@ -85,6 +87,7 @@ def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, id_sync:
 @zenoh_session
 def get_remote_component_state(component_name: str, id_sync: int, workspace=None) -> [ACTIVE, INACTIVE]:
     result = workspace.get(f"/wait/{id_sync}/{component_name}")
+    log_once.debug(f"Wait for component state of {component_name}, {id_sync}...")
     # log.debug(f"Checking /wait/{id_sync}/{component_name}: " + (result[0].value.get_content() if result else "NONE (considered ACTIVE)"))
     if len(result) <= 0:
         return ACTIVE

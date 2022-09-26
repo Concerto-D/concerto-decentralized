@@ -71,7 +71,6 @@ def init_time_log_dir(assembly_name: str, timestamp_log_dir: Optional[str] = Non
     global ASSEMBLY_NAME
     LOG_DIR_TIMESTAMP = timestamp_log_dir if timestamp_log_dir is not None else datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     ASSEMBLY_NAME = assembly_name
-    Path(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml").touch()
 
 
 def log_time_value(timestamp_type: str, timestamp_period: str, *args, **kwargs):
@@ -105,12 +104,12 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, **kwa
 
 # TODO rename functions
 def register_timestamps_in_file():
-    with open(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml", "a") as f:
+    log.debug(f"DUMPING FILE: {LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml")
+    with open(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml", "w") as f:
         yaml.safe_dump(all_timestamps_dict, f)
 
 
 def register_end_all_time_values():
-    log.debug(all_timestamps_dict)
     for timestamp_name, timestamp_values in all_timestamps_dict.items():
         if TimestampPeriod.END not in timestamp_values.keys():
             all_timestamps_dict[timestamp_name][TimestampPeriod.END] = time.time()

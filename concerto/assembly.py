@@ -505,6 +505,8 @@ class Assembly(object):
     def finish_reconfiguration(self):
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self.obj_id}").touch()  # Create a file that serves as a flag
+        self.register_timestamps()
+        exit()
 
     def run_semantics_iteration(self):
         # Execute semantic iterator
@@ -523,12 +525,10 @@ class Assembly(object):
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             log.debug("Everyone blocked")
             log.debug("Going sleeping bye")
-            log.debug("\n")
             self.go_to_sleep()
         elif self.time_manager.is_initial_time_up() and not are_active_transitions:
             log.debug("Time's up")
             log.debug("Go sleep")
-            log.debug("\n")
             self.go_to_sleep()
         else:
             time.sleep(FREQUENCE_POLLING)
@@ -537,6 +537,11 @@ class Assembly(object):
         assembly_config.save_config(self)
         if global_variables.concerto_d_version == CONCERTO_D_SYNCHRONOUS:
             rest_communication.save_communication_cache(self.get_name())
+        self.register_timestamps()
+        log.debug("")  # To separate differents sleeping rounds
+        exit()
+
+
+    def register_timestamps(self):
         time_logger.register_end_all_time_values()
         time_logger.register_timestamps_in_file()
-        exit()
