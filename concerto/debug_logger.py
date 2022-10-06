@@ -4,12 +4,9 @@ import time
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
-log.addHandler(handler)
 
 log_once = logging.getLogger("logger_once")
 log_once.setLevel(logging.DEBUG)
-log_once.addHandler(handler)
 
 
 class LogMessageOnce(logging.Filter):
@@ -42,3 +39,10 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 
 sys.excepthook = handle_exception
+
+
+def set_stdout_formatter(assembly_name):
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    stdout_handler.setFormatter(logging.Formatter(f"{assembly_name} - %(asctime)s %(message)s"))
+    log.addHandler(stdout_handler)
+    log_once.addHandler(stdout_handler)

@@ -7,7 +7,7 @@ import yaml
 from concerto import global_variables
 from concerto.debug_logger import log
 
-LOG_DIR_NAME = "/tmp"
+LOG_DIR_NAME = "/home/aomond/tmp"
 LOG_DIR_TIMESTAMP = ""
 ASSEMBLY_NAME = ""
 

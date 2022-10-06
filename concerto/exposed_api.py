@@ -5,7 +5,7 @@ import yaml
 from flask import Flask, request
 from threading import Thread
 
-from concerto.debug_logger import log
+from concerto.debug_logger import log, log_once
 from concerto.rest_communication import ACTIVE, INACTIVE
 import logging
 
@@ -81,11 +81,15 @@ def run_flask_api(assembly):
     @app.route("/get_remote_component_state/<component_name>")
     @catch_exceptions
     def get_remote_component_state(component_name: str):
+        calling_assembly_name = request.args.get("calling_assembly_name")
         if assembly.is_component_idle(component_name):
-            assembly.remote_confirmations.add(component_name)
-            return INACTIVE
+            assembly.remote_confirmations.add(calling_assembly_name)
+            component_state = INACTIVE
         else:
-            return ACTIVE
+            component_state = ACTIVE
+        log_once.debug(f"Remote asembly {calling_assembly_name} checks for my local state of {component_name}: {component_state}")
+
+        return component_state
 
     # Remove logging of each HTTP transactions
     werkzeug_log = logging.getLogger('werkzeug')

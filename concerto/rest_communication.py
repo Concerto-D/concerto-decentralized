@@ -83,15 +83,16 @@ def get_results_from_request(key_cache, url, default_value, params=None):
     try:
         if _is_url_accessible(url):
             result = requests.get(url, params=params).text
-            communications_cache[key_cache] = result
-            log_once.debug(f"{url} accessible, result: {result}")
+            if result != "":  # TODO: Bug, sometimes API return blank response
+                communications_cache[key_cache] = result
+                log_once.debug(f"{url}?{params} accessible, result: {result}")
         else:
             result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-            log_once.debug(f"{url} is not accessible, using cache result: {result} instead")
+            log_once.debug(f"{url}?{params} is not accessible, using cache result: {result} instead")
     except requests.exceptions.ConnectionError as e:
         log_once.debug(e)
         result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-        log_once.debug(f"{url} raised an exception, using cache result: {result} instead")
+        log_once.debug(f"{url}?{params} raised an exception, using cache result: {result} instead")
     return result
 
 
@@ -132,10 +133,11 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
     return result
 
 
-def get_remote_component_state(component_name: str) -> [ACTIVE, INACTIVE]:
+def get_remote_component_state(component_name: str, calling_assembly_name: str) -> [ACTIVE, INACTIVE]:
     endpoint_name = "get_remote_component_state"
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}"
     key_cache = component_name
-    result = get_results_from_request(key_cache, url, ACTIVE)
+    params = {"calling_assembly_name": calling_assembly_name}
+    result = get_results_from_request(key_cache, url, ACTIVE, params=params)
     return result
