@@ -87,7 +87,7 @@ def run_flask_api(assembly):
             component_state = INACTIVE
         else:
             component_state = ACTIVE
-        log_once.debug(f"Remote asembly {calling_assembly_name} checks for my local state of {component_name}: {component_state}")
+        # log_once.debug(f"Remote asembly {calling_assembly_name} checks for my local state of {component_name}: {component_state}")
 
         return component_state
 

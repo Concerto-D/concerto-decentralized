@@ -81,3 +81,10 @@ def get_remote_component_state(component_name: str, calling_assembly_name: str) 
         return zenoh_communication.get_remote_component_state(component_name)
     else:
         return rest_communication.get_remote_component_state(component_name, calling_assembly_name)
+
+
+def clear_global_synchronization_cache():
+    if global_variables.is_concerto_d_asynchronous():
+        return
+    else:
+        rest_communication.clear_global_synchronization_cache()

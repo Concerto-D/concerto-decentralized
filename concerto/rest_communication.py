@@ -71,6 +71,12 @@ def clear_communication_cache(assembly_name):
         os.remove(file_name)
 
 
+def clear_global_synchronization_cache():
+    for comp_name in inventory.keys():
+        if comp_name in communications_cache.keys():
+            del communications_cache[comp_name]
+
+
 def _is_url_accessible(url):
     try:
         requests.head(url)

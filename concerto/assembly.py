@@ -35,8 +35,11 @@ def track_instruction_number(func):
     """
     def _track_instruction_number(self, *args, **kwargs):
         if global_variables.current_nb_instructions_done >= self.global_nb_instructions_done[global_variables.reconfiguration_name]:
+            log.debug(f"---- START INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}")
             result = func(self, *args, **kwargs)
+            log.debug(f"---- END INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}")
         else:
+            log.debug(f"---- SKIP INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}: Already done")
             result = None
         global_variables.current_nb_instructions_done += 1
         return result
@@ -443,33 +446,46 @@ class Assembly(object):
         while not finished:
             finished = True
             if not len(self.act_components) == 0:
+                log_once.debug(f"WAIT ALL {wait_for_refusing_provide} --- Local component not finished, actives components: {len(self.act_components)}")
                 finished = False
             else:
-                log_once.debug(f"Assemblies where I got remote confirmations: {self.remote_confirmations}")
-                assemblies_to_wait = [remote_assembly for remote_assembly in self._remote_assemblies if remote_assembly not in self.remote_confirmations]
-                log_once.debug(f"Other assemblies to wait: {assemblies_to_wait}")
-                for ass_name in assemblies_to_wait:
+                ass_to_wait = set()
+                for ass_name in self._remote_assemblies:
                     assembly_idle = communication_handler.get_remote_component_state(ass_name, self.name) == INACTIVE
                     if not assembly_idle:
+                        ass_to_wait.add(ass_name)
                         finished = False
+                if ass_to_wait:
+                    log_once.debug(f"WAIT ALL {wait_for_refusing_provide} --- Remote assembly {ass_to_wait} not finished, waiting for it")
+
+                if None in self.remote_confirmations: self.remote_confirmations.remove(None)  # TODO fix bug
+
+                if not wait_for_refusing_provide and finished and len(self._remote_assemblies) != len(self.remote_confirmations):
+                    remotes_to_wait = [remote for remote in self._remote_assemblies if remote not in self.remote_confirmations]
+
+                    log_once.debug(f"WAIT ALL {wait_for_refusing_provide} --- All remote finished, but waiting for their confirmations (remote asses to confirm: {len(self._remote_assemblies)}, actual remotes confirmations: {len(self.remote_confirmations)}). Remote that I don't have confirmation: {remotes_to_wait}")
+                    finished = False
 
             if not finished:
                 self.run_semantics_iteration()
 
         # End of global synchronization, reset all fields used for it
+        if not wait_for_refusing_provide:
+            self.remote_confirmations.clear()
+            communication_handler.clear_global_synchronization_cache()
+
         self.wait_for_refusing_provide = False
-        self.remote_confirmations.clear()
 
     def is_component_idle(self, component_name: str) -> bool:
         if self.wait_for_refusing_provide:
             return False
         if component_name == self.get_name():
             res = self.is_idle()
-            log_once.debug(f"Is {component_name} idle: {res}")
+            # log_once.debug(f"Is {component_name} idle: {res}")
             return res
         elif component_name in self.components.keys():
             res = component_name not in self.act_components
-            log_once.debug(f"Is {component_name} (comp) idle: {res}")
+            # log_once.debug(f"Is {component_name} (comp) idle: {res}")
             return res
         else:
             raise Exception(f"Tried to call is_component_idle on a non-local component {component_name}")
