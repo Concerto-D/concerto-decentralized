@@ -1,5 +1,5 @@
 pyyaml
-eclipse-zenoh
+eclipse-zenoh==0.5.0b9
 jinja2
 Flask
 requests
