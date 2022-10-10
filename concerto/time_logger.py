@@ -7,7 +7,6 @@ import yaml
 from concerto import global_variables
 from concerto.debug_logger import log
 
-LOG_DIR_NAME = "/home/aomond/tmp"
 LOG_DIR_TIMESTAMP = ""
 ASSEMBLY_NAME = ""
 
@@ -104,8 +103,8 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, **kwa
 
 # TODO rename functions
 def register_timestamps_in_file():
-    log.debug(f"DUMPING FILE: {LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml")
-    with open(f"{LOG_DIR_NAME}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml", "w") as f:
+    log.debug(f"DUMPING FILE: {global_variables.execution_expe_dir}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml")
+    with open(f"{global_variables.execution_expe_dir}/{ASSEMBLY_NAME}_{LOG_DIR_TIMESTAMP}.yaml", "w") as f:
         yaml.safe_dump(all_timestamps_dict, f)
 
 
