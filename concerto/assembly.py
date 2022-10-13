@@ -35,11 +35,8 @@ def track_instruction_number(func):
     """
     def _track_instruction_number(self, *args, **kwargs):
         if global_variables.current_nb_instructions_done >= self.global_nb_instructions_done[global_variables.reconfiguration_name]:
-            log.debug(f"---- START INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}")
             result = func(self, *args, **kwargs)
-            log.debug(f"---- END INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}")
         else:
-            log.debug(f"---- SKIP INSTRUCTION {global_variables.current_nb_instructions_done} {func.__name__}: Already done")
             result = None
         global_variables.current_nb_instructions_done += 1
         return result
@@ -510,9 +507,6 @@ class Assembly(object):
         return self.error_reports
 
     def finish_reconfiguration(self):
-        log.debug("-- FINISHED -- ASSEMBLIES REMOTE CONFIRMATIONS --")
-        for ass in self.remote_confirmations:
-            log.debug(ass)
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
         Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self.obj_id}").touch()  # Create a file that serves as a flag
         self.go_to_sleep(50)
