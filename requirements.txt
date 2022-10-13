@@ -1,5 +1,5 @@
-pyyaml
+PyYAML==6.0
 eclipse-zenoh==0.5.0b9
-jinja2
-Flask
-requests
+Jinja2==3.1.2
+Flask==2.2.2
+requests==2.28.1
