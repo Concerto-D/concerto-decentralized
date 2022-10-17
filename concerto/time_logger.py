@@ -86,16 +86,16 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, **kwa
         timestamp_name += f"_{parameters_kwargs}"
 
     if timestamp_period == TimestampPeriod.START:
-        if timestamp_name in all_timestamps_dict:
-            raise Exception(f"Register time value error: {timestamp_name} for {TimestampPeriod.START} already registered")
+        if timestamp_name in all_timestamps_dict.keys():
+            raise Exception(f"Register time value start error: {timestamp_name} for {TimestampPeriod.START} already registered")
         all_timestamps_dict[timestamp_name] = {}
         all_timestamps_dict[timestamp_name][TimestampPeriod.START] = time.time()
 
     else:
         if timestamp_name not in all_timestamps_dict.keys():
-            raise Exception(f"Register time value error: {timestamp_name} never registered")
+            raise Exception(f"Register time value end error: {timestamp_name} never registered")
         if TimestampPeriod.END in all_timestamps_dict[timestamp_name]:
-            raise Exception(f"Register time value error: {timestamp_name} for {TimestampPeriod.END} already registered")
+            raise Exception(f"Register time value start error: {timestamp_name} for {TimestampPeriod.END} already registered")
         all_timestamps_dict[timestamp_name][TimestampPeriod.END] = time.time()
 
     return timestamp_name

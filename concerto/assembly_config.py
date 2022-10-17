@@ -167,7 +167,7 @@ def _restore_component(assembly, comp_values, components_names, components):
                 component.act_idocks.add(transition.dst_dock)
 
     # Restore active behavior
-    component.act_behavior = comp_values['act_behavior']
+    component.set_behavior(comp_values['act_behavior'])
 
     # Restore queued behaviors
     for bhv in comp_values['queued_behaviors']:
