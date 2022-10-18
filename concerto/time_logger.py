@@ -47,6 +47,7 @@ class TimestampType:
         SAVING_STATE = f"{TYPE}_saving_state"
         DEPLOY = f"{TYPE}_deploy"
         UPDATE = f"{TYPE}_update"
+        UPTIME_WAIT_ALL = f"{TYPE}_uptime_wait_all"
 
     class TimestampInstruction:
         TYPE = "instruction"

@@ -106,6 +106,8 @@ class Assembly(object):
         self.components_states = {}
         self.remote_confirmations: Set[str] = set()
 
+        self.exit_code_sleep = 0
+
         global_variables.concerto_d_version = concerto_d_version
         global_variables.reconfiguration_name = reconfiguration_name
         global_variables.current_nb_instructions_done = 0
@@ -508,7 +510,6 @@ class Assembly(object):
 
     def finish_reconfiguration(self):
         log.debug("---------------------- END OF RECONFIGURATION GG -----------------------")
-        Path(f"{global_variables.execution_expe_dir}/finished_reconfigurations/{self.obj_id}").touch()  # Create a file that serves as a flag
         self.go_to_sleep(50)
 
     def run_semantics_iteration(self):
@@ -531,11 +532,11 @@ class Assembly(object):
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             log.debug("Everyone blocked")
             log.debug("Going sleeping bye")
-            self.go_to_sleep(0)
+            self.go_to_sleep(self.exit_code_sleep)
         elif self.time_manager.is_initial_time_up() and not are_active_transitions:
             log.debug("Time's up")
             log.debug("Go sleep")
-            self.go_to_sleep(0)
+            self.go_to_sleep(self.exit_code_sleep)
         else:
             time.sleep(FREQUENCE_POLLING)
 
