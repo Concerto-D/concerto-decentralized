@@ -85,8 +85,8 @@ def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, workspac
 
 
 @zenoh_session
-def get_remote_component_state(component_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
-    result = workspace.get(f"/wait/{component_name}")
+def get_remote_component_state(component_name: str, reconfiguration_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
+    result = workspace.get(f"/wait/{reconfiguration_name}/{component_name}")
     log_once.debug(f"Wait for component state of {component_name}: {result}")
     if len(result) <= 0:
         return ACTIVE

@@ -415,6 +415,9 @@ class Assembly(object):
     @track_instruction_number
     @create_timestamp_metric(TimestampType.TimestampInstruction.WAIT, is_instruction_method=True)
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
+        """
+        TODO: uniquement testé en local
+        """
         finished = False
         self.wait_for_refusing_provide = wait_for_refusing_provide
         while not finished:
@@ -439,6 +442,7 @@ class Assembly(object):
         :params wait_for_refusing_provide: Used to specify that the assembly need to wait for the provides
         ports connected to it that they finish their reconfiguration. Else the use port might reconfigure itself
         before receiving order to wait for the provide port to reconfigure itself.
+        TODO: doit être placé systématiquement à la fin de chaque reconfiguration_name (sauf pour le wait_for_refusing_provide=True)
         """
         finished = False
         self.wait_for_refusing_provide = wait_for_refusing_provide
@@ -450,12 +454,14 @@ class Assembly(object):
             else:
                 ass_to_wait = set()
                 for ass_name in self._remote_assemblies:
-                    assembly_idle = communication_handler.get_remote_component_state(ass_name, self.name) == INACTIVE
+                    assembly_idle = communication_handler.get_remote_component_state(ass_name, self.name, global_variables.reconfiguration_name) == INACTIVE
                     if not assembly_idle:
                         ass_to_wait.add(ass_name)
                         finished = False
                 if ass_to_wait:
                     log_once.debug(f"WAIT ALL {wait_for_refusing_provide} --- Remote assembly {ass_to_wait} not finished, waiting for it")
+                else:
+                    log_once.debug("No assembly to wait, all are inactives")
 
                 if None in self.remote_confirmations: self.remote_confirmations.remove(None)  # TODO fix bug
 

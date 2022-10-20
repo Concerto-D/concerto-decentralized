@@ -76,9 +76,12 @@ def set_component_state(state: [ACTIVE, INACTIVE], component_name: str):
         return
 
 
-def get_remote_component_state(component_name: str, calling_assembly_name: str) -> [ACTIVE, INACTIVE]:
+def get_remote_component_state(component_name: str, calling_assembly_name: str, reconfiguration_name: str) -> [ACTIVE, INACTIVE]:
+    """
+    TODO: harmoniser synchrone et asynchrone
+    """
     if global_variables.is_concerto_d_asynchronous():
-        return zenoh_communication.get_remote_component_state(component_name)
+        return zenoh_communication.get_remote_component_state(component_name, reconfiguration_name)
     else:
         return rest_communication.get_remote_component_state(component_name, calling_assembly_name)
 
