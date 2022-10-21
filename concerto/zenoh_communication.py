@@ -2,7 +2,7 @@ import time
 
 import zenoh
 
-from concerto.debug_logger import log_once
+from concerto.debug_logger import log_once, log
 
 config = {}
 
@@ -37,58 +37,80 @@ def zenoh_session(func):
 
 @zenoh_session
 def get_nb_dependency_users(component_name: str, dependency_name: str, workspace=None) -> int:
-    res = workspace.get(f"/nb_users/{component_name}/{dependency_name}")
-    return int(res[0].value.get_content()) if len(res) > 0 else 0
+    zenoh_topic = f"/nb_users/{component_name}/{dependency_name}"
+    res = workspace.get(zenoh_topic)
+    int_res = int(res[0].value.get_content()) if len(res) > 0 else 0
+    log_once.debug(f"Get nb dependency users on {zenoh_topic}, result: {int_res}")
+    return int_res
 
 
 @zenoh_session
 def send_nb_dependency_users(nb: int, component_name: str, dependency_name: str, workspace=None):
-    workspace.put(f"/nb_users/{component_name}/{dependency_name}", str(nb))
+    zenoh_topic = f"/nb_users/{component_name}/{dependency_name}"
+    log_once.debug(f"Put nb dependency users {str(nb)} on {zenoh_topic}")
+    workspace.put(zenoh_topic, str(nb))
 
 
 @zenoh_session
 def get_refusing_state(component_name: str, dependency_name: str, workspace=None) -> int:
-    res = workspace.get(f"/refusing/{component_name}/{dependency_name}")
-    return bool(int(res[0].value.get_content())) if len(res) > 0 else False
+    zenoh_topic = f"/refusing/{component_name}/{dependency_name}"
+    res = workspace.get(zenoh_topic)
+    bool_res = bool(int(res[0].value.get_content())) if len(res) > 0 else False
+    log_once.debug(f"Get refusing state on {zenoh_topic}, result: {bool_res}")
+    return bool_res
 
 
 @zenoh_session
 def send_refusing_state(value: int, component_name: str, dependency_name: str, workspace=None):
-    workspace.put(f"/refusing/{component_name}/{dependency_name}", int(value))
+    zenoh_topic = f"/refusing/{component_name}/{dependency_name}"
+    log_once.debug(f"Send refusing state {int(value)} on {zenoh_topic}")
+    workspace.put(zenoh_topic, int(value))
 
 
 @zenoh_session
 def get_data_dependency(component_name: str, dependency_name: str, workspace=None):
-    res = workspace.get(f"/data/{component_name}/{dependency_name}")
-    return res[0].value.get_content() if len(res) > 0 else ""
+    zenoh_topic = f"/data/{component_name}/{dependency_name}"
+    res = workspace.get(zenoh_topic)
+    str_res = res[0].value.get_content() if len(res) > 0 else ""
+    log_once.debug(f"Get data dependency on {zenoh_topic}, result: {str_res}")
+    return str_res
 
 
 @zenoh_session
 def write_data_dependency(component_name: str, dependency_name: str, data, workspace=None):
-    workspace.put(f"/data/{component_name}/{dependency_name}", data)
+    zenoh_topic = f"/data/{component_name}/{dependency_name}"
+    log_once.debug(f"Write date dependency {data} on {zenoh_topic}")
+    workspace.put(zenoh_topic, data)
 
 
 @zenoh_session
 def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
-    workspace.put(f"/{action}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}", action)
+    zenoh_topic = f"/{action}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}"
+    log.debug(f"Send synced connection {action} on {zenoh_topic}")
+    workspace.put(zenoh_topic, action)
 
 
 @zenoh_session
 def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
-    result = workspace.get(f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}")
-    return len(result) > 0 and result[0].value.get_content() == action
+    zenoh_topic = f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}"
+    result = workspace.get(zenoh_topic)
+    str_result = result[0].value.get_content()
+    log_once.debug(f"Check synced connection on {zenoh_topic}, result: {str_result}")
+    return len(result) > 0 and str_result == action
 
 
 @zenoh_session
 def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, reconfiguration_name: str, workspace=None):
-    workspace.put(f"/wait/{reconfiguration_name}/{component_name}", state)
+    zenoh_topic = f"/wait/{reconfiguration_name}/{component_name}"
+    log.debug(f"Put component state {state} on {zenoh_topic}")
+    workspace.put(zenoh_topic, state)
 
 
 @zenoh_session
 def get_remote_component_state(component_name: str, reconfiguration_name: str, workspace=None) -> [ACTIVE, INACTIVE]:
     result = workspace.get(f"/wait/{reconfiguration_name}/{component_name}")
-    log_once.debug(f"Wait for component state of {component_name}: {result}")
+    str_result = result[0].value.get_content()
     if len(result) <= 0:
         return ACTIVE
     else:
-        return result[0].value.get_content()
+        return str_result
