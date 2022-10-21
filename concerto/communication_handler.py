@@ -69,9 +69,9 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
         return rest_communication.is_conn_synced(syncing_component, component_to_sync, dep_provide, dep_use, action)
 
 
-def set_component_state(state: [ACTIVE, INACTIVE], component_name: str):
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, reconfiguration_name: str):
     if global_variables.is_concerto_d_asynchronous():
-        zenoh_communication.set_component_state(state, component_name)
+        zenoh_communication.set_component_state(state, component_name, reconfiguration_name)
     else:
         return
 

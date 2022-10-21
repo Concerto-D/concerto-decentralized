@@ -11,7 +11,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, List, Set, Callable, Optional
 
-from concerto import time_logger, communication_handler
+from concerto import time_logger, communication_handler, global_variables
 from concerto.communication_handler import INACTIVE, ACTIVE
 from concerto.debug_logger import log, log_once
 from concerto.place import Dock, Place
@@ -604,7 +604,7 @@ class Component(object, metaclass=ABCMeta):
                     behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
-        communication_handler.set_component_state(ACTIVE, self.get_name())
+        communication_handler.set_component_state(ACTIVE, self.get_name(), global_variables.reconfiguration_name)
         if behavior is not None and behavior != "_init":
             time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
         if self.gantt is not None:
@@ -711,7 +711,7 @@ class Component(object, metaclass=ABCMeta):
 
     def _go_idle(self):
         # Ajoute un behavior "de fin" (?) si c'est le cas
-        communication_handler.set_component_state(INACTIVE, self.get_name())
+        communication_handler.set_component_state(INACTIVE, self.get_name(), global_variables.reconfiguration_name)
         self.set_behavior(None)
         if self.get_verbosity() >= 1:
             self.print_color("Going IDLE")

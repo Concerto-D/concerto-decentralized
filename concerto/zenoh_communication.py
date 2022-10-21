@@ -80,8 +80,8 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
 
 
 @zenoh_session
-def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, workspace=None):
-    workspace.put(f"/wait/{component_name}", state)
+def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, reconfiguration_name: str, workspace=None):
+    workspace.put(f"/wait/{reconfiguration_name}/{component_name}", state)
 
 
 @zenoh_session

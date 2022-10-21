@@ -425,7 +425,7 @@ class Assembly(object):
             if component_name in self.components.keys():  # Local component
                 is_component_idle = component_name not in self.act_components
             else:                                         # Remote component
-                is_component_idle = communication_handler.get_remote_component_state(component_name, self.name) == INACTIVE
+                is_component_idle = communication_handler.get_remote_component_state(component_name, self.name, global_variables.reconfiguration_name) == INACTIVE
 
             finished = is_component_idle
 
@@ -532,7 +532,7 @@ class Assembly(object):
         self.remove_from_active_components(idle_components)
 
         if self.is_idle():
-            communication_handler.set_component_state(INACTIVE, self.name)
+            communication_handler.set_component_state(INACTIVE, self.name, global_variables.reconfiguration_name)
 
         # Check for sleeping conditions
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
