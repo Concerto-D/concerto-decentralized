@@ -94,9 +94,9 @@ def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provi
 def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
     zenoh_topic = f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}"
     result = workspace.get(zenoh_topic)
-    str_result = result[0].value.get_content()
+    str_result = result[0].value.get_content() if len(result) > 0 else ""
     log_once.debug(f"Check synced connection on {zenoh_topic}, result: {str_result}")
-    return len(result) > 0 and str_result == action
+    return str_result == action
 
 
 @zenoh_session
