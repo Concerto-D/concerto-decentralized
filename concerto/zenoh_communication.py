@@ -86,7 +86,7 @@ def write_data_dependency(component_name: str, dependency_name: str, data, works
 @zenoh_session
 def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
     zenoh_topic = f"/{action}/{syncing_component}/{component_to_sync}/{dep_provide}/{dep_use}"
-    log.debug(f"Send synced connection {action} on {zenoh_topic}")
+    log_once.debug(f"Send synced connection {action} on {zenoh_topic}")
     workspace.put(zenoh_topic, action)
 
 
@@ -94,7 +94,10 @@ def send_syncing_conn(syncing_component: str, component_to_sync: str,  dep_provi
 def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide: str, dep_use: str, action: str, workspace=None):
     zenoh_topic = f"/{action}/{component_to_sync}/{syncing_component}/{dep_provide}/{dep_use}"
     result = workspace.get(zenoh_topic)
-    str_result = result[0].value.get_content() if len(result) > 0 else ""
+    if len(result) > 0:
+        str_result = result[0].value.get_content()
+    else:
+        str_result = ""
     log_once.debug(f"Check synced connection on {zenoh_topic}, result: {str_result}")
     return str_result == action
 
@@ -102,7 +105,7 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
 @zenoh_session
 def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, reconfiguration_name: str, workspace=None):
     zenoh_topic = f"/wait/{reconfiguration_name}/{component_name}"
-    log.debug(f"Put component state {state} on {zenoh_topic}")
+    log_once.debug(f"Put component state {state} on {zenoh_topic}")
     workspace.put(zenoh_topic, state)
 
 
