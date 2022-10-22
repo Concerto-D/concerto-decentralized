@@ -99,6 +99,7 @@ def get_results_from_request(key_cache, url, default_value, params=None):
         # log_once.debug(e)
         result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
         # log_once.debug(f"{url}?{params} raised an exception, using cache result: {result} instead")
+    time.sleep(0.2)
     return result
 
 
