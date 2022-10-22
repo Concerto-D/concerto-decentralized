@@ -604,7 +604,8 @@ class Component(object, metaclass=ABCMeta):
                     behavior, self.get_name()))
         # TODO warn if no transition with the behavior is fireable from the current state
         self.act_behavior = behavior
-        communication_handler.set_component_state(ACTIVE, self.get_name(), global_variables.reconfiguration_name)
+        if behavior is not None:
+            communication_handler.set_component_state(ACTIVE, self.get_name(), global_variables.reconfiguration_name)
         if behavior is not None and behavior != "_init":
             time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
         if self.gantt is not None:

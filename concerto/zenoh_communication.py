@@ -11,6 +11,7 @@ DECONN = "DECONN"
 ACTIVE = "ACTIVE"
 INACTIVE = "INACTIVE"
 
+last_msg_component_state = ""
 
 class _ZenohSession:
     _session = None
@@ -30,6 +31,7 @@ def zenoh_session(func):
         session = _get_zenoh_session()
         workspace = session.workspace()
         result = func(*args, **kwargs, workspace=workspace)
+        time.sleep(0.2)
         return result
 
     return create_and_close_session
@@ -104,9 +106,12 @@ def is_conn_synced(syncing_component: str, component_to_sync: str,  dep_provide:
 
 @zenoh_session
 def set_component_state(state: [ACTIVE, INACTIVE], component_name: str, reconfiguration_name: str, workspace=None):
-    zenoh_topic = f"/wait/{reconfiguration_name}/{component_name}"
-    log_once.debug(f"Put component state {state} on {zenoh_topic}")
-    workspace.put(zenoh_topic, state)
+    global last_msg_component_state
+    if state + component_name + reconfiguration_name != last_msg_component_state:
+        zenoh_topic = f"/wait/{reconfiguration_name}/{component_name}"
+        log_once.debug(f"Put component state {state} on {zenoh_topic}")
+        workspace.put(zenoh_topic, state)
+        last_msg_component_state = state + component_name + reconfiguration_name
 
 
 @zenoh_session
