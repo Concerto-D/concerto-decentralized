@@ -277,6 +277,7 @@ class Assembly(object):
                 # log.debug(f"Connection already done: Waiting connection from {comp2_name}")
                 finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
             else:
+                log.debug(f"Create connection locally for: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
                 finished = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
 
             if not finished:
