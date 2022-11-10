@@ -24,7 +24,7 @@ from concerto.gantt_record import GanttRecord
 from concerto.utility import COLORS, TimeManager
 
 # In synchronous execution, how much interval (in seconds) to poll results
-FREQUENCE_POLLING = 0.1
+FREQUENCE_POLLING = 0.05
 
 
 def track_instruction_number(func):

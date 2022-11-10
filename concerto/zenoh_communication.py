@@ -30,7 +30,7 @@ def zenoh_session(func):
     def create_and_close_session(*args, **kwargs):
         session = _get_zenoh_session()
         result = func(*args, **kwargs, session=session)
-        time.sleep(0.2)
+        # time.sleep(0.2)
         return result
 
     return create_and_close_session
