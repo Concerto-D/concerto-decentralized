@@ -227,7 +227,7 @@ class Assembly(object):
         return comp
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.ADD, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.ADD, is_instruction_method=True)
     def add_component(self, name: str, comp_type: str):
         if name in self.components:
             raise Exception("Trying to add '%s' as a component while it is already a component" % name)
@@ -237,7 +237,7 @@ class Assembly(object):
         self.add_to_active_components(name)  # _init
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.DEL, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.DEL, is_instruction_method=True)
     def del_component(self, component_name: str):
         finished = False
         while not finished:
@@ -253,7 +253,7 @@ class Assembly(object):
                 self.run_semantics_iteration()
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.CONN, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.CONN, is_instruction_method=True)
     def connect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         """
         This method adds a connection between two components dependencies.
@@ -349,7 +349,7 @@ class Assembly(object):
         return dep1, dep2
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.DCONN, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.DCONN, is_instruction_method=True)
     def disconnect(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         """
         This method adds a connection between two components dependencies.
@@ -406,7 +406,7 @@ class Assembly(object):
             return False
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.PUSH_B, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.PUSH_B, is_instruction_method=True)
     def push_b(self, component_name: str, behavior: str):
         component = self.get_component(component_name)
         component.queue_behavior(behavior)
@@ -414,7 +414,7 @@ class Assembly(object):
             self.add_to_active_components(component_name)
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.WAIT, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.WAIT, is_instruction_method=True)
     def wait(self, component_name: str, wait_for_refusing_provide: bool = False):
         """
         TODO: uniquement testé en local
@@ -436,7 +436,7 @@ class Assembly(object):
         self.wait_for_refusing_provide = False
 
     @track_instruction_number
-    @create_timestamp_metric(TimestampType.TimestampInstruction.WAITALL, is_instruction_method=True)
+    # @create_timestamp_metric(TimestampType.TimestampInstruction.WAITALL, is_instruction_method=True)
     def wait_all(self, wait_for_refusing_provide: bool = False):
         """
         Global synchronization
