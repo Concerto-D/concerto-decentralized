@@ -830,6 +830,9 @@ class Component(object, metaclass=ABCMeta):
             if not enabled:
                 continue
 
+            if global_variables.is_concerto_d_central() and not self._assembly.time_checker.is_node_awake_now(self.get_name()):
+                continue
+
             did_something = True
             if self.get_verbosity() >= 1:
                 self.print_color("Starting transition '%s'" % (trans.get_name()))
