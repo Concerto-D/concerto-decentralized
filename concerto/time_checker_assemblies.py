@@ -18,9 +18,9 @@ class TimeCheckerAssemblies:
         seconds_elapsed = self.get_seconds_elapsed()
         for uptime, duration in uptimes_node:
             if uptime <= seconds_elapsed <= (uptime + duration):
-                log_once(f"Node {component_name} is up. Current time: {seconds_elapsed}. Times awakening: {uptime} - {uptime + duration}")
+                log_once.debug(f"Node {component_name} is up. Current time: {seconds_elapsed}. Times awakening: {uptime} - {uptime + duration}")
                 return True
-        log_once(f"Node {component_name} is not up. Current time: {seconds_elapsed}")
+        log_once.debug(f"Node {component_name} is not up. Current time: {seconds_elapsed}")
         return False
 
     def get_seconds_elapsed(self):
