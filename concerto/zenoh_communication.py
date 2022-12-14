@@ -40,7 +40,7 @@ def zenoh_session(func):
 def get_nb_dependency_users(component_name: str, dependency_name: str, session: zenoh.session.Session = None) -> int:
     zenoh_topic = f"nb_users/{component_name}/{dependency_name}"
     res = session.get(zenoh_topic, zenoh.ListCollector())()
-    int_res = int(res[0].ok.payload.decode("utf-8")) if len(res) > 0 else 0
+    int_res = int(res[0].ok.payload.decode("utf-8")) if len(res) > 0 else -1
     log_once.debug(f"Get nb dependency users on {zenoh_topic}, result: {int_res}")
     return int_res
 

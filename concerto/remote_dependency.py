@@ -18,11 +18,11 @@ class RemoteDependency(Dependency):
         Dependency.__init__(self, None, name, dep_type)
         self.remote_component_name = remote_component_name
 
-    def is_in_use(self) -> bool:
+    def get_nb_users(self) -> int:
         """
         On fait dans le topic plutôt qu'en local car la dépendance est remote
         """
-        return communication_handler.get_nb_dependency_users(self.remote_component_name, self.dependency_name) > 0
+        return communication_handler.get_nb_dependency_users(self.remote_component_name, self.dependency_name)
 
     def is_refusing(self):
         return communication_handler.get_refusing_state(self.get_component_name(), self.get_name())

@@ -109,7 +109,7 @@ def get_nb_dependency_users(component_name: str, dependency_name: str) -> int:
     target_host = inventory[component_name]
     url = f"http://{target_host}/{endpoint_name}/{component_name}/{dependency_name}"
     key_cache = endpoint_name + component_name + dependency_name
-    result = int(get_results_from_request(key_cache, url, 0))
+    result = int(get_results_from_request(key_cache, url, -1))
     return result
 
 

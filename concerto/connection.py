@@ -36,10 +36,12 @@ class Connection:
         return self._use_dep
 
     def is_active(self) -> bool:
-        return self._provide_dep.is_in_use()
+        # If get_nb_users == -1 (the remote dep is not available and there is no cache), consider that it is not active
+        return self._provide_dep.get_nb_users() > 0
 
     def is_locked(self) -> bool:
-        return self._use_dep.is_in_use()
+        # If get_nb_users == -1 (the remote dep is not available and there is no cache), consider that it is locked)
+        return self._use_dep.get_nb_users() != 0
 
     def get_opposite_dependency(self, dep):
         return self._use_dep if dep == self._provide_dep else self._provide_dep

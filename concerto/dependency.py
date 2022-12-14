@@ -156,8 +156,8 @@ class Dependency(object):
     def disconnect(self, c):
         self.dependency_connections.remove(c)
 
-    def is_in_use(self) -> bool:
-        return self.nb_users > 0
+    def get_nb_users(self) -> int:
+        return self.nb_users
 
     def start_using(self):
         self.nb_users += 1
