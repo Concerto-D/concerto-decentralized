@@ -5,6 +5,7 @@ import yaml
 from flask import Flask, request
 from threading import Thread
 
+from concerto import global_variables
 from concerto.debug_logger import log, log_once
 from concerto.rest_communication import ACTIVE, INACTIVE
 import logging
@@ -95,7 +96,7 @@ def run_flask_api(assembly):
     werkzeug_log = logging.getLogger('werkzeug')
     werkzeug_log.setLevel(logging.ERROR)
 
-    with open("inventory.yaml") as f:
+    with open(global_variables.get_inventory_absolute_path()) as f:
         loaded_inventory = yaml.safe_load(f)
     _, port = loaded_inventory[assembly.get_name()].split(":")
 
