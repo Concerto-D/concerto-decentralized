@@ -20,13 +20,12 @@ INACTIVE = "INACTIVE"
 """
 inventory: each component should be associated with an ip/port
 """
-INVENTORY_FILE_PATH = "inventory.yaml"
 inventory = {}
 communications_cache = {}
 
 
 def parse_inventory_file():
-    absolute_inventory_path = f"{global_variables.execution_expe_dir}/{INVENTORY_FILE_PATH}"
+    absolute_inventory_path = global_variables.get_inventory_absolute_path()
     log.debug(f"Loading inventory from {absolute_inventory_path}")
     with open(absolute_inventory_path, "r") as f:
         loaded_yaml = yaml.safe_load(f)
