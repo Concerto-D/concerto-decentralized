@@ -553,7 +553,7 @@ class Assembly(object):
             rest_communication.save_communication_cache(self.get_name())
         time_logger.register_end_all_time_values()
         time_logger.register_timestamps_in_file()
-        log.debug("")  # To separate differents sleeping rounds
+        log.debug("")  # To visually separate differents sleeping rounds
         exit(exit_code)
 
 

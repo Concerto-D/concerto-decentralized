@@ -26,8 +26,9 @@ communications_cache = {}
 
 
 def parse_inventory_file():
-    log.debug(f"Loading inventory from {INVENTORY_FILE_PATH}")
-    with open(INVENTORY_FILE_PATH, "r") as f:
+    absolute_inventory_path = f"{global_variables.execution_expe_dir}/{INVENTORY_FILE_PATH}"
+    log.debug(f"Loading inventory from {absolute_inventory_path}")
+    with open(absolute_inventory_path, "r") as f:
         loaded_yaml = yaml.safe_load(f)
         for ass_comp_name, host in loaded_yaml.items():
             inventory[ass_comp_name] = host
