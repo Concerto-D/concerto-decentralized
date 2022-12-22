@@ -606,8 +606,8 @@ class Component(object, metaclass=ABCMeta):
         self.act_behavior = behavior
         if behavior is not None:
             communication_handler.set_component_state(ACTIVE, self.get_name(), global_variables.reconfiguration_name)
-        # if behavior is not None and behavior != "_init":
-        #     time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior)
+        if behavior is not None and behavior != "_init":
+            time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior, self.get_name())
         if self.gantt is not None:
             self.gantt.push_b(self.get_name(), behavior, time.perf_counter())
         self.visited_places = set()
@@ -699,8 +699,8 @@ class Component(object, metaclass=ABCMeta):
         if idle:
             if not self.queued_behaviors.empty():
                 idle = False
-                # if self.act_behavior != "_init":
-                #     time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior)
+                if self.act_behavior != "_init":
+                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, self.get_name())
                 self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 
