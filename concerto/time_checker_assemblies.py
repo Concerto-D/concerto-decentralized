@@ -7,8 +7,8 @@ node_num_assembly_name = ["server", "dep0", "dep1", "dep2", "dep3", "dep4", "dep
 
 
 class TimeCheckerAssemblies:
-    def __init__(self, uptimes_nodes_file_path):
-        self.start_time = time.time()
+    def __init__(self, uptimes_nodes_file_path, execution_start_time):
+        self.start_time = execution_start_time
         with open(uptimes_nodes_file_path) as f:
             self.uptime_nodes = json.load(f)
 
@@ -18,9 +18,9 @@ class TimeCheckerAssemblies:
         seconds_elapsed = self.get_seconds_elapsed()
         for uptime, duration in uptimes_node:
             if uptime <= seconds_elapsed <= (uptime + duration):
-                log_once.debug(f"Node {component_name} is up. Current time: {seconds_elapsed}. Times awakening: {uptime} - {uptime + duration}")
+                log_once.debug(f"Node {component_name} is up. Current time: {int(seconds_elapsed)}. Times awakening: {uptime} - {uptime + duration}")
                 return True
-        log_once.debug(f"Node {component_name} is not up. Current time: {seconds_elapsed}")
+        log_once.debug(f"Node {component_name} is not up. Current time: {int(seconds_elapsed)}")
         return False
 
     def get_seconds_elapsed(self):
