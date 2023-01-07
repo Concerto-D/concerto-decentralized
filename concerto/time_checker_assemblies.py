@@ -7,21 +7,27 @@ node_num_assembly_name = ["server", "dep0", "dep1", "dep2", "dep3", "dep4", "dep
 
 
 class TimeCheckerAssemblies:
-    def __init__(self, uptimes_nodes_file_path, execution_start_time):
-        self.start_time = execution_start_time
+    def __init__(self, uptimes_nodes_file_path):
+        self.start_time = None
+        self.min_uptime = None
         with open(uptimes_nodes_file_path) as f:
             self.uptime_nodes = json.load(f)
 
-    def is_node_awake_now(self, component_name):
+    def set_start_time(self):
+        self.start_time = time.time()
+
+    def set_min_uptime(self, min_uptime):
+        self.min_uptime = min_uptime
+
+    def is_node_awake_now(self, component_name, round_reconf):
         log_once.debug(f"Checking if node for assembly {component_name} is up")
-        uptimes_node = self.uptime_nodes[node_num_assembly_name.index(component_name)]
+        uptime, duration = self.uptime_nodes[node_num_assembly_name.index(component_name)][round_reconf]
         seconds_elapsed = self.get_seconds_elapsed()
-        for uptime, duration in uptimes_node:
-            if uptime <= seconds_elapsed <= (uptime + duration):
-                log_once.debug(f"Node {component_name} is up. Current time: {int(seconds_elapsed)}. Times awakening: {uptime} - {uptime + duration}")
-                return True
-        log_once.debug(f"Node {component_name} is not up. Current time: {int(seconds_elapsed)}")
+        if uptime <= seconds_elapsed <= (uptime + duration):
+            log_once.debug(f"Node {component_name} is up. Current time: {int(seconds_elapsed)}. Times awakening: {uptime} - {uptime + duration}")
+            return True
+        log_once.debug(f"Node {component_name} is not up. Current time: {int(seconds_elapsed)}. Times awakening: {uptime} - {uptime + duration}")
         return False
 
     def get_seconds_elapsed(self):
-        return time.time() - self.start_time
+        return time.time() - self.start_time + self.min_uptime

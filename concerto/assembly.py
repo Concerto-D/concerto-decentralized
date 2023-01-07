@@ -5,6 +5,7 @@
 .. module:: assembly
    :synopsis: this file contains the Assembly class.
 """
+import math
 import time
 from os.path import exists
 from pathlib import Path
@@ -17,6 +18,7 @@ from concerto.component import Component
 from concerto.debug_logger import log, log_once
 from concerto.global_variables import CONCERTO_D_SYNCHRONOUS
 from concerto.remote_dependency import RemoteDependency
+from concerto.time_checker_assemblies import TimeCheckerAssemblies
 from concerto.time_logger import TimestampType, create_timestamp_metric
 from concerto.transition import Transition
 from concerto.connection import Connection
@@ -64,7 +66,8 @@ class Assembly(object):
             waiting_rate,
             concerto_d_version,
             nb_concerto_nodes,
-            reconfiguration_name
+            reconfiguration_name,
+            uptimes_nodes_file_path=None
     ):
         self.time_manager = TimeManager(waiting_rate)
         self.components_types = components_types
@@ -118,6 +121,11 @@ class Assembly(object):
             rest_communication.parse_inventory_file()
             rest_communication.load_communication_cache(self.get_name())
             exposed_api.run_api_in_thread(self)
+        if global_variables.is_concerto_d_central():
+            self.time_checker = TimeCheckerAssemblies(uptimes_nodes_file_path)
+            self._set_round_reconf_for_components()
+            self._set_execution_start_time()
+
 
     @property
     def obj_id(self):
@@ -149,6 +157,30 @@ class Assembly(object):
         else:
             log.debug("'\33[33m'----- Previous config doesn't NOT exists, starting from zero ----'\033[0m'")
             log.debug(f"'\33[33m'----- Searched in {assembly_config.build_saved_config_file_path(self.name)} -----'\033[0m'")
+
+    def _get_next_round_reconf(self):
+        # If there is no previous configuration (first execution), return 0
+        if len(self.components.values()) == 0:
+            return 0
+        return max(comp.round_reconf for comp in self.components.values())
+
+    def _set_round_reconf_for_components(self):
+        max_round_reconf = self._get_next_round_reconf()
+        log.debug(f"set_round_reconf_for_components: {max_round_reconf}")
+        for comp in self.components.values():
+            comp.round_reconf = max_round_reconf + 1
+
+    def _set_execution_start_time(self):
+        max_round_reconf = self._get_next_round_reconf()
+        uptime_nodes = self.time_checker.uptime_nodes
+        min_uptime = math.inf
+        for i in range(len(uptime_nodes)):
+            uptime, duration = uptime_nodes[i][max_round_reconf]
+            if uptime < min_uptime:
+                min_uptime = uptime
+
+        self.time_checker.set_min_uptime(min_uptime)
+        self.time_checker.set_start_time()
 
     def set_verbosity(self, level: int):
         self.verbosity = level

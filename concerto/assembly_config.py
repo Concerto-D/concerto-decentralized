@@ -178,4 +178,7 @@ def _restore_component(assembly, comp_values, components_names, components):
         place_comp = component.st_places[place_dict['place_name']]
         component.visited_places.add(place_comp)
 
+    # Restore round_reconf
+    component.round_reconf = comp_values["round_reconf"]  # Used only for central reconfiguration
+
     return component

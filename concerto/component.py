@@ -207,7 +207,8 @@ class Component(object, metaclass=ABCMeta):
             "act_behavior": self.act_behavior,
             "queued_behaviors": self.queued_behaviors,
             "visited_places": self.visited_places,
-            "initialized": self.initialized
+            "initialized": self.initialized,
+            "round_reconf": self.round_reconf
         }
 
     def set_assembly(self, assembly):
@@ -611,7 +612,7 @@ class Component(object, metaclass=ABCMeta):
         if behavior is not None:
             communication_handler.set_component_state(ACTIVE, self.get_name(), global_variables.reconfiguration_name)
         if behavior is not None and behavior != "_init":
-            if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name()):
+            if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf):
                 component_timestamps_dict = self.timestamps_dict if global_variables.is_concerto_d_central() else None
                 time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.START, behavior, self.get_name(), component_timestamps_dict=component_timestamps_dict)
         if self.gantt is not None:
@@ -676,7 +677,7 @@ class Component(object, metaclass=ABCMeta):
         time_logger.log_time_value(TimestampType.TimestampEvent.SLEEPING, timestamp_period, component_timestamps_dict=self.timestamps_dict)
 
     def handle_central_timestamps(self):
-        is_awake_now = self._assembly.time_checker.is_node_awake_now(self.get_name())
+        is_awake_now = self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf)
         seconds_elapsed = self._assembly.time_checker.get_seconds_elapsed()
         log_once.debug(f"Checking handle_central_timestamps: name: {self.get_name()} sleeping: {self.is_sleeping}, is_awake_now: {is_awake_now}, seconds_elapsed: {int(seconds_elapsed)}")
         if self.is_sleeping is None:
@@ -692,6 +693,8 @@ class Component(object, metaclass=ABCMeta):
             time_logger.register_end_all_time_values(component_timestamps_dict=self.timestamps_dict)
             time_logger.register_timestamps_in_file(component_timestamps_dict=self.timestamps_dict, component_name=self.get_name())
             self.timestamps_dict = {}
+            self.round_reconf += 1
+            log.debug(f"actual round reconf: {self.round_reconf}")
             self.timestamps_switch_sleeping_state(TimestampPeriod.START)
 
     def semantics(self) -> Tuple[bool, bool, bool]:
@@ -731,7 +734,7 @@ class Component(object, metaclass=ABCMeta):
             if not self.queued_behaviors.empty():
                 idle = False
                 if self.act_behavior != "_init":
-                    if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name()):
+                    if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf):
                         component_timestamps_dict = self.timestamps_dict if global_variables.is_concerto_d_central() else None
                         time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, self.get_name(), component_timestamps_dict=component_timestamps_dict)
                 self.set_behavior(self.queued_behaviors.get())
@@ -870,7 +873,7 @@ class Component(object, metaclass=ABCMeta):
                 continue
 
             # Don't start a transition if the node is not awaken
-            if global_variables.is_concerto_d_central() and not self._assembly.time_checker.is_node_awake_now(self.get_name()):
+            if global_variables.is_concerto_d_central() and not self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf):
                 continue
 
             did_something = True
