@@ -92,6 +92,8 @@ def get_results_from_request(key_cache, url, default_value, params=None):
             if result != "":  # TODO: Bug, sometimes API return blank response
                 communications_cache[key_cache] = result
                 # log_once.debug(f"{url}?{params} accessible, result: {result}")
+            else:             # TODO: act as if the remote node is unreachable
+                result = default_value
         else:
             result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
             # log_once.debug(f"{url}?{params} is not accessible, using cache result: {result} instead")
