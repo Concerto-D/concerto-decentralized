@@ -300,22 +300,7 @@ class Assembly(object):
         # - Faire une vérification à partir du type de composant (si on part du principe
         # que les assemblies connaissent tous les types de composants possibles)
         # - Ajouter un échange de message avec les informations du composant d'en face
-        finished = False
         log.debug(f"Creating connection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
-        while not finished:
-            dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
-            connection_id = Connection.build_id_from_dependencies(dep1, dep2)
-            if connection_id in self.connections:
-                # log.debug(f"Connection already done: Waiting connection from {comp2_name}")
-                finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
-            else:
-                log.debug(f"Create connection locally for: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
-                finished = self._create_conn(comp1_name, dep1_name, comp2_name, dep2_name)
-
-            if not finished:
-                self.run_semantics_iteration()
-
-    def _create_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
         if DepType.valid_types(dep1.get_type(),
                                dep2.get_type()):
@@ -338,19 +323,6 @@ class Assembly(object):
             if not remote_connection:
                 self.component_connections[comp2_name].add(new_connection)
 
-            # [con] Ajouter la synchronization avec le composant d'en face
-            # TODO: réfléchir sur le besoin de la synchronization pour le con: pourquoi attendre que la connection d'en face
-            # soit faite, on peut juste lancer les bhvs et s'il n'y a pas de remote dependencies on considère la dépendance
-            # non served
-            if remote_connection:
-                # Need d'initialiser le nombre de user sur la dépendance à 0 car si on veut déconnecter tout de suite,
-                # un check est fait sur le nb d'utilisateur
-                communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, CONN)
-                is_conn_synced = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, CONN)
-                log.debug("Connection done locally, waiting for the connection message from:"
-                                  f"{comp1_name} {comp2_name} {dep2_name} {dep1_name}")
-                # log.debug(f"Is conn synced between {comp1_name} and {comp2_name} ? (for {dep1_name} and {dep2_name}): {is_conn_synced}")
-                return is_conn_synced
             return True
 
         else:
@@ -391,20 +363,7 @@ class Assembly(object):
         :param comp2_name: The name of the second component to connect
         :param dep2_name:  The name of the dependency of the second component to connect
         """
-        finished = False
         log.debug(f"Creating disconnection: {comp1_name} {dep1_name} {comp2_name} {dep2_name}")
-        while not finished:
-            dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
-            connection_id = Connection.build_id_from_dependencies(dep1, dep2)
-            if connection_id not in self.connections:
-                finished = communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
-            else:
-                finished = self._remove_conn(comp1_name, dep1_name, comp2_name, dep2_name)
-
-            if not finished:
-                self.run_semantics_iteration()
-
-    def _remove_conn(self, comp1_name: str, dep1_name: str, comp2_name: str, dep2_name: str):
         dep1, dep2 = self._compute_dependencies_from_names(comp1_name, dep1_name, comp2_name, dep2_name)
         id_connection_to_remove = Connection.build_id_from_dependencies(dep1, dep2)
 
@@ -423,16 +382,6 @@ class Assembly(object):
             if not is_remote_disconnection:
                 self.component_connections[comp2_name].discard(connection)
             del self.connections[id_connection_to_remove]
-
-            # [dcon] Ajouter la synchronization avec le composant d'en face
-            # TODO: réfléchir sur le besoin de la synchronization pour le dcon, parce qu'une fois que moi je me suis déco,
-            # je n'ai pas besoin de savoir si les autres se sont déco (si on suppose un programme valide)
-            if is_remote_disconnection:
-                communication_handler.send_syncing_conn(comp1_name, comp2_name, dep1_name, dep2_name, DECONN)
-                log.debug("Disconnection done locally, waiting for the disconnection message from:"
-                                  f"{comp1_name} {comp2_name} {dep2_name} {dep1_name}")
-                return communication_handler.is_conn_synced(comp1_name, comp2_name, dep2_name, dep1_name, DECONN)
-
             return True
         else:
             return False
