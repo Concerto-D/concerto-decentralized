@@ -731,12 +731,12 @@ class Component(object, metaclass=ABCMeta):
 
         # Check s'il reste des behaviors à exécuter
         if idle:
+            if self.act_behavior != "_init":
+                if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf):
+                    component_timestamps_dict = self.timestamps_dict if global_variables.is_concerto_d_central() else None
+                    time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, self.get_name(), component_timestamps_dict=component_timestamps_dict)
             if not self.queued_behaviors.empty():
                 idle = False
-                if self.act_behavior != "_init":
-                    if not global_variables.is_concerto_d_central() or self._assembly.time_checker.is_node_awake_now(self.get_name(), self.round_reconf):
-                        component_timestamps_dict = self.timestamps_dict if global_variables.is_concerto_d_central() else None
-                        time_logger.log_time_value(TimestampType.BEHAVIOR, TimestampPeriod.END, self.act_behavior, self.get_name(), component_timestamps_dict=component_timestamps_dict)
                 self.set_behavior(self.queued_behaviors.get())
                 did_something = True
 
