@@ -127,7 +127,8 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, compo
 
 # TODO rename functions
 def register_timestamps_in_file(component_timestamps_dict=None, component_name=None):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    time_in_ms = time.time() % 1000
+    timestamp = datetime.now().strftime(f"%Y-%m-%d_%H-%M-%S-{time_in_ms}")
     if component_timestamps_dict is not None and component_name is not None:
         timestamp_dict_to_save = component_timestamps_dict
         name_to_save = component_name
