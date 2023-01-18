@@ -807,22 +807,18 @@ class Component(object, metaclass=ABCMeta):
                     if dep.is_locked():
                         log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the place {place}")
                         can_leave = False
-                        break
             if not can_leave:
                 continue
 
             # Checking group dependencies if in a group
             deactivating_groups_operation: Dict[Group, Group.Operation] = {}
             for group in self.place_groups[place.get_name()]:
-                if not can_leave:
-                    break
                 group_operation = group.leave_place_operation(odocks)
                 if group.is_deactivating(group_operation):
                     for dep in self.group_dependencies[group.get_name()]:
                         if (dep.get_type() is DepType.PROVIDE) and dep.is_locked():
                             log_once.debug(f"Provide dependency {str(dep)} is locked and cannot leave the group {group}")
                             can_leave = False
-                            break
                     deactivating_groups_operation[group] = group_operation
             if not can_leave:
                 continue
@@ -867,7 +863,6 @@ class Component(object, metaclass=ABCMeta):
                 if not dep.is_served():
                     log_once.debug(f"Use dependency {str(dep)} of the transition {trans.get_name()} not served, transition cannot start")
                     enabled = False
-                    break
 
             if not enabled:
                 continue
@@ -966,20 +961,16 @@ class Component(object, metaclass=ABCMeta):
                             log_once.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not served. "
                                                 "cannot go into it")
                             ready = False
-                            break
                         if not dep.is_allowed():
                             log_once.debug(f"Use dep {dep.get_name()} from the place {place.get_name()} is not allowed. "
                                                 "cannot go into it")
                             ready = False
-                            break
                 if not ready:
                     continue
 
                 # Checking group dependencies
                 activating_groups_operation: Dict[Group, Group.Operation] = {}
                 for group in self.place_groups[place.get_name()]:
-                    if not ready:
-                        break
                     # A vérifier: on regarde combien de input dock manquants n'ont pas le jeton
                     group_operation = group.enter_place_operation(inp_docks)
                     if group.is_activating(group_operation):
@@ -992,7 +983,6 @@ class Component(object, metaclass=ABCMeta):
                                     log_once.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not allowed. "
                                                         "cannot go into it")
                                 ready = False
-                                break
                         activating_groups_operation[group] = group_operation
                 if not ready:
                     continue
