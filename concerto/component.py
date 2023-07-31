@@ -787,6 +787,7 @@ class Component(object, metaclass=ABCMeta):
         This method represents the one moving the token of a place to its
         output docks.
         """
+        # TODO: check pourquoi un appel subsequent à get_refusing_state quand on est idle
         did_something = False
         places_to_remove: Set[Place] = set()
 
@@ -935,6 +936,7 @@ class Component(object, metaclass=ABCMeta):
             place: Place = dock.get_place()
             log_once.debug(f"Move from idocks to place ({place.get_name()})")
             if place in self.act_places:
+                log_once.debug(f"Place {place.get_name()} already in active places, continue")
                 continue
 
             # On récupère tous les input docks associés au behavior actif de la fin des transitions
@@ -942,6 +944,7 @@ class Component(object, metaclass=ABCMeta):
             grp_inp_docks = place.get_groups_of_input_docks(self.act_behavior)
             for inp_docks in grp_inp_docks:
                 if len(inp_docks) is 0:
+                    log_once.debug(f"{len(inp_docks)} is 0, continue")
                     continue
 
                 # On regarde si tous les input docks on reçu le jeton
@@ -949,9 +952,11 @@ class Component(object, metaclass=ABCMeta):
                 for dock2 in inp_docks:
                     if dock2 not in self.act_idocks:
                         ready = False
+                        log_once.debug(f"{dock2.obj_id} not in active idocks, not ready")
                         break
                 # Si ce n'est pas le cas on attend
                 if not ready:
+                    log_once.debug("Not ready")
                     continue
 
                 # Checking place dependencies
@@ -977,7 +982,7 @@ class Component(object, metaclass=ABCMeta):
                         for dep in self.group_dependencies[group.get_name()]:
                             if dep.get_type() is DepType.USE and (not dep.is_served() or not dep.is_allowed()):
                                 if not dep.is_served():
-                                    log_once.debug(f"Use dep {dep.get_name()} from the group {place.get_name()} is not served. "
+                                    log_once.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not served. "
                                                         "cannot go into it")
                                 if not dep.is_allowed():
                                     log_once.debug(f"Use dep {dep.get_name()} from the group {group.get_name()} is not allowed. "

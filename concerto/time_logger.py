@@ -1,7 +1,6 @@
 import os
 import time
 from datetime import datetime
-from typing import Optional
 
 import yaml
 
@@ -10,6 +9,7 @@ from concerto.debug_logger import log, log_once
 
 LOG_DIR_TIMESTAMP = ""
 ASSEMBLY_NAME = ""
+TIMESTAMP_EXPE_START = 0.0
 
 
 all_timestamps_dict = {}
@@ -39,6 +39,7 @@ def create_timestamp_metric(timestamp_type, is_instruction_method=False):
 class TimestampType:
 
     BEHAVIOR = "behavior"
+    TRANSITION = "transition"
 
     class TimestampEvent:
         TYPE = "event"
@@ -68,9 +69,15 @@ class TimestampPeriod:
     END = "end"
 
 
-def init_time_log_dir(assembly_name: str):
+def init_time_log_dir(assembly_name: str, timestamp_expe_start: float):
     global ASSEMBLY_NAME
+    global TIMESTAMP_EXPE_START
     ASSEMBLY_NAME = assembly_name
+    TIMESTAMP_EXPE_START = timestamp_expe_start
+
+
+def _compute_relative_time():
+    return time.time() - TIMESTAMP_EXPE_START
 
 
 def log_time_value(timestamp_type: str, timestamp_period: str, *args, **kwargs):
@@ -103,7 +110,7 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, compo
                 log_once.debug(f"Register time value start not done: {timestamp_name} for {TimestampPeriod.START} already registered")
         else:
             timestamp_dict_to_save[timestamp_name] = {}
-            timestamp_dict_to_save[timestamp_name][TimestampPeriod.START] = time.time()
+            timestamp_dict_to_save[timestamp_name][TimestampPeriod.START] = _compute_relative_time()
             log.debug(f"Saved timestamp: {timestamp_type} {args} {kwargs} {timestamp_period}")
 
     else:
@@ -119,7 +126,7 @@ def register_time_value(timestamp_type: str, timestamp_period: str, *args, compo
         elif TimestampPeriod.END in timestamp_dict_to_save[timestamp_name]:
             raise Exception(f"Register time value end error: {timestamp_name} for {TimestampPeriod.END} already registered")
         else:
-            timestamp_dict_to_save[timestamp_name][TimestampPeriod.END] = time.time()
+            timestamp_dict_to_save[timestamp_name][TimestampPeriod.END] = _compute_relative_time()
             log.debug(f"Saved timestamp: {timestamp_type} {args} {kwargs} {timestamp_period}")
 
     return timestamp_name
@@ -152,4 +159,4 @@ def register_end_all_time_values(component_timestamps_dict=None):
     for timestamp_name, timestamp_values in timestamp_dict_to_save.items():
         if TimestampPeriod.END not in timestamp_values.keys():
             log.debug(f"Saved timestamp: {timestamp_name} {TimestampPeriod.END}")
-            timestamp_dict_to_save[timestamp_name][TimestampPeriod.END] = time.time()
+            timestamp_dict_to_save[timestamp_name][TimestampPeriod.END] = _compute_relative_time()

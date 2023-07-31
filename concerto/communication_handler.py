@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import zenoh
 
@@ -86,8 +87,18 @@ def get_remote_component_state(component_name: str, calling_assembly_name: str, 
         return rest_communication.get_remote_component_state(component_name, calling_assembly_name)
 
 
-def clear_global_synchronization_cache():
+def clear_communication_cache(assembly):
     if global_variables.is_concerto_d_asynchronous():
         return
     else:
-        rest_communication.clear_global_synchronization_cache()
+        rest_communication.clear_communication_cache(assembly)
+
+
+def set_provide_deps_to_provided(deps_to_acknowledge: List):
+    """
+    Passe l'état des dépendences listées à provided
+    """
+    if global_variables.is_concerto_d_asynchronous():
+        return
+    else:
+        rest_communication.set_provide_deps_to_provided(deps_to_acknowledge)

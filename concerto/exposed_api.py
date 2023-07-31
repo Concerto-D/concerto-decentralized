@@ -43,29 +43,17 @@ def run_flask_api(assembly):
     @app.route("/get_nb_dependency_users/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_nb_dependency_users(component_name: str, dependency_name: str):
-        for conn in set(assembly.component_connections[component_name]):
-            if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep.nb_users)
-            if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep.nb_users)
+        return str(assembly.components[component_name].st_dependencies[dependency_name].nb_users)
 
     @app.route("/get_refusing_state/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_refusing_state(component_name: str, dependency_name: str):
-        for conn in set(assembly.component_connections[component_name]):
-            if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep.is_refusing)
-            if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep.is_refusing)
+        return str(assembly.components[component_name].st_dependencies[dependency_name].is_refusing)
 
     @app.route("/get_data_dependency/<component_name>/<dependency_name>")
     @catch_exceptions
     def get_data_dependency(component_name: str, dependency_name: str):
-        for conn in set(assembly.component_connections[component_name]):
-            if conn._use_dep.get_name() == dependency_name:
-                return str(conn._use_dep.data)
-            if conn._provide_dep.get_name() == dependency_name:
-                return str(conn._provide_dep.data)
+        return str(assembly.components[component_name].st_dependencies[dependency_name].data)
 
     @app.route("/is_conn_synced/<syncing_component>/<component_to_sync>/<dep_to_sync>/<syncing_dep>/<action>")
     @catch_exceptions

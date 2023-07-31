@@ -26,7 +26,7 @@ from concerto.gantt_record import GanttRecord
 from concerto.utility import COLORS, TimeManager
 
 # In synchronous execution, how much interval (in seconds) to poll results
-FREQUENCE_POLLING = 0.05
+FREQUENCE_POLLING = 0.3
 
 
 def track_instruction_number(func):
@@ -125,7 +125,6 @@ class Assembly(object):
             self.time_checker = TimeCheckerAssemblies(uptimes_nodes_file_path)
             self._set_round_reconf_for_components()
             self._set_execution_start_time()
-
 
     @property
     def obj_id(self):
@@ -418,12 +417,15 @@ class Assembly(object):
 
     @track_instruction_number
     @create_timestamp_metric(TimestampType.TimestampInstruction.WAITALL, is_instruction_method=True)
-    def wait_all(self, wait_for_refusing_provide: bool = False):
+    def wait_all(self, wait_for_refusing_provide: bool = False, deps_concerned: List = None):
         """
         Global synchronization
         :params wait_for_refusing_provide: Used to specify that the assembly need to wait for the provides
         ports connected to it that they finish their reconfiguration. Else the use port might reconfigure itself
         before receiving order to wait for the provide port to reconfigure itself.
+        :params deps_concerned: Filled only if wait_for_refusing_provide is True. Represent the use dependencies
+        that should be considered provided after the wait_all (do not require an additionnal check because by definition
+        the wait_for_refusing_provide acknowledge the fact that these deps are provided)
         TODO: doit être placé systématiquement à la fin de chaque reconfiguration_name (sauf pour le wait_for_refusing_provide=True)
         """
         finished = False
@@ -456,10 +458,13 @@ class Assembly(object):
             if not finished:
                 self.run_semantics_iteration()
 
-        # End of global synchronization, reset all fields used for it
+        # End of global synchronization, reset all fields used for it and cache
         if not wait_for_refusing_provide:
             self.remote_confirmations.clear()
-            communication_handler.clear_global_synchronization_cache()
+            communication_handler.clear_communication_cache(self.get_name())
+        else:
+            communication_handler.set_provide_deps_to_provided(deps_concerned)
+
 
         self.wait_for_refusing_provide = False
 
@@ -517,6 +522,7 @@ class Assembly(object):
             communication_handler.set_component_state(INACTIVE, self.name, global_variables.reconfiguration_name)
 
         # Check for sleeping conditions
+        # TODO: Be careful about the case were concurrent transitions executions block sleeping one by one
         if self.time_manager.is_waiting_rate_time_up() and all_tokens_blocked:
             log.debug("Everyone blocked")
             log.debug("Going sleeping bye")
@@ -525,7 +531,8 @@ class Assembly(object):
             log.debug("Time's up")
             log.debug("Go sleep")
             self.go_to_sleep(self.exit_code_sleep)
-        else:
+
+        if all_tokens_blocked:
             time.sleep(FREQUENCE_POLLING)
 
     def go_to_sleep(self, exit_code):

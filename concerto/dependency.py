@@ -75,13 +75,17 @@ class Dependency(object):
         self.dependency_name = name
         self.dependency_type = dep_type
         self.dependency_connections: Set = set()
-        self.is_refusing: bool = False
+        self._is_refusing: bool = False
         self.nb_users = 0
         self.data = None
 
     @property
     def obj_id(self):
         return f"{self._component.name}-{self.dependency_name}"
+
+    @property
+    def is_refusing(self):
+        return self._is_refusing
 
     def to_json(self):
         return {
@@ -184,7 +188,7 @@ class Dependency(object):
         return True
 
     def set_refusing_state(self, value: bool):
-        self.is_refusing = value
+        self._is_refusing = value
 
         # S'il y a au moins une dépendance remote, il faut la prévenir du fait que le provide n'accepte
         # plus d'utilisation

@@ -71,10 +71,10 @@ def clear_communication_cache(assembly_name):
         os.remove(file_name)
 
 
-def clear_global_synchronization_cache():
-    for comp_name in inventory.keys():
-        if comp_name in communications_cache.keys():
-            del communications_cache[comp_name]
+def set_provide_deps_to_provided(provide_deps_list):
+    for comp_name, dep_name in provide_deps_list:
+        key_cache = "get_nb_dependency_users" + comp_name + dep_name
+        communications_cache[key_cache] = "1"
 
 
 def _is_url_accessible(url):
@@ -91,16 +91,16 @@ def get_results_from_request(key_cache, url, default_value, params=None):
             result = requests.get(url, params=params).text
             if result != "":  # TODO: Bug, sometimes API return blank response
                 communications_cache[key_cache] = result
-                # log_once.debug(f"{url}?{params} accessible, result: {result}")
+                log_once.debug(f"{url}?{params} accessible, result: {result}")
             else:             # TODO: act as if the remote node is unreachable
                 result = default_value
         else:
             result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-            # log_once.debug(f"{url}?{params} is not accessible, using cache result: {result} instead")
+            log_once.debug(f"{url}?{params} is not accessible, using cache result: {result} instead")
     except requests.exceptions.ConnectionError as e:
         # log_once.debug(e)
         result = communications_cache[key_cache] if key_cache in communications_cache.keys() else default_value
-        # log_once.debug(f"{url}?{params} raised an exception, using cache result: {result} instead")
+        log_once.debug(f"{url}?{params} raised an exception, using cache result: {result} instead")
     # time.sleep(0.2)
     return result
 
