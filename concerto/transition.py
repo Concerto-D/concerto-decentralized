@@ -8,6 +8,8 @@
 
 import threading
 
+from concerto.time_logger import log_time_value, TimestampType, TimestampPeriod
+
 
 class Transition:
     """This Transition class is used to create a transition.
@@ -95,7 +97,9 @@ class Transition:
 
     def execute_user_function(self, user_function, arguments):
         try:
+            log_time_value(TimestampType.TRANSITION, TimestampPeriod.START, user_function.__name__)
             user_function(*arguments)
+            log_time_value(TimestampType.TRANSITION, TimestampPeriod.END, user_function.__name__)
         except Exception as e:
             self._component.thread_safe_report_error(self, repr(e))
 

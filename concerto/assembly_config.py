@@ -130,7 +130,7 @@ def _restore_component(assembly, comp_values, components_names, components):
     # Restore dependencies
     for dep_values in comp_values['st_dependencies'].values():
         dep_comp = component.st_dependencies[dep_values['dependency_name']]
-        dep_comp.is_refusing = dep_values['is_refusing']
+        dep_comp.set_refusing_state(dep_values['is_refusing'])
         dep_comp.nb_users = dep_values['nb_users']
         dep_comp.data = dep_values['data']
 
