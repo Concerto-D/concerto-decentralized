@@ -59,11 +59,11 @@ Host g5k
 - ```mkdir <all_expes_dir>```
 - ```cd <all_expes_dir>```
 - - Clone the **experiment_files** repository:
-  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
-  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
+  - ```git clone git@github.com:Concerto-D/experiment_files.git```
+  - or ````git clone https://github.com/Concerto-D/experiment_files.git```` 
 - Clone the **evaluation** repository: 
-  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
-  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
+  - ```git clone git@github.com:Concerto-D/evaluation.git```
+  - or ````git clone https://github.com/Concerto-D/evaluation.git````
   
 *Configure the experiment parameters*
 
@@ -121,14 +121,14 @@ This part explains what to do if the goal is only to **start a reconfiguration m
 - ```mkdir <all_projects_dir>```
 - ```cd <all_projects_dir>```
 - Clone the **concerto-decentralized** repository: 
-  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/concerto-decentralized.git```
-  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/concerto-decentralized.git````
+  - ```git clone git@github.com:Concerto-D/concerto-decentralized.git```
+  - or ````git clone https://github.com/Concerto-D/concerto-decentralized.git````
 - - Clone the **experiment_files** repository:
-  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/experiment_files.git```
-  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/experiment_files.git```` 
+  - ```git clone git@github.com:Concerto-D/experiment_files.git```
+  - or ```git clone https://github.com/Concerto-D/experiment_files.git``` 
 - Clone the **evaluation** repository: 
-  - ```git clone git@gitlab.inria.fr:aomond-imt/concerto-d/evaluation.git```
-  - or ````git clone https://gitlab.inria.fr/aomond-imt/concerto-d/evaluation.git````
+  - ```git clone git@github.com:Concerto-D/evaluation.git```
+  - or ````git clone https://github.com/Concerto-D/evaluation.git````
 
 *Install apt deps*
 - ```sudo apt update```
@@ -167,7 +167,4 @@ python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experi
 in the example with 3 deps it has to be <nb_deps_tot> equal to 3 in the config file. It cannot go beyond 12 deps.
 - Launching scripts like this is the equivalent of having **100% overlap** between units.
 - The results are not computed here (total reconf time, etc).
-
-# TODO:
-- put projects in public and remove gitlab deploy keys etc
 - Mettre concerto-d-synchrone dans la liste au début + faire un test avec le tag ICSOC
