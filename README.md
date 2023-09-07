@@ -167,4 +167,3 @@ python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experi
 in the example with 3 deps it has to be <nb_deps_tot> equal to 3 in the config file. It cannot go beyond 12 deps.
 - Launching scripts like this is the equivalent of having **100% overlap** between units.
 - The results are not computed here (total reconf time, etc).
-- Mettre concerto-d-synchrone dans la liste au début + faire un test avec le tag ICSOC
