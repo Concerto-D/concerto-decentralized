@@ -59,18 +59,19 @@ Host g5k
 - ```mkdir <all_expes_dir>```
 - ```cd <all_expes_dir>```
 - - Clone the **experiment_files** repository:
-  - ```git clone git@github.com:Concerto-D/experiment_files.git```
-  - or ````git clone https://github.com/Concerto-D/experiment_files.git```` 
+  - ````git clone https://github.com/Concerto-D/experiment_files.git```` 
 - Clone the **evaluation** repository: 
-  - ```git clone git@github.com:Concerto-D/evaluation.git```
-  - or ````git clone https://github.com/Concerto-D/evaluation.git````
+  - ````git clone https://github.com/Concerto-D/evaluation.git````
   
 *Configure the experiment parameters*
 
-The file ```evaluation/expe_parameters.yaml``` contains the differents parameters of the experiments. This will be fed to the
-python script that starts the experiment. This file contains an example of a configuration. **For each experiments** to run,
-this has to be **adapted** before being passed as a parameter to the script.
-Each parameter is directly explained in the file.
+The file ```evaluation/expe_parameters_example.yaml``` contains the differents parameters of the experiments. This will be fed to the
+python script that starts the experiment. This file contains an example of a configuration.
+Each parameter is directly explained in the file, notably:
+  - Version to run:
+    - ```version_concerto_d: "synchronous"``` (without a Relay Node)
+    - ```version_concerto_d: "asynchronous"``` (with a Relay Node)
+  - ```all_expes_dir: "path/to/all_expes_dir"```
 
 *Install apt deps*
 - ```sudo apt update```
@@ -86,7 +87,7 @@ Each parameter is directly explained in the file.
 Assuming the previous step were executed.
 - If local execution: ```ssh g5k``` create a dummy ssh connection to g5k. Every other connections to g5k will go through this one.
 - ```source set_python_path.sh```
-- ```python experiment/execution_experiment.py expe_parameters.yaml```
+- ```python experiment/execution_experiment.py expe_parameters_example.yaml```
 
 ### Gather results
 There are two dirs created for the execution: **local dir** and **remote dir**.
@@ -121,49 +122,44 @@ This part explains what to do if the goal is only to **start a reconfiguration m
 - ```mkdir <all_projects_dir>```
 - ```cd <all_projects_dir>```
 - Clone the **concerto-decentralized** repository: 
-  - ```git clone git@github.com:Concerto-D/concerto-decentralized.git```
-  - or ````git clone https://github.com/Concerto-D/concerto-decentralized.git````
+  - ````git clone https://github.com/Concerto-D/concerto-decentralized.git````
 - - Clone the **experiment_files** repository:
-  - ```git clone git@github.com:Concerto-D/experiment_files.git```
-  - or ```git clone https://github.com/Concerto-D/experiment_files.git``` 
+  - ```git clone https://github.com/Concerto-D/experiment_files.git``` 
 - Clone the **evaluation** repository: 
-  - ```git clone git@github.com:Concerto-D/evaluation.git```
-  - or ````git clone https://github.com/Concerto-D/evaluation.git````
+  - ````git clone https://github.com/Concerto-D/evaluation.git````
 
 *Install apt deps*
 - ```sudo apt update```
 - ```sudo apt install python3-pip virtualenv```
 
-*Set up Python evaluation project:*
+*Install dependencies:*
 - ```cd concerto-decentralized```
 - ```virtualenv venv```
 - ```source venv/bin/activate```
 - ```pip install -r requirements.txt```
 
-### Start execution of a script
-Position in concerto-decentralized dir and activate environment **if not already done**:
-```
-cd concerto-decentralized
-source venv/bin/activate
-source source_dir.sh
-```
-There is no orchestrator in local, scripts has to be started manually. The call of a script is like this:
-```
-# Start the server
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_server.py <config_file_path> <uptime_duration> <waiting_rate> <timestamp_log_dir> <execution_expe_dir> <version_concerto_d> &
+- ```cd evaluation```
+- ```virtualenv venv```
+- ```source venv/bin/activate```
+- ```pip install -r requirements.txt```
 
-# Start a dependency (need an additionnal <dep_num> arg)
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py <config_file_path> <uptime_duration> <waiting_rate> <timestamp_log_dir> <execution_expe_dir> <version_concerto_d> <dep_num> &
-```
-Example of calls 1 serv and 3 deps
-```
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_server.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous &    # Server
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 0 &    # Dep 0
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 1 &    # Dep 1
-python3 ../evaluation/synthetic_use_case/reconf_programs/reconf_dep.py ../experiment_files/parameters/transitions_times/transitions_times-1-30-deps12-0.json 30 1 . . synchronous 2 &    # Dep 2
-```
-**Notes:** 
-- The **number of deps launched** has to match **all the <nb_deps_tot> variables** present in <config_file_path>. Here
-in the example with 3 deps it has to be <nb_deps_tot> equal to 3 in the config file. It cannot go beyond 12 deps.
-- Launching scripts like this is the equivalent of having **100% overlap** between units.
-- The results are not computed here (total reconf time, etc).
+### Configuration
+- In ```expe_parameters_example.yaml``` (or a copy), set:
+  - ```environment: local```
+  - Define version to run:
+    - ```version_concerto_d: "synchronous"``` (without a Relay Node)
+    - ```version_concerto_d: "asynchronous"``` (with a Relay Node)
+  - ```all_expes_dir: "path/to/all_projects_dir"```
+  - ```all_executions_dir: path/to/all_projects_dir```
+- For the asynchronous experiments (with a Relay Node), install and configure zenoh:
+  - ```wget https://download.eclipse.org/zenoh/zenoh/0.6.0-beta.1/x86_64-unknown-linux-gnu/zenoh-0.6.0-beta.1-x86_64-unknown-linux-gnu.zip```
+  - ```mkdir ../zenoh_install```
+  - ```unzip -d ../zenoh_install zenoh-0.6.0-beta.1-x86_64-unknown-linux-gnu.zip```
+  - ```cp experiment/zenohd-config.json5 ../zenoh_install/```
+- Use local inventory: ```cp inventory_local.yaml inventory.yaml```
+
+### Execution
+- ```cd evaluation```
+- ```source venv/bin/activate```
+- ```source set_python_path.sh```
+- ```python3 experiment/execution_experiment.py expe_parameters_example.yaml```
